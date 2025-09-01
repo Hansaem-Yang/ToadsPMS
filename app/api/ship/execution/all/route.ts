@@ -85,10 +85,6 @@ export async function GET(req: Request) {
       ]
     );
 
-    if (items.length === 0) {
-      return NextResponse.json({ success: false, message: 'The data does not exist.' }, { status: 401 });
-    }
-
     let equipmentTasks: Equipment[] = [];
     let equipTask : Equipment;
     let equipNo: string = '';

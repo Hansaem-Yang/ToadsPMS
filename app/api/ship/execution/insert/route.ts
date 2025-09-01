@@ -1,0 +1,109 @@
+import { NextResponse } from 'next/server';
+import { getSql, getPool } from '@/db'; // 이전에 만든 query 함수
+import { MaintenanceWork } from '@/types/vessel/maintenance_work';
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const item : MaintenanceWork = body;
+
+    const sql = await getSql();
+    const pool = await getPool();
+    const transantion = pool.transaction();
+    await transantion.begin();
+    try {
+      let count = 0;
+      let query = `
+      insert into [maintenance_work] (
+              work_order
+            , work_date
+            , manager
+            , work_details
+            , used_parts
+            , work_hours
+            , delay_reason
+            , vessel_no
+            , equip_no
+            , section_code
+            , plan_code
+      )
+      values (
+            (select isnull(max(work_order), 0) + 1 from [maintenance_work])
+            , getdate()
+            , @manager
+            , @workDetails
+            , @usedParts
+            , @workHours
+            , @delayReason
+            , @vesselNo
+            , @equipNo
+            , @sectionCode
+            , @planCode
+      );`;
+
+      let params = [
+        { name: 'manager', value: item.manager }, 
+        { name: 'workDetails', value: item.work_details }, 
+        { name: 'usedParts', value: item.used_parts }, 
+        { name: 'workHours', value: item.work_hours }, 
+        { name: 'delayReason', value: item.delay_reason }, 
+        { name: 'vesselNo', value: item.vessel_no }, 
+        { name: 'equipNo', value: item.equip_no }, 
+        { name: 'sectionCode', value: item.section_code }, 
+        { name: 'planCode', value: item.plan_code }, 
+      ];
+
+      const request = new sql.Request(transantion);
+
+      params?.forEach(p => request.input(p.name, p.value));
+      let result = await request.query(query);
+      count += result.rowsAffected[0];
+
+      query = `
+      update maintenance_plan
+         set lastest_date = getdate()
+       where vessel_no = @vesselNo
+         and equip_no = @equipNo
+         and section_code = @sectionCode
+         and plan_code = @planCode;`;
+
+      params = [
+        { name: 'vesselNo', value: item.vessel_no }, 
+        { name: 'equipNo', value: item.equip_no }, 
+        { name: 'sectionCode', value: item.section_code }, 
+        { name: 'planCode', value: item.plan_code }, 
+      ];
+      
+      result = await request.query(query);
+
+      query = `
+      update equipment
+         set lastest_date = getdate()
+       where vessel_no = @vesselNo
+         and equip_no = @equipNo;`;
+
+      params = [
+        { name: 'vesselNo', value: item.vessel_no }, 
+        { name: 'equipNo', value: item.equip_no }, 
+      ];
+      
+      result = await request.query(query);
+
+      if (count === 0) {
+        transantion.rollback();
+        return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
+      }
+
+      transantion.commit();
+      // 성공 정보 반환
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      transantion.rollback();
+      console.log(err);
+      return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    }
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+  }
+}

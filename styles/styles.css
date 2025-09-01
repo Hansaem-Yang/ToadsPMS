@@ -1,0 +1,28 @@
+.gantt-container {
+  display: flex; /* Flexbox로 가로 정렬 */
+  border: 1px solid #e5e7eb;
+}
+
+.fixed-title-section {
+  width: 250px; /* 좌측 고정 영역의 너비 */
+  flex-shrink: 0; /* 스크롤 시 크기 줄어들지 않도록 설정 */
+  overflow-y: auto; /* 세로 스크롤 가능하게 설정 */
+}
+
+.scrollable-data-section {
+  flex-grow: 1; /* 남은 공간을 모두 차지 */
+  overflow-x: auto; /* 가로 스크롤 가능하게 설정 */
+  /* 세로 스크롤을 동기화하기 위해 overflow-y를 auto로 설정 */
+  overflow-y: auto;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}

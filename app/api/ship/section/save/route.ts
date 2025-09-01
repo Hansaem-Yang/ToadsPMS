@@ -1,0 +1,52 @@
+import { NextResponse } from 'next/server';
+import { execute } from '@/db'; // 이전에 만든 query 함수
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { vessel_no, equip_no, section_code, section_name, description } = body;
+
+    // DB에서 사용자 정보 확인
+    const count = await execute(
+      `merge [section] as a
+       using (select @vesselNo as vessel_no
+                   , @equipNo as equip_no
+                   , @sectionCode as section_code
+                   , @sectionName as section_name
+                   , @description as description) as b
+          on (a.vessel_no = b.vessel_no and a.equip_no = b.equip_no and a.section_code = b.section_code)
+        when matched then
+             update
+                set a.section_name = b.section_name
+                  , a.description = b.description
+        when not matched then
+             insert (vessel_no
+                   , equip_no
+                   , section_code
+                   , section_name
+                   , description)
+             values (b.vessel_no
+                   , b.equip_no
+                   , (select format(isnull(max(section_code), 0) + 1, '000') from [section] where vessel_no = b.vessel_no and equip_no = b.equip_no)
+                   , b.section_name
+                   , b.description);`,
+      [
+        { name: 'vesselNo', value: vessel_no },
+        { name: 'equipNo', value: equip_no },
+        { name: 'sectionCode', value: section_code },
+        { name: 'sectionName', value: section_name },
+        { name: 'description', value: description },
+      ]
+    );
+
+    if (count === 0) {
+      return NextResponse.json({ success: false, message: 'Data was not saved.' }, { status: 401 });
+    }
+
+    // 성공 정보 반환
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+  }
+}

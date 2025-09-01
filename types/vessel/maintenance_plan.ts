@@ -1,0 +1,26 @@
+export interface MaintenancePlan {
+    vessel_no: string;
+    vessel_name: string;
+    equip_no: string;
+    equip_name: string;
+    section_code: string;
+    section_name: string;
+    plan_code: string;
+    plan_name: string;
+    manufacturer: string;
+    model: string;
+    specifications: string;
+    lastest_date: string;
+    workers: number;
+    work_hours: number;
+    interval: number;
+    interval_term: string;
+    location: string;
+    self_maintenance: string;
+    manager: string;
+    important_items: string;
+    instructions: string;
+    critical: string;
+    due_date: string;
+    status: string;
+}

@@ -91,7 +91,7 @@ export async function GET(req: Request) {
         vessel = {
           id: item.vessel_no,
           name: item.vessel_name,
-          vessel_no: '',
+          vessel_no: item.vessel_no,
           vessel_name: '',
           equip_no: '',
           equip_name: '',
@@ -130,7 +130,7 @@ export async function GET(req: Request) {
           equipment = {
             id: item.equip_no,
             name: item.equip_name,
-            vessel_no: '',
+            vessel_no: item.vessel_no,
             vessel_name: '',
             equip_no: '',
             equip_name: '',
@@ -170,7 +170,7 @@ export async function GET(req: Request) {
             section = {
               id: `${item.equip_no}-${item.section_code}`,
               name: item.section_name,
-              vessel_no: '',
+              vessel_no: item.vessel_no,
               vessel_name: '',
               equip_no: '',
               equip_name: '',

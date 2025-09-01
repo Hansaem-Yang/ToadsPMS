@@ -38,6 +38,7 @@ import { MaintenanceWork } from '@/types/vessel/maintenance_work'; // ✅ interf
 
 export default function MaintenanceWorkManagementPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [vessels, setVessels] = useState<Maintenance[]>([])
   const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
   const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
   const [searchTerm, setSearchTerm] = useState("")
@@ -51,6 +52,13 @@ export default function MaintenanceWorkManagementPage() {
   const [selectedHistoryItems, setSelectedHistoryItems] = useState<MaintenanceWork[]>([])
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string>("")
+
+  const fetchVessels = () => {
+    fetch(`/api/admin/ships/all`)
+      .then(res => res.json())
+      .then(data => setVessels(data))
+      .catch(err => console.error(err));
+  };
 
   const fetchMaintenance = () => {
     fetch(`/api/admin/maintenance`)
@@ -74,6 +82,7 @@ export default function MaintenanceWorkManagementPage() {
       const user = requireAuth();
       setUserInfo(user);
 
+      fetchVessels();
       fetchMaintenance();
     } catch (error) {
       // Redirect handled by requireAuth
@@ -389,9 +398,9 @@ export default function MaintenanceWorkManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">전체 선박</SelectItem>
-                    <SelectItem value="SHIP001">태평양호</SelectItem>
-                    <SelectItem value="SHIP002">대서양호</SelectItem>
-                    <SelectItem value="SHIP003">인도양호</SelectItem>
+                    {vessels.map((vessel) => (
+                      <SelectItem value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -400,10 +409,10 @@ export default function MaintenanceWorkManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="지연">지연</SelectItem>
-                    <SelectItem value="예정">예정</SelectItem>
-                    <SelectItem value="진행중">진행중</SelectItem>
-                    <SelectItem value="완료">완료</SelectItem>
+                    <SelectItem value="DELAY">지연</SelectItem>
+                    <SelectItem value="NORMAL">예정</SelectItem>
+                    <SelectItem value="EXTENSION">연장</SelectItem>
+                    <SelectItem value="COMPLATE">완료</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

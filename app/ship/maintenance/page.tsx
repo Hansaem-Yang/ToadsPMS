@@ -665,6 +665,7 @@ export default function MaintenanceWorkManagementPage() {
                           id="plan_code" 
                           placeholder="작업코드를 입력하세요" 
                           onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, plan_code: e.target.value }))}
+                          disabled
                         />
                       </div>
                       <div className="space-y-2">
@@ -811,7 +812,6 @@ export default function MaintenanceWorkManagementPage() {
                         disabled={!addMaintenance?.vessel_no || 
                           !addMaintenance?.equip_no || 
                           !addMaintenance?.section_code || 
-                          !addMaintenance?.plan_code ||
                           !addMaintenance?.plan_name ||
                           !addMaintenance?.interval ||
                           !addMaintenance?.interval_term ||

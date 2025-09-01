@@ -392,7 +392,7 @@ export default function MaintenanceWorkManagementPage() {
                     />
                   </div>
                 </div>
-                <Select value={shipFilter} onValueChange={setShipFilter}>
+                <Select defaultValue={shipFilter} onValueChange={setShipFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -403,7 +403,7 @@ export default function MaintenanceWorkManagementPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>

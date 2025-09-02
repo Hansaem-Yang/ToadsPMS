@@ -148,6 +148,13 @@ export default function ShipEquipmentPage() {
       alert(data.message);
     }
   }
+  
+  // Function to handle history button click
+  const handleDetailsClick = (vesselNo: string, equipName: string) => {
+    const encodedParam = encodeURIComponent(equipName);
+    
+    window.location.href = `/ship/execution?equipName=${encodedParam}`;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,11 +207,9 @@ export default function ShipEquipmentPage() {
                           <SelectValue placeholder="카테고리 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PROBULSION">추진시스템</SelectItem>
-                          <SelectItem value="POWER">전력시스템</SelectItem>
-                          <SelectItem value="NAVIGATIONAL">항해장비</SelectItem>
-                          <SelectItem value="SAFETY">안전장비</SelectItem>
-                          <SelectItem value="COMMUNICATION">통신장비</SelectItem>
+                          <SelectItem value="engine">Engine</SelectItem>
+                          <SelectItem value="deck">Deck</SelectItem>
+                          <SelectItem value="etc">Etc</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -357,7 +362,15 @@ export default function ShipEquipmentPage() {
                           <span className="text-sm">다음: {item.due_date}</span>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" style={{cursor: 'pointer'}}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDetailsClick(item.vessel_no, item.equip_name)
+                        }}
+                        style={{cursor: 'pointer'}}
+                      >
                         <Settings className="w-4 h-4 mr-2" />
                         상세보기
                       </Button>

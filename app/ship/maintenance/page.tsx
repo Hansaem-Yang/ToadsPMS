@@ -579,7 +579,7 @@ export default function MaintenanceWorkManagementPage() {
                   작업 캘린더
                 </Button>
                 {/* 섹션 추가 Dialog */}
-                <Dialog open={isAddSectionDialogOpen}>
+                <Dialog open={isAddSectionDialogOpen} onOpenChange={setIsAddSectionDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddSectionDialogOpen} style={{cursor: 'pointer'}}>
                       <Plus className="w-4 h-4 mr-2" />새 섹션 추가

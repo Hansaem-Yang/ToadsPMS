@@ -83,13 +83,13 @@ export default function AdminCalendarPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "delayed":
         return <Badge variant="destructive">지연</Badge>
-      case "EXTENSION":
+      case "extension":
         return <Badge variant="outline">연장</Badge>
-      case "NORMAL":
+      case "normal":
         return <Badge variant="secondary">예정</Badge>
-      case "COMPLATE":
+      case "complate":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>

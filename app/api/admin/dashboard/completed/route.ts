@@ -31,10 +31,10 @@ export async function GET(req: Request) {
             , convert(varchar(10), b.due_date, 121) as due_date 
             , convert(varchar(10), b.next_due_date, 121) as next_due_date 
             , convert(varchar(10), b.extension_date, 121) as extension_date 
-            , case when b.due_date < getdate() and b.lastest_date < getdate() and b.extension_date >= getdate() then 'EXTENSION'
-                    when b.due_date < getdate() then 'DELAY' 
-                    when b.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)) then 'COMPLATE'
-                    else 'NORMAL' end as status
+            , case when b.due_date < getdate() and b.lastest_date < getdate() and b.extension_date >= getdate() then 'extension'
+                    when b.due_date < getdate() then 'delayed' 
+                    when b.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)) then 'complate'
+                    else 'normal' end as status
             , datediff(day, getdate(), b.due_date) as days_until
             , datediff(day, getdate(), b.extension_date) as extension_days_until
           from [vessel] as a

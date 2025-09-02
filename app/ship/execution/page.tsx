@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -19,6 +20,8 @@ import { Maintenance } from '@/types/dashboard/maintenance';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
 
 export default function MaintenanceExecutionPage() {
+  const searchParams = useSearchParams()
+  const equipName = searchParams.get("equipName") || ""
   const initialMaintenanceItem: Maintenance = {
     vessel_no: "",
     vessel_name: "",
@@ -75,6 +78,7 @@ export default function MaintenanceExecutionPage() {
   };
 
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [params, setParams] = useState<any>(null)
   const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
@@ -109,6 +113,10 @@ export default function MaintenanceExecutionPage() {
       setUserInfo(user)
 
       fetchEquipmentTasks(user.ship_no)
+      
+      if (equipName) {
+        setParams(equipName)
+      }
     } catch (error) {
       // Redirect handled by requireAuth
     }
@@ -116,6 +124,12 @@ export default function MaintenanceExecutionPage() {
 
   useEffect(() => {
     let filtered = equipmentWorks
+      
+    if (params) {
+      setSearchTerm(params);
+
+      setParams('');
+    }
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -136,13 +150,13 @@ export default function MaintenanceExecutionPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "delayed":
         return <Badge variant="destructive">지연</Badge>
-      case "EXTENSION":
+      case "extension":
         return <Badge variant="outline">연장</Badge>
-      case "NORMAL":
+      case "normal":
         return <Badge variant="secondary">예정</Badge>
-      case "COMPLATE":
+      case "complate":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -151,13 +165,13 @@ export default function MaintenanceExecutionPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "delayed":
         return <AlertTriangle className="w-4 h-4 text-red-600" />
-      case "EXTENSION":
+      case "extension":
         return <PlusCircle className="w-4 h-4 text-orange-600" />
-      case "NORMAL":
+      case "normal":
         return <Calendar className="w-4 h-4 text-blue-600" />
-      case "COMPLATE":
+      case "complate":
         return <CheckCircle className="w-4 h-4 text-green-600" />
       default:
         return <Calendar className="w-4 h-4" />
@@ -185,7 +199,7 @@ export default function MaintenanceExecutionPage() {
           executionResult.equip_no === task.equip_no &&
           executionResult.section_code === task.section_code &&
           executionResult.plan_code === task.plan_code
-          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
+          ? { ...task, status: "complate", lastest_date: new Date().toISOString().split("T")[0] }
           : task,
         ),
       })),
@@ -218,7 +232,7 @@ export default function MaintenanceExecutionPage() {
           extensionResult.equip_no === task.equip_no &&
           extensionResult.section_code === task.section_code &&
           extensionResult.plan_code === task.plan_code
-          ? { ...task, status: 'EXTENSION', extension_date: extensionResult.extension_date }
+          ? { ...task, status: 'extension', extension_date: extensionResult.extension_date }
           : task,
         ),
       })),
@@ -250,7 +264,7 @@ export default function MaintenanceExecutionPage() {
 
   const handleSelectAll = () => {
     const allTaskIds = filteredEquipment.flatMap((eq) =>
-      eq.children.filter((task) => task.status !== "COMPLATE").map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`),
+      eq.children.filter((task) => task.status !== "complate").map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`),
     )
 
     if (selectedWorks.length === allTaskIds.length) {
@@ -298,7 +312,7 @@ export default function MaintenanceExecutionPage() {
             data.section_code === task.section_code &&
             data.plan_code === task.plan_code
           )
-          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
+          ? { ...task, status: "complate", lastest_date: new Date().toISOString().split("T")[0] }
           : task,
         ),
       })),
@@ -349,7 +363,7 @@ export default function MaintenanceExecutionPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("DELAY")}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("delayed")}</div>
                 <p className="text-xs text-muted-foreground">즉시 실행 필요</p>
               </CardContent>
             </Card>
@@ -360,7 +374,7 @@ export default function MaintenanceExecutionPage() {
                 <Calendar className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus("NORMAL") + getTasksByStatus("EXTENSION")}</div>
+                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus("normal") + getTasksByStatus("extension")}</div>
                 <p className="text-xs text-muted-foreground">실행 대기</p>
               </CardContent>
             </Card>
@@ -371,7 +385,7 @@ export default function MaintenanceExecutionPage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{getTasksByStatus("COMPLATE")}</div>
+                <div className="text-2xl font-bold text-green-600">{getTasksByStatus("complate")}</div>
                 <p className="text-xs text-muted-foreground">실행 완료</p>
               </CardContent>
             </Card>
@@ -388,7 +402,7 @@ export default function MaintenanceExecutionPage() {
                     checked={
                       selectedWorks.length > 0 &&
                       selectedWorks.length ===
-                        filteredEquipment.flatMap((eq) => eq.children.filter((task) => task.status !== "COMPLATE")).length
+                        filteredEquipment.flatMap((eq) => eq.children.filter((task) => task.status !== "complate")).length
                     }
                     onCheckedChange={handleSelectAll}
                   />
@@ -417,10 +431,9 @@ export default function MaintenanceExecutionPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">전체 카테고리</SelectItem>
-                    <SelectItem value="추진시스템">추진시스템</SelectItem>
-                    <SelectItem value="전력시스템">전력시스템</SelectItem>
-                    <SelectItem value="항해장비">항해장비</SelectItem>
-                    <SelectItem value="안전장비">안전장비</SelectItem>
+                    <SelectItem value="engine">Engine</SelectItem>
+                    <SelectItem value="deck">Deck</SelectItem>
+                    <SelectItem value="etc">Etc</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -429,7 +442,7 @@ export default function MaintenanceExecutionPage() {
 
           {/* 장비별 작업 목록 */}
           <div className="space-y-6">
-            {equipmentWorks.map((eq) => (
+            {filteredEquipment.map((eq) => (
               <Card key={eq.equip_no}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -465,7 +478,7 @@ export default function MaintenanceExecutionPage() {
                               id={`${task.equip_no}-${task.section_code}-${task.plan_code}`}
                               checked={selectedWorks.includes(`${task.equip_no}-${task.section_code}-${task.plan_code}`)}
                               onCheckedChange={() => handleTaskSelection(`${task.equip_no}-${task.section_code}-${task.plan_code}`, eq.equip_name, task)}
-                              disabled={task.status === "COMPLATE"}
+                              disabled={task.status === "complate"}
                               className="mt-1"
                             />
                             <div className="flex items-center gap-2">
@@ -487,19 +500,19 @@ export default function MaintenanceExecutionPage() {
                                   <span>담당자: {task.manager}</span>
                                   <span>작업자수: {task.workers}</span>
                                   <span>작업자별 작업시간: {task.work_hours}시간</span>
-                                  {task.status === 'COMPLATE' && (
+                                  {task.status === 'complate' && (
                                     <span className="text-green-600">완료일: {task.lastest_date}</span>
                                   )}
                                 </div>
                               </div>
                             </div>
                           </div>
-                          {task.status !== "COMPLATE" && task.status === "DELAY" && (
+                          {task.status !== "complate" && task.status === "delayed" && (
                             <Button onClick={() => handleExtension(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
                               연장 신청
                             </Button>
                           )}
-                          {task.status !== "COMPLATE" && (
+                          {task.status !== "complate" && (
                             <Button onClick={() => handleExecuteTask(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
                               개별 실행
                             </Button>
@@ -570,7 +583,7 @@ export default function MaintenanceExecutionPage() {
                               className="text-sm"
                             />
                           </div>
-                          {task.status === 'DELAY' && (
+                          {task.status === 'delayed' && (
                             <div>
                               <Label className="text-xs">지연 사유</Label>
                               <Textarea
@@ -595,7 +608,7 @@ export default function MaintenanceExecutionPage() {
                 <Button 
                   onClick={handleSaveBulkExecution} 
                   className="bg-blue-600 hover:bg-blue-700"
-                  disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === 'DELAY' && !item.delay_reason)).length > 0}
+                  disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === 'delayed' && !item.delay_reason)).length > 0}
                   style={{cursor: 'pointer'}}
                 >
                   일괄 등록 완료
@@ -653,7 +666,7 @@ export default function MaintenanceExecutionPage() {
                       rows={3}
                     />
                   </div>
-                  {selectedWork.status === 'DELAY' && (
+                  {selectedWork.status === 'delayed' && (
                     <div>
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
@@ -673,7 +686,7 @@ export default function MaintenanceExecutionPage() {
                   <Button 
                     onClick={handleSaveExecution} 
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={!executionResult.work_details || (executionResult.status === 'DELAY' && !executionResult.delay_reason) }
+                    disabled={!executionResult.work_details || (executionResult.status === 'delayed' && !executionResult.delay_reason) }
                     style={{cursor: 'pointer'}}
                   >
                     등록 완료

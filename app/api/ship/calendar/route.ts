@@ -30,9 +30,9 @@ export async function GET(req: Request) {
             , convert(varchar(10), case when a.due_date < getdate() and a.extension_date is null then dateadd(day, -1, getdate()) 
                                         when a.due_date < getdate() and a.extension_date is not null and a.extension_date > getdate() then a.extension_date
                                         else a.due_date end, 121) as calendar_date
-            , case when a.due_date < getdate() and a.lastest_date < getdate() and a.extension_date >= getdate() then 'EXTENSION'
-			             when a.due_date < getdate() then 'DELAY' 
-                   else 'NORMAL' end as status
+            , case when a.due_date < getdate() and a.lastest_date < getdate() and a.extension_date >= getdate() then 'extension'
+			             when a.due_date < getdate() then 'delayed' 
+                   else 'normal' end as status
          from (select a.vessel_no
                     , c.equip_no
                     , c.equip_name

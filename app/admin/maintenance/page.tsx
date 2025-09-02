@@ -154,13 +154,13 @@ export default function MaintenanceWorkManagementPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "delayed":
         return <Badge variant="destructive">지연</Badge>
-      case "EXTENSION":
+      case "extension":
         return <Badge variant="outline">연장</Badge>
-      case "NORMAL":
+      case "normal":
         return <Badge variant="secondary">예정</Badge>
-      case "COMPLATE":
+      case "complate":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -224,6 +224,21 @@ export default function MaintenanceWorkManagementPage() {
                           Critical
                         </Badge>
                       )}
+                      {item.type === "TASK" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleHistoryClick(item.vessel_no, item.id)
+                          }}
+                          className="hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-300 transition-all"
+                          title="작업 이력 조회"
+                          style={{cursor: 'pointer'}}
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                     {item.type === "TASK" && (
                       <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
@@ -253,27 +268,6 @@ export default function MaintenanceWorkManagementPage() {
                   </span>
                 )}
                 {item.status && getStatusBadge(item.status)}
-                
-
-                <div className="flex items-center space-x-2">
-                  {item.type === "TASK" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        console.log("[v0] Gear button clicked for task:", item.id, "Type:", item.type)
-                        console.log("[v0] Task data:", item)
-                        handleHistoryClick(item.vessel_no, item.id)
-                      }}
-                      className="hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-300 transition-all"
-                      title="작업 이력 조회"
-                      style={{cursor: 'pointer'}}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -346,7 +340,7 @@ export default function MaintenanceWorkManagementPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus(maintenanceData, "DELAY")}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus(maintenanceData, "delayed")}</div>
                 <p className="text-xs text-muted-foreground">즉시 조치 필요</p>
               </CardContent>
             </Card>
@@ -357,7 +351,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Calendar className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus(maintenanceData, "NORMAL")}</div>
+                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus(maintenanceData, "normal")}</div>
                 <p className="text-xs text-muted-foreground">예정된 작업</p>
               </CardContent>
             </Card>
@@ -368,7 +362,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Settings className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{getTasksByStatus(maintenanceData, "COMPLATE")}</div>
+                <div className="text-2xl font-bold text-green-600">{getTasksByStatus(maintenanceData, "complate")}</div>
                 <p className="text-xs text-muted-foreground">완료된 작업</p>
               </CardContent>
             </Card>
@@ -409,10 +403,10 @@ export default function MaintenanceWorkManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="DELAY">지연</SelectItem>
-                    <SelectItem value="NORMAL">예정</SelectItem>
-                    <SelectItem value="EXTENSION">연장</SelectItem>
-                    <SelectItem value="COMPLATE">완료</SelectItem>
+                    <SelectItem value="delayed">지연</SelectItem>
+                    <SelectItem value="normal">예정</SelectItem>
+                    <SelectItem value="extension">연장</SelectItem>
+                    <SelectItem value="complate">완료</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

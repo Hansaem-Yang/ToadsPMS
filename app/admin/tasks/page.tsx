@@ -25,54 +25,63 @@ export default function TaskListPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
+  const fetchTask = (() => {
+    fetch(`/api/admin/dashboard/${taskType}?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => {
+        setMaintenances(data);
+      })
+      .catch(err => console.error(err));
+  })
+
   useEffect(() => {
     try {
       const user = requireAuth();
       setUserInfo(user);
+
+      fetchTask();
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
 
   useEffect(() => {
-    fetch(`/api/admin/dashboard/${taskType}?vesselNo=${vesselNo}`)
-      .then(res => res.json())
-      .then(data => {
-        setMaintenances(data);
+    let filtered = maintenances;
 
-        let filtered = data;
+    // Filter by ship ID if specified
+    if (vesselNo) {
+      filtered = filtered.filter((task: { vessel_no: string }) => task.vessel_no === vesselNo);
+    }
 
-        // Filter by ship ID if specified
-        if (vesselNo) {
-          filtered = filtered.filter((task: { vessel_no: string }) => task.vessel_no === vesselNo);
-        }
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (task: { plan_name: string; vessel_name: string; plan_code: string }) =>
+          task.plan_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          task.vessel_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          task.plan_code.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
 
-        // Filter by search term
-        if (searchTerm) {
-          filtered = filtered.filter(
-            (task: { plan_name: string; vessel_name: string; plan_code: string }) =>
-              task.plan_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              task.vessel_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              task.plan_code.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
-        }
-        setFilteredTasks(filtered);
-      })
-      .catch(err => console.error(err));
-      
-  }, [taskType, vesselNo, searchTerm, statusFilter])
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((task: {status: string}) =>
+        task.status === statusFilter
+      )
+    }
+    setFilteredTasks(filtered);
+  }, [maintenances, taskType, vesselNo, searchTerm, statusFilter])
 
   if (!userInfo) return null
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "delayed":
         return <Badge variant="destructive">지연</Badge>
-      case "EXTENSION":
+      case "extension":
         return <Badge variant="outline">연장</Badge>
-      case "NORMAL":
+      case "normal":
         return <Badge variant="secondary">예정</Badge>
-      case "COMPLATE":
+      case "complate":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -153,9 +162,9 @@ export default function TaskListPage() {
                   <SelectContent>
                     <SelectItem value="all">전체 상태</SelectItem>
                     <SelectItem value="delayed">지연</SelectItem>
-                    <SelectItem value="weekly">금주예정</SelectItem>
-                    <SelectItem value="monthly">금월예정</SelectItem>
-                    <SelectItem value="completed">완료</SelectItem>
+                    <SelectItem value="extension">연장</SelectItem>
+                    <SelectItem value="normal">예정</SelectItem>
+                    <SelectItem value="complate">완료</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

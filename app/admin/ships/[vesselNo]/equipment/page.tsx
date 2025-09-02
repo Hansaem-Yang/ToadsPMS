@@ -212,9 +212,9 @@ export default function ShipEquipmentPage() {
                           <SelectValue placeholder="카테고리 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ENGINE">ENGINE</SelectItem>
-                          <SelectItem value="DECK">DECK</SelectItem>
-                          <SelectItem value="ETC">ETC</SelectItem>
+                          <SelectItem value="engine">Engine</SelectItem>
+                          <SelectItem value="deck">Deck</SelectItem>
+                          <SelectItem value="etc">Etc</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

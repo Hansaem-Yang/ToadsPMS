@@ -132,11 +132,22 @@ export default function MaintenanceExecutionPage() {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter(
-        (eq) =>
-          eq.equip_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eq.children.some((task) => task.plan_name.toLowerCase().includes(searchTerm.toLowerCase())),
-      )
+      const lowerKeyword = searchTerm.toLowerCase();
+
+      filtered = filtered.map(equipment => {
+        const filteredSections = equipment.children.filter(plan => {
+            return (
+              plan.plan_name.toLowerCase().includes(lowerKeyword)
+            );
+          });
+
+        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
+          return { ...equipment, children: filteredSections };
+        }
+
+        return null;
+      })
+      .filter((e) => e !== null);
     }
 
     if (categoryFilter !== "ALL") {

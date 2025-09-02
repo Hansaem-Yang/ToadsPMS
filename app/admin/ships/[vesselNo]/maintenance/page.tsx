@@ -40,13 +40,11 @@ import { MaintenancePlan } from '@/types/vessel/maintenance_plan'; // ✅ interf
 export default function MaintenanceWorkManagementPage() {
   const searchParams = useSearchParams()
   const vesselName = searchParams.get("vesselName")
-
   const params = useParams()
   const vesselNo = params.vesselNo as string
+
   const [userInfo, setUserInfo] = useState<any>(null)
   const [equipments, setEquipments] = useState<Equipment[]>([])
-  const [sections, setSections] = useState<Section[]>([])
-  const [maintenancePlans, setMaintenancePlans] = useState<MaintenancePlan[]>([])
 
   const [filteredData, setFilteredData] = useState<Equipment[]>(equipments)
   const [searchTerm, setSearchTerm] = useState("")
@@ -59,32 +57,17 @@ export default function MaintenanceWorkManagementPage() {
 
   const [addMaintenance, setAddMaintenance] = useState<MaintenancePlan>()
   const [isAddMaintenanceDialogOpen, setIsAddMaintenanceDialogOpen] = useState(false)
-  const [sectionFilteredData, setSectionFilteredData] = useState<Section[]>(sections)
 
   const [selectedMaintenance, setSelectedMaintenance] = useState<MaintenancePlan>()
   const [isEditMaintenanceDialogOpen, setIsEditMaintenanceDialogOpen] = useState(false)
+  
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>()
 
-  const [selectedEquipmentValue, setSelectedEquipmentValue] = useState<string>("")
-  const [selectedSectionValue, setSelectedSectionValue] = useState<string>("")
 
   const fetchEquipments = () => {
-    fetch(`/api/admin/ships/${vesselNo}/equipment/all?vesselNo=${vesselNo}`)
+    fetch(`/api/admin/ships/${vesselNo}/maintenance?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setEquipments(data))
-      .catch(err => console.error(err));
-  };
-
-  const fetchSections = () => {
-    fetch(`/api/admin/ships/${vesselNo}/section/all?vesselNo=${vesselNo}`)
-      .then(res => res.json())
-      .then(data => setSections(data))
-      .catch(err => console.error(err));
-  };
-
-  const fetchMaintenancePlans = () => {
-    fetch(`/api/admin/ships/${vesselNo}/maintenance/all?vesselNo=${vesselNo}`)
-      .then(res => res.json())
-      .then(data => setMaintenancePlans(data))
       .catch(err => console.error(err));
   };
 
@@ -93,8 +76,6 @@ export default function MaintenanceWorkManagementPage() {
       const user = requireAuth();
       setUserInfo(user);
 
-      fetchMaintenancePlans();
-      fetchSections();
       fetchEquipments();
 
       setAddSection((prev: any) => ({ ...prev, vessel_no: vesselNo }));
@@ -108,12 +89,29 @@ export default function MaintenanceWorkManagementPage() {
     let filtered = equipments
 
     if (searchTerm) {
-      filtered = filtered.filter(
-        (eq: { equip_name: string; model: string; manufacturer: string }) =>
-          eq.equip_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eq.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eq.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+      const lowerKeyword = searchTerm.toLowerCase();
+
+      filtered = filtered.map(equipment => {
+        const filteredSections = equipment.children.map(section => {
+            const filteredItems = section.children.filter(plan =>
+              plan.plan_name.toLowerCase().includes(lowerKeyword)
+            );
+
+            return { ...section, children: filteredItems };
+          })
+          .filter(section => {
+            return (
+              section.section_name.toLowerCase().includes(lowerKeyword) || section.children.length > 0
+            );
+          });
+
+        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
+          return { ...equipment, children: filteredSections };
+        }
+
+        return null;
+      })
+      .filter((e) => e !== null);
     }
 
     setFilteredData(filtered)
@@ -151,12 +149,20 @@ export default function MaintenanceWorkManagementPage() {
         return <Badge variant="outline" className="text-xs">{status}</Badge>
     }
   }
+  
+  const equipmentCount = equipments.length;
+  const sectionCount = equipments.reduce((acc, eq) => { 
+    return acc + eq.children.length; 
+  }, 0);
+  const maintenanceCount = equipments.reduce((acc, eq) => { 
+    const childrenCount = eq.children.reduce((sectionAcc, section) => {
+      return sectionAcc + section.children.length;
+    }, 0);
+    return acc + childrenCount; 
+  }, 0);
 
   const renderMaintenance = (parent: Section, level = 2) => {
-    let filtered = maintenancePlans;
-    filtered = filtered.filter((plan: { equip_no: string, section_code: string }) => plan.equip_no === parent.equip_no && plan.section_code === parent.section_code);
-
-    return filtered.map((item) => (
+    return parent.children.map((item) => (
       <div key={`${item.equip_no}-${item.section_code}-${item.plan_code}`} className={`${level > 0 ? "ml-6" : ""}`}>
         <Collapsible open={expandedItems.has(`${item.equip_no}-${item.section_code}-${item.plan_code}`)} onOpenChange={() => toggleExpanded(`${item.equip_no}-${item.section_code}-${item.plan_code}`)}>
           <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
@@ -168,7 +174,7 @@ export default function MaintenanceWorkManagementPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{item.plan_name}</span>
                       <span className="text-sm text-gray-500">({item.plan_code})</span>
-                      { item.critical && getCriticalBadge(item.critical)}
+                      {item.critical && getCriticalBadge(item.critical)}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
                       {item.interval && (
@@ -183,16 +189,8 @@ export default function MaintenanceWorkManagementPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {item.lastest_date && (
-                  <span className="text-sm text-gray-500">최근 정비: {item.lastest_date}</span>
-                )}&nbsp;
                 {item.due_date && (
-                  <span className="text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm">예정일: {item.due_date}</span>
-                    </div>
-                  </span>
+                  <span className="text-sm text-gray-500">다음: {item.due_date}</span>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => handleEditMaintenanceDialogOpen(item)} style={{cursor: 'pointer'}}>
                   <Edit className="w-4 h-4" />
@@ -206,14 +204,11 @@ export default function MaintenanceWorkManagementPage() {
   }
 
   const renderSection =  (parent: Equipment, level = 1) => {
-    let filtered = sections;
-    filtered = filtered.filter((section: { equip_no: string }) => section.equip_no === parent.equip_no);
-
-    return filtered.map((item) => (
+    return parent.children.map((item) => (
       <div key={`${item.equip_no}-${item.section_code}`} className={`${level > 0 ? "ml-6" : ""}`}>
         <Collapsible open={expandedItems.has(`${item.equip_no}-${item.section_code}`)} onOpenChange={() => toggleExpanded(`${item.equip_no}-${item.section_code}`)}>
           <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
-            {item.maintenance_count > 0 && (
+            {item.children && item.children.length > 0 && (
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
                   {expandedItems.has(`${item.equip_no}-${item.section_code}`) ? (
@@ -249,7 +244,7 @@ export default function MaintenanceWorkManagementPage() {
             </div>
           </div>
 
-          {item.maintenance_count > 0 && (
+          {item.children && item.children.length > 0 && (
             <CollapsibleContent>
               <div className="ml-4 border-l-2 border-gray-200 pl-4">
                 {renderMaintenance(item, level + 1)}
@@ -266,7 +261,7 @@ export default function MaintenanceWorkManagementPage() {
       <div key={item.equip_no} className={`${level > 0 ? "ml-6" : ""}`}>
         <Collapsible open={expandedItems.has(item.equip_no)} onOpenChange={() => toggleExpanded(item.equip_no)}>
           <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
-            {item.section_count > 0 && (
+            {item.children && item.children.length > 0 && (
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
                   {expandedItems.has(item.equip_no) ? (
@@ -293,7 +288,7 @@ export default function MaintenanceWorkManagementPage() {
             </div>
           </div>
 
-          {item.section_count > 0 && (
+          {item.children && item.children.length > 0 && (
             <CollapsibleContent>
               <div className="ml-4 border-l-2 border-gray-200 pl-4">
                 {renderSection(item, level + 1)}
@@ -305,96 +300,51 @@ export default function MaintenanceWorkManagementPage() {
     ))
   }
 
-  const equipmentChanged = (type: string, value: string) => {
-    setSelectedEquipmentValue(value);
-    if (type === 'SECTION') {
-      setAddSection((prev: any) => ({ ...prev, equip_no: value }));
-    } else {
-      setAddMaintenance((prev: any) => ({ ...prev, equip_no: value }));
+  const equipmentChanged = (value: string) => {
+    let filtered = equipments;
+    filtered = filtered.filter((eq: { equip_no: string }) => eq.equip_no.toLowerCase().includes(value.toLowerCase()))
 
-      let filtered = sections;
-      filtered = filtered.filter((section: { equip_no: string;}) => section.equip_no.toLowerCase().includes(value.toLowerCase()));
-
-      setSectionFilteredData(filtered);
-    }
+    setSelectedEquipment(filtered[0]);
   }
-
-  const sectionChanged = (value: string) => {
-    setSelectedSectionValue(value);
-    setAddMaintenance((prev: any) => ({ ...prev, section_code: value }));
-  }
-
-  const editEquipmentChanged = (type: string, value: any) => {
-    setSelectedEquipmentValue(value);
-    if (type === 'SECTION') {
-      setSelectedSection((prev: any) => ({ ...prev, equip_no: value }));
-    } else {
-      setSelectedMaintenance((prev: any) => ({ ...prev, equip_no: value }));
-
-      let filtered = sections;
-      filtered = filtered.filter((section: { equip_no: string;}) => section.equip_no.toLowerCase().includes(value.toLowerCase()));
-
-      setSectionFilteredData(filtered);
-    }
-  }
-
-  const editSectionChanged = (value: string) => {
-    setSelectedSectionValue(value);
-    setSelectedMaintenance((prev: any) => ({ ...prev, section_code: value }));
-  }
-  
-  const updateSubQuantityOfEquipment = (item: any) => {
-    // 1. map()을 사용하여 새로운 배열을 생성합니다.
-    const updatedEquipments = equipments.map((eq) => {
-      // 2. 변경할 항목을 찾습니다.
-      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
-        // 3. 스프레드 연산자로 기존 속성을 복사하고 name만 변경한 새로운 객체를 반환합니다.
-        return { ...eq, section_count: eq.section_count + 1 };
-      }
-      // 4. 변경하지 않을 항목은 그대로 반환합니다.
-      return eq;
-    });
-
-    // 5. setEquipments 함수로 상태를 업데이트합니다.
-    setEquipments(updatedEquipments);
-  };
 
   const addSections = (item: any) => {
-    const updatedSections = [...sections, item];
+    return equipments.map((eq) => {
+      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+        const updatedSections = [...eq.children, item];
+        return {...eq, children: updatedSections }
+      }
 
-    // 1. setSections 함수를 사용하여 상태를 새로운 배열로 업데이트합니다.
-    setSections(updatedSections);
+      return eq;
+    });
   }
 
   const updateSections = (item: any) => {
-    // 1. map()을 사용하여 새로운 배열을 생성합니다.
-    const updatedSections = sections.map((section) => {
-      // 2. 변경할 항목을 찾습니다.
-      if (section.vessel_no === item.vessel_no && section.equip_no === item.equip_no && section.section_code === item.section_code) {
-        // 3. 스프레드 연산자로 기존 속성을 복사하고 name만 변경한 새로운 객체를 반환합니다.
-        return { ...section, 
-          vessel_no: item.vessel_no,
-          equip_no: item.equip_no,
-          section_code: item.section_code,
-          section_name: item.section_name,
-          description: item.description,
-          due_date: item.due_date,
-          maintenance_count: item.maintenance_count
-        };
-      }
-      // 4. 변경하지 않을 항목은 그대로 반환합니다.
-      return section;
-    });
+    return equipments.map((eq) => {
+      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+        const updatedSections = eq.children.map((section) => {
+          if (section.section_code === item.section_code) {
+            return { ...section,  
+              vessel_no: item.vessel_no,
+              equip_no: item.equip_no,
+              section_code: item.section_code,
+              section_name: item.section_name,
+              description: item.description,
+              due_date: item.due_date,
+              maintenance_count: item.maintenance_count 
+            };
+          }
 
-    // 5. setSections 함수로 상태를 업데이트합니다.
-    setSections(updatedSections);
+          return section;
+        });
+
+        return {...eq, children: updatedSections }
+      }
+
+      return eq;
+    });
   }
 
   const handleAddSectionDialogOpen = () => {
-    if (selectedEquipmentValue) {
-      equipmentChanged("SECTION", selectedEquipmentValue);
-    }
-
     setIsAddSectionDialogOpen(true);
   }
 
@@ -410,10 +360,8 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
+      setEquipments(addSections(addSection));
       setIsAddSectionDialogOpen(false);
-
-      addSections(addSection);
-      updateSubQuantityOfEquipment(addSection);
     } else {
       alert(data.message);
     }
@@ -436,10 +384,8 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
+      setEquipments(updateSections(selectedSection));
       setIsEditSectionDialogOpen(false);
-
-      updateSections(selectedSection);
-      updateSubQuantityOfEquipment(selectedSection);
     } else {
       alert(data.message);
     }
@@ -452,77 +398,77 @@ export default function MaintenanceWorkManagementPage() {
   const handleEditSelfMaintenanceChange = (checked : boolean) => {
     setSelectedMaintenance((prev: any) => ({ ...prev, self_maintenance: checked ? 'Y' : 'N'}))
   }
-
-  const updateSubQuantityOfSection = (item: any) => {
-    // 1. map()을 사용하여 새로운 배열을 생성합니다.
-    const updateSections = sections.map((section) => {
-      // 2. 변경할 항목을 찾습니다.
-      if (section.equip_no === item.equip_no && section.section_code === item.section_code) {
-        // 3. 스프레드 연산자로 기존 속성을 복사하고 name만 변경한 새로운 객체를 반환합니다.
-        return { ...section, maintenance_count: section.maintenance_count + 1 };
-      }
-      // 4. 변경하지 않을 항목은 그대로 반환합니다.
-      return section;
-    });
-
-    // 5. setSections 함수로 상태를 업데이트합니다.
-    setSections(updateSections);
-  };
   
-
   const addMaintenances = (item: any) => {
-    const updatedMaintenancePlans = [...maintenancePlans, item];
+    return equipments.map((eq) => {
+      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+        const updatedSections = eq.children.map((section) => {
+          if (section.section_code === item.section_code) {
+            const updatedMaintenances = [...section.children, item];
 
-    // 1. setSections 함수를 사용하여 상태를 새로운 배열로 업데이트합니다.
-    setMaintenancePlans(updatedMaintenancePlans);
+            return {...section, children: updatedMaintenances }
+          }
+
+          return section;
+        });
+
+        return {...eq, children: updatedSections }
+      }
+
+      return eq;
+    });
   }
 
   const updateMaintenances = (item: any) => {
-    // 1. map()을 사용하여 새로운 배열을 생성합니다.
-    const updatedMaintenancePlans = maintenancePlans.map((plan) => {
-      // 2. 변경할 항목을 찾습니다.
-      if (plan.vessel_no === item.vessel_no && plan.equip_no === item.equip_no && plan.section_code === item.section_code && plan.plan_code === item.plan_code) {
-        // 3. 스프레드 연산자로 기존 속성을 복사하고 name만 변경한 새로운 객체를 반환합니다.
-        return { ...plan, 
-          vessel_no: item.vessel_no,
-          vessel_name: item.vessel_name,
-          equip_no: item.equip_no,
-          equip_name: item.equip_name,
-          section_code: item.section_code,
-          plan_code: item.plan_code,
-          plan_name: item.plan_name,
-          manufacturer: item.manufacturer,
-          model: item.model,
-          specifications: item.specifications,
-          lastest_date: item.lastest_date,
-          workers: item.workers,
-          work_hours: item.work_hours,
-          interval: item.interval,
-          interval_term: item.interval_term,
-          location: item.location,
-          self_maintenance: item.self_maintenance,
-          manager: item.manager,
-          important_items: item.important_items,
-          instructions: item.instructions,
-          critical: item.critical,
-          due_date: item.due_date
-        };
-      }
-      // 4. 변경하지 않을 항목은 그대로 반환합니다.
-      return plan;
-    });
+    return equipments.map((eq) => {
+      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+        const updatedSections = eq.children.map((section) => {
+          if (section.section_code === item.section_code) {
+            const updatedMaintenances = section.children.map((plan) => {
+              if (plan.plan_code === item.plan_code) {
+                return { ...plan,  
+                  vessel_no: item.vessel_no,
+                  vessel_name: item.vessel_name,
+                  equip_no: item.equip_no,
+                  equip_name: item.equip_name,
+                  section_code: item.section_code,
+                  plan_code: item.plan_code,
+                  plan_name: item.plan_name,
+                  manufacturer: item.manufacturer,
+                  model: item.model,
+                  specifications: item.specifications,
+                  lastest_date: item.lastest_date,
+                  workers: item.workers,
+                  work_hours: item.work_hours,
+                  interval: item.interval,
+                  interval_term: item.interval_term,
+                  location: item.location,
+                  self_maintenance: item.self_maintenance,
+                  manager: item.manager,
+                  important_items: item.important_items,
+                  instructions: item.instructions,
+                  critical: item.critical,
+                  due_date: item.due_date
+                };
+              }
 
-    // 5. setMaintenancePlans 함수로 상태를 업데이트합니다.
-    setMaintenancePlans(updatedMaintenancePlans);
+              return plan;
+            });
+
+            return {...section, children: updatedMaintenances }
+          }
+
+          return section;
+        });
+
+        return {...eq, children: updatedSections }
+      }
+
+      return eq;
+    });
   }
 
   const handleAddMaintenanceDialogOpen = (item: any) => {
-    if (selectedEquipmentValue)
-      equipmentChanged("MAINTENANCE", selectedEquipmentValue);
-    
-    if (selectedSectionValue)
-      sectionChanged(selectedSectionValue);
-    
     setIsAddMaintenanceDialogOpen(true);
   }
 
@@ -538,17 +484,15 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
+      setEquipments(addMaintenances(addMaintenance));
       setIsAddMaintenanceDialogOpen(false);
-      addMaintenances(addMaintenance);
-
-      updateSubQuantityOfSection(addMaintenance);
     } else {
       alert(data.message);
     }
   }
 
   const handleEditMaintenanceDialogOpen = (item: any) => {
-    editEquipmentChanged("MAINTENANCE", item?.equip_no);
+    equipmentChanged(item.equip_no);
 
     setSelectedMaintenance(item);
     setIsEditMaintenanceDialogOpen(true);
@@ -567,10 +511,8 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
+      setEquipments(updateMaintenances(selectedMaintenance));
       setIsEditMaintenanceDialogOpen(false);
-
-      updateMaintenances(selectedMaintenance);
-      updateSubQuantityOfSection(selectedMaintenance);
     } else {
       alert(data.message);
     }
@@ -585,16 +527,16 @@ export default function MaintenanceWorkManagementPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{vesselName} - 유지보수 작업 관리</h1>
-                <p className="text-gray-600">{vesselNo} 선박의 유지보수 작업을 관리하세요</p>
+                <h1 className="text-3xl font-bold text-gray-900">{vesselName} - 정비 등록</h1>
+                <p className="text-gray-600">{vesselNo} 선박의 정비 작업을 관리하세요</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => (window.location.href = "/admin/calendar")} style={{cursor: 'pointer'}}>
+                <Button variant="outline" onClick={() => (window.location.href = "/ship/calendar")} style={{cursor: 'pointer'}}>
                   <Calendar className="w-4 h-4 mr-2" />
                   작업 캘린더
                 </Button>
                 {/* 섹션 추가 Dialog */}
-                <Dialog open={isAddSectionDialogOpen}>
+                <Dialog open={isAddSectionDialogOpen} onOpenChange={setIsAddSectionDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddSectionDialogOpen} style={{cursor: 'pointer'}}>
                       <Plus className="w-4 h-4 mr-2" />새 섹션 추가
@@ -607,10 +549,10 @@ export default function MaintenanceWorkManagementPage() {
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="section_code">섹션 코드</Label>
+                        <Label htmlFor="section_code">섹션코드</Label>
                         <Input 
                           id="section_code" 
-                          placeholder="섹션 코드" 
+                          placeholder="섹션코드를 입력하세요" 
                           onChange={(e) => setAddSection((prev: any) => ({ ...prev, section_code: e.target.value }))}
                           disabled
                         />
@@ -626,13 +568,12 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="space-y-2">
                         <Label htmlFor="equip_no">장비</Label>
                         <Select 
-                          value={selectedEquipmentValue} 
-                          onValueChange={(value) => equipmentChanged("SECTION", value)}>
+                          onValueChange={(value) => equipmentChanged(value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="장비 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            {equipments.map((eq) => (
+                            {equipments.map(eq => (
                               <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
                             ))}
                           </SelectContent>
@@ -655,6 +596,7 @@ export default function MaintenanceWorkManagementPage() {
                         onClick={handleAddSectionSave}
                         disabled={!addSection?.vessel_no || 
                           !addSection?.equip_no || 
+                          !addSection?.section_code || 
                           !addSection?.section_name}
                         style={{cursor: 'pointer'}}
                         >추가</Button>
@@ -678,7 +620,7 @@ export default function MaintenanceWorkManagementPage() {
                         <Label htmlFor="plan_code">작업 코드</Label>
                         <Input 
                           id="plan_code" 
-                          placeholder="작업 코드" 
+                          placeholder="작업코드를 입력하세요" 
                           onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, plan_code: e.target.value }))}
                           disabled
                         />
@@ -694,8 +636,7 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="space-y-2">
                         <Label htmlFor="equip_no">장비</Label>
                         <Select 
-                          value={selectedEquipmentValue} 
-                          onValueChange={(value) => equipmentChanged("MAINTENANCE", value)}>
+                          onValueChange={(value) => equipmentChanged(value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="장비 선택" />
                           </SelectTrigger>
@@ -709,17 +650,26 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="space-y-2">
                         <Label htmlFor="section_code">섹션</Label>
                         <Select 
-                          value={selectedSectionValue} 
-                          onValueChange={(value) => sectionChanged(value)}>
+                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, section_code: value }))}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="섹션 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            {sectionFilteredData.map(section => (
+                            {selectedEquipment?.children.map(section => (
                               <SelectItem value={section.section_code}>{section.section_name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="interval">작업 주기</Label>
+                        <Input 
+                          id="interval" 
+                          type="number" 
+                          placeholder="작업주기를 입력하세요" 
+                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, interval: e.target.value }))}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="interval_term">주기 단위</Label>
@@ -736,15 +686,6 @@ export default function MaintenanceWorkManagementPage() {
                             <SelectItem value="YEAR">YEAR</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="interval">작업 주기</Label>
-                        <Input 
-                          id="interval" 
-                          type="number" 
-                          placeholder="작업주기를 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, interval: e.target.value }))}
-                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="workers">작업 인원수</Label>
@@ -788,7 +729,7 @@ export default function MaintenanceWorkManagementPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastest_date">최근 정비일</Label>
+                        <Label htmlFor="lastest_date">마지막 작업일자</Label>
                         <Input 
                           id="lastest_date" 
                           type="date"
@@ -797,10 +738,11 @@ export default function MaintenanceWorkManagementPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastest_date">정비 구분</Label>
+                        <Label htmlFor="critical">정비 구분</Label>
                         <Select 
                           defaultValue="NORMAL"
                           onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, critical: value }))}
+                          disabled
                         >
                           <SelectTrigger className="w-40">
                             <SelectValue />
@@ -817,6 +759,7 @@ export default function MaintenanceWorkManagementPage() {
                         <Checkbox 
                           id="self_maintenance" 
                           onCheckedChange ={handleSelfMaintenanceChange}
+                          disabled
                         />
                         <Label htmlFor="self_maintenance">자체 정비</Label>
                       </div>
@@ -860,7 +803,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Wrench className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{equipments.length}</div>
+                <div className="text-2xl font-bold">{equipmentCount}</div>
                 <p className="text-xs text-muted-foreground">등록된 장비</p>
               </CardContent>
             </Card>
@@ -870,7 +813,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Wrench className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{sections.length}</div>
+                <div className="text-2xl font-bold">{sectionCount}</div>
                 <p className="text-xs text-muted-foreground">등록된 섹션</p>
               </CardContent>
             </Card>
@@ -880,7 +823,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Wrench className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{maintenancePlans.length}</div>
+                <div className="text-2xl font-bold">{maintenanceCount}</div>
                 <p className="text-xs text-muted-foreground">등록된 작업</p>
               </CardContent>
             </Card>
@@ -961,7 +904,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="equip_no">장비</Label>
                     <Select 
                       defaultValue={selectedSection.equip_no} 
-                      onValueChange={(value) => editEquipmentChanged("SECTION", value)}
+                      onValueChange={(value) => setSelectedSection((prev: any) => ({ ...prev, equip_no: value }))}
                       disabled
                     >
                       <SelectTrigger>
@@ -995,6 +938,7 @@ export default function MaintenanceWorkManagementPage() {
                     !selectedSection?.equip_no || 
                     !selectedSection?.section_code || 
                     !selectedSection?.section_name}
+                  style={{cursor: 'pointer'}}
                 >수정</Button>
               </div>
             </DialogContent>
@@ -1032,7 +976,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="equip_no">장비</Label>
                     <Select 
                       defaultValue={selectedMaintenance.equip_no}
-                      onValueChange={(value) => editEquipmentChanged("MAINTENANCE", value)}
+                      onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, equip_no: value }))}
                       disabled
                     >
                       <SelectTrigger>
@@ -1040,7 +984,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {equipments.map(eq => (
-                          <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                          <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1049,14 +993,14 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="section_code">섹션</Label>
                     <Select 
                       defaultValue={selectedMaintenance.section_code}
-                      onValueChange={(value) => editSectionChanged(value)}
+                      onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, section_code: value }))}
                       disabled
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="섹션 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        {sectionFilteredData.map(section => (
+                        {selectedEquipment?.children.map(section => (
                           <SelectItem value={section.section_code}>{section.section_name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -1119,9 +1063,9 @@ export default function MaintenanceWorkManagementPage() {
                         <SelectValue placeholder="위치 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="D">Dock</SelectItem>
-                        <SelectItem value="P">In Port</SelectItem>
-                        <SelectItem value="S">Sailing</SelectItem>
+                        <SelectItem value="D">DOCK</SelectItem>
+                        <SelectItem value="P">IN PORT</SelectItem>
+                        <SelectItem value="S">SAILING</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1139,16 +1083,17 @@ export default function MaintenanceWorkManagementPage() {
                     <Input 
                       id="lastest_date" 
                       type="date"
-                      className="w-36"
+                       className="w-36"
                       defaultValue={selectedMaintenance.lastest_date}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastest_date">정비 구분</Label>
+                    <Label htmlFor="critical">정비 구분</Label>
                     <Select 
                       defaultValue={selectedMaintenance.critical}
                       onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, critical: value }))}
+                      disabled
                     >
                       <SelectTrigger className="w-40">
                         <SelectValue />
@@ -1166,6 +1111,7 @@ export default function MaintenanceWorkManagementPage() {
                       id="self_maintenance" 
                       checked={selectedMaintenance.self_maintenance === "Y" ? true : false}
                       onCheckedChange ={handleEditSelfMaintenanceChange}
+                      disabled
                     />
                     <Label htmlFor="self_maintenance">자체 정비</Label>
                   </div>

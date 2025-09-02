@@ -123,6 +123,8 @@ export async function GET(req: Request) {
 
         vessels.push(vessel);
         vesselNo = item.vessel_no;
+        equipNo = '';
+        sectionCode = '';
       }
 
       if (item.equip_no !== null) {
@@ -162,6 +164,7 @@ export async function GET(req: Request) {
 
           vessel?.children.push(equipment);
           equipNo = item.equip_no;
+          sectionCode = '';
         }
 
         if (item.section_code !== null) {

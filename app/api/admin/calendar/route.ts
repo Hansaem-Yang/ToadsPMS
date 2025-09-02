@@ -83,6 +83,7 @@ export async function GET(req: Request) {
         
         vessels.push(vessel);
         vesselNo = item.vessel_no;
+        calendarDate = '';
       }
 
       if (calendarDate !== item.calendar_date) {

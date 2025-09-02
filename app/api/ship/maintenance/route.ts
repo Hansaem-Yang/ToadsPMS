@@ -89,6 +89,7 @@ export async function GET(req: Request) {
         
         equips.push(equip);
         equipNo = item.equip_no;
+        sectionCode = '';
       }
 
       if (sectionCode !== item.section_code) {

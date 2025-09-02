@@ -87,6 +87,7 @@ export async function GET(req: Request) {
 
         equipments.push(equipment);
         equipNo = item.equip_no;
+        calendarDate = '';
       }
 
       if (calendarDate !== item.calendar_date) {

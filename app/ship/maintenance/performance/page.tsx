@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { requireAuth } from "@/lib/auth"
+import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
-import { Card, CardContent,  CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,15 +43,15 @@ export default function MaintenanceWorkManagementPage() {
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string>("")
 
-  const fetchVessels = () => {
-    fetch(`/api/admin/maintenance/performance`)
+  const fetchVessels = (vesselNo: string) => {
+    fetch(`/api/ship/maintenance/performance?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setVessels(data))
       .catch(err => console.error(err));
   };
   
   const fetchMaintenanceWorks = (vesselNo: string, equipNo: string, sectionCode: string, planCode: string) => {
-    fetch(`/api/admin/maintenance/work?vesselNo=${vesselNo}&equipNo=${equipNo}&sectionCode=${sectionCode}&planCode=${planCode}`)
+    fetch(`/api/ship/maintenance/work?vesselNo=${vesselNo}&equipNo=${equipNo}&sectionCode=${sectionCode}&planCode=${planCode}`)
       .then(res => res.json())
       .then(data => {
         setSelectedHistoryItems(data)
@@ -62,10 +62,10 @@ export default function MaintenanceWorkManagementPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth();
+      const user = vesselRequireAuth();
       setUserInfo(user);
 
-      fetchVessels();
+      fetchVessels(user.ship_no);
     } catch (error) {
       // Redirect handled by requireAuth
     }
@@ -200,8 +200,8 @@ export default function MaintenanceWorkManagementPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">정비 실적 현황</h1>
-                <p className="text-gray-600">전체 선박의 정비 실적 현황을 조회하세요</p>
+                <h1 className="text-3xl font-bold text-gray-900">{userInfo.ship_name} - 정비 실적 현황</h1>
+                <p className="text-gray-600">{userInfo.ship_no} 선박의 정비 실적 현황을 조회하세요</p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => (window.location.href = "/admin/calendar")} style={{cursor: 'pointer'}}>
@@ -230,17 +230,6 @@ export default function MaintenanceWorkManagementPage() {
                     />
                   </div>
                 </div>
-                <Select defaultValue={shipFilter} onValueChange={setShipFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">전체 선박</SelectItem>
-                    {vessels.map((vessel) => (
-                      <SelectItem value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
@@ -251,9 +240,6 @@ export default function MaintenanceWorkManagementPage() {
               <div className="space-y-4">
                 {filteredData.map(vessel => (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xl font-bold text-gray-600">
-                      <Ship className="w-5 h-5" />{vessel.vessel_name}
-                    </div>
                     {vessel.children.map((eq) => (
                       <Card key={`${eq.vessel_no}-${eq.equip_no}`}>
                         <CardHeader>

@@ -1,3 +1,5 @@
+import { MaintenancePlan } from "./maintenance_plan";
+
 export interface Section {
     vessel_no: string;
     equip_no: string;
@@ -10,4 +12,5 @@ export interface Section {
     regist_user: number;
     modify_date: string;
     modify_user: number;
+    children: MaintenancePlan[];
 }

@@ -53,8 +53,8 @@ export default function ShipInventoryShortagePage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("shortage")
   const [searchTerm, setSearchTerm] = useState("")
-  const [priorityFilter, setPriorityFilter] = useState<string>("all")
-  const [equipmentFilter, setEquipmentFilter] = useState<string>("all")
+  const [priorityFilter, setPriorityFilter] = useState<string>("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("ALL")
 
   useEffect(() => {
     try {
@@ -102,8 +102,8 @@ export default function ShipInventoryShortagePage() {
       item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.partCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.equipmentName.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesPriority = priorityFilter === "all" || item.priority === priorityFilter
-    const matchesEquipment = equipmentFilter === "all" || item.equipmentId === equipmentFilter
+    const matchesPriority = priorityFilter === "ALL" || item.priority === priorityFilter
+    const matchesEquipment = equipmentFilter === "ALL" || item.equipmentId === equipmentFilter
     return matchesSearch && matchesPriority && matchesEquipment
   })
 
@@ -236,7 +236,7 @@ export default function ShipInventoryShortagePage() {
                       <SelectValue placeholder="장비 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 장비</SelectItem>
+                      <SelectItem value="ALL">전체 장비</SelectItem>
                       <SelectItem value="ENG-001">주엔진</SelectItem>
                       <SelectItem value="ENG-002">보조엔진</SelectItem>
                     </SelectContent>
@@ -246,7 +246,7 @@ export default function ShipInventoryShortagePage() {
                       <SelectValue placeholder="우선순위" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체</SelectItem>
+                      <SelectItem value="ALL">전체</SelectItem>
                       <SelectItem value="높음">높음</SelectItem>
                       <SelectItem value="중간">중간</SelectItem>
                       <SelectItem value="낮음">낮음</SelectItem>

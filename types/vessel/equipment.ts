@@ -1,3 +1,5 @@
+import { Section } from "./section";
+
 export interface Equipment {
     vessel_no: string;
     equip_no: string;
@@ -16,4 +18,5 @@ export interface Equipment {
     regist_user: number;
     modify_date: string;
     modify_user: number;
+    children: Section[];
 }

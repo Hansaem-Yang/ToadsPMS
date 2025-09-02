@@ -64,7 +64,7 @@ export default function AdminInventoryLossPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0])
-  const [selectedShip, setSelectedShip] = useState<string>("all")
+  const [selectedShip, setSelectedShip] = useState<string>("ALL")
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredData, setFilteredData] = useState(mockLossData)
 
@@ -92,7 +92,7 @@ export default function AdminInventoryLossPage() {
       end.setHours(23, 59, 59, 999)
 
       const dateMatch = itemDate >= start && itemDate <= end
-      const shipMatch = selectedShip === "all" || item.shipName === selectedShip
+      const shipMatch = selectedShip === "ALL" || item.shipName === selectedShip
       const searchMatch =
         searchTerm === "" ||
         item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -193,7 +193,7 @@ export default function AdminInventoryLossPage() {
                         <SelectValue placeholder="선박 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
+                        <SelectItem value="ALL">전체</SelectItem>
                         {shipList.map((ship) => (
                           <SelectItem key={ship.id} value={ship.name}>
                             {ship.name}

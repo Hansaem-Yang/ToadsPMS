@@ -82,16 +82,31 @@ export default function ShipCalendarPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "delayed":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
-      case "extension":
+      case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
-      case "normal":
+      case "NORMAL":
         return <Badge variant="secondary">예정</Badge>
-      case "complate":
+      case "COMPLATE":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
     }
   }
 
@@ -398,11 +413,7 @@ export default function ShipCalendarPage() {
                                 <div className="flex items-center gap-2 mt-2 text-sm">
                                   <span className="text-gray-500">({`${task.equip_no}-${task.section_code}-${task.plan_code}`})</span>
                                 </div>
-                                {task.critical && (
-                                  <Badge variant="destructive" className="text-xs px-1 py-0">
-                                    Critical
-                                  </Badge>
-                                )}
+                                {task.critical && getCriticalBadge(task.critical)}
                                 {task.self_maintenance && task.self_maintenance === 'Y' && (
                                   <Badge variant="default" className="text-xs px-1 py-0">
                                     Self Maintenance

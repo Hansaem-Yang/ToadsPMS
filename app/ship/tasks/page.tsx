@@ -19,7 +19,7 @@ const mockShipUserTasks = [
     taskCode: "ENG-001-001",
     taskName: "주엔진 오일 교체",
     equipment: "주엔진",
-    critical: true,
+    critical: "CRITICAL",
     dueDate: "2024-01-10",
     status: "지연",
     assignee: "김정비",
@@ -32,7 +32,7 @@ const mockShipUserTasks = [
     taskCode: "ENG-001-002",
     taskName: "주엔진 냉각수 점검",
     equipment: "주엔진",
-    critical: true,
+    critical: "CRITICAL",
     dueDate: "2024-01-18",
     status: "금주예정",
     assignee: "김정비",
@@ -45,7 +45,7 @@ const mockShipUserTasks = [
     taskCode: "DEC-002-001",
     taskName: "갑판 청소 및 점검",
     equipment: "갑판",
-    critical: false,
+    critical: "NORMAL",
     dueDate: "2024-01-25",
     status: "금월예정",
     assignee: "이선원",
@@ -58,7 +58,7 @@ const mockShipUserTasks = [
     taskCode: "SAF-001-001",
     taskName: "소화기 점검",
     equipment: "소화기",
-    critical: true,
+    critical: "CRITICAL",
     dueDate: "2024-01-05",
     status: "완료",
     assignee: "최안전관리자",
@@ -73,10 +73,10 @@ export default function ShipTaskListPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [filteredTasks, setFilteredTasks] = useState(mockShipUserTasks)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("ALL")
 
   const searchParams = useSearchParams()
-  const taskType = searchParams.get("type") || "all"
+  const taskType = searchParams.get("type") || "ALL"
 
   useEffect(() => {
     try {
@@ -91,7 +91,7 @@ export default function ShipTaskListPage() {
     let filtered = mockShipUserTasks
 
     // Filter by task type from URL params
-    if (taskType !== "all") {
+    if (taskType !== "ALL") {
       const statusMap: { [key: string]: string } = {
         delayed: "지연",
         weekly: "금주예정",
@@ -115,7 +115,7 @@ export default function ShipTaskListPage() {
     }
 
     // Filter by status
-    if (statusFilter !== "all") {
+    if (statusFilter !== "ALL") {
       filtered = filtered.filter((task) => task.status === statusFilter)
     }
 
@@ -153,10 +153,25 @@ export default function ShipTaskListPage() {
         return <Clock className="w-4 h-4" />
     }
   }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
+    }
+  }
 
   const getTypeTitle = (type: string) => {
     switch (type) {
-      case "delayed":
+      case "DELAYED":
         return "지연된 작업"
       case "weekly":
         return "금주 예정 작업"
@@ -211,7 +226,7 @@ export default function ShipTaskListPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 상태</SelectItem>
+                    <SelectItem value="ALL">전체 상태</SelectItem>
                     <SelectItem value="지연">지연</SelectItem>
                     <SelectItem value="금주예정">금주예정</SelectItem>
                     <SelectItem value="금월예정">금월예정</SelectItem>
@@ -240,11 +255,7 @@ export default function ShipTaskListPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-gray-900">{task.taskName}</h3>
-                            {task.critical && (
-                              <Badge variant="destructive" className="text-xs">
-                                Critical
-                              </Badge>
-                            )}
+                            {task.critical && getCriticalBadge(task.critical)}
                           </div>
                           <p className="text-sm text-gray-600">{task.taskCode}</p>
                           <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">

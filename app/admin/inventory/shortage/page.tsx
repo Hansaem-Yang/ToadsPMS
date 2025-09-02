@@ -85,8 +85,8 @@ const mockShortageData = [
 
 export default function ShortagePage() {
   const router = useRouter()
-  const [selectedShip, setSelectedShip] = useState<string>("all")
-  const [selectedPriority, setSelectedPriority] = useState<string>("all")
+  const [selectedShip, setSelectedShip] = useState<string>("ALL")
+  const [selectedPriority, setSelectedPriority] = useState<string>("ALL")
   const [searchTerm, setSearchTerm] = useState("")
   const [activeMenu, setActiveMenu] = useState("shortage")
 
@@ -133,8 +133,8 @@ export default function ShortagePage() {
   }
 
   const filteredShortageData = mockShortageData.filter((item) => {
-    const matchesShip = selectedShip === "all" || item.shipId === selectedShip
-    const matchesPriority = selectedPriority === "all" || item.priority === selectedPriority
+    const matchesShip = selectedShip === "ALL" || item.shipId === selectedShip
+    const matchesPriority = selectedPriority === "ALL" || item.priority === selectedPriority
     const matchesSearch =
       item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.partCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -242,7 +242,7 @@ export default function ShortagePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 선박</SelectItem>
+                      <SelectItem value="ALL">전체 선박</SelectItem>
                       <SelectItem value="SHIP-001">한국호</SelectItem>
                       <SelectItem value="SHIP-002">부산호</SelectItem>
                     </SelectContent>
@@ -252,7 +252,7 @@ export default function ShortagePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">전체 우선순위</SelectItem>
+                      <SelectItem value="ALL">전체 우선순위</SelectItem>
                       <SelectItem value="높음">높음</SelectItem>
                       <SelectItem value="중간">중간</SelectItem>
                       <SelectItem value="낮음">낮음</SelectItem>

@@ -15,7 +15,7 @@ import { Maintenance } from '@/types/dashboard/maintenance';
 
 export default function TaskListPage() {
   const searchParams = useSearchParams()
-  const taskType = searchParams.get("type") || "all"
+  const taskType = searchParams.get("type") || "ALL"
   const vesselNo = searchParams.get("vesselNo")
   const vesselName = searchParams.get("vesselName")
 
@@ -23,7 +23,7 @@ export default function TaskListPage() {
   const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
   const [filteredTasks, setFilteredTasks] = useState(maintenances)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("ALL")
 
   const fetchTask = (() => {
     fetch(`/api/admin/dashboard/${taskType}?vesselNo=${vesselNo}`)
@@ -63,7 +63,7 @@ export default function TaskListPage() {
       )
     }
 
-    if (statusFilter !== "all") {
+    if (statusFilter !== "ALL") {
       filtered = filtered.filter((task: {status: string}) =>
         task.status === statusFilter
       )
@@ -75,13 +75,13 @@ export default function TaskListPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "delayed":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
-      case "extension":
+      case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
-      case "normal":
+      case "NORMAL":
         return <Badge variant="secondary">예정</Badge>
-      case "complate":
+      case "COMPLATE":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -90,7 +90,7 @@ export default function TaskListPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "delayed":
+      case "DELAYED":
         return <AlertTriangle className="w-4 h-4 text-red-600" />
       case "weekly":
         return <Calendar className="w-4 h-4 text-orange-600" />
@@ -102,10 +102,25 @@ export default function TaskListPage() {
         return <Clock className="w-4 h-4" />
     }
   }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
+    }
+  }
 
   const getTypeTitle = (type: string) => {
     switch (type) {
-      case "delayed":
+      case "DELAYED":
         return "지연된 작업"
       case "weekly":
         return "금주 예정 작업"
@@ -160,11 +175,11 @@ export default function TaskListPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="delayed">지연</SelectItem>
-                    <SelectItem value="extension">연장</SelectItem>
-                    <SelectItem value="normal">예정</SelectItem>
-                    <SelectItem value="complate">완료</SelectItem>
+                    <SelectItem value="ALL">전체 상태</SelectItem>
+                    <SelectItem value="DELAYED">지연</SelectItem>
+                    <SelectItem value="EXTENSION">연장</SelectItem>
+                    <SelectItem value="NORMAL">예정</SelectItem>
+                    <SelectItem value="COMPLATE">완료</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -189,11 +204,7 @@ export default function TaskListPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-gray-900">{`${task.plan_code} - ${task.plan_name}`}</h3>
-                            {task.critical && (
-                              <Badge variant="destructive" className="text-xs">
-                                Critical
-                              </Badge>
-                            )}
+                            {task.critical && getCriticalBadge(task.critical)}
                           </div>
                           <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                             <span className="flex items-center gap-1">

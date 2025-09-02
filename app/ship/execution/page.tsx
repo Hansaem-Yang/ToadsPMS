@@ -82,7 +82,7 @@ export default function MaintenanceExecutionPage() {
   const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [selectedWork, setSelectedWork] = useState<any>(null)
   const [isExecutionDialogOpen, setIsExecutionDialogOpen] = useState(false)
   const [executionResult, setExecutionResult] = useState<Maintenance>(initialMaintenanceItem)
@@ -139,7 +139,7 @@ export default function MaintenanceExecutionPage() {
       )
     }
 
-    if (categoryFilter !== "all") {
+    if (categoryFilter !== "ALL") {
       filtered = filtered.filter((eq) => eq.category === categoryFilter)
     }
 
@@ -150,28 +150,43 @@ export default function MaintenanceExecutionPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "delayed":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
-      case "extension":
+      case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
-      case "normal":
+      case "NORMAL":
         return <Badge variant="secondary">예정</Badge>
-      case "complate":
+      case "COMPLATE":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
   }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
+    }
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "delayed":
+      case "DELAYED":
         return <AlertTriangle className="w-4 h-4 text-red-600" />
-      case "extension":
+      case "EXTENSION":
         return <PlusCircle className="w-4 h-4 text-orange-600" />
-      case "normal":
+      case "NORMAL":
         return <Calendar className="w-4 h-4 text-blue-600" />
-      case "complate":
+      case "COMPLATE":
         return <CheckCircle className="w-4 h-4 text-green-600" />
       default:
         return <Calendar className="w-4 h-4" />
@@ -199,7 +214,7 @@ export default function MaintenanceExecutionPage() {
           executionResult.equip_no === task.equip_no &&
           executionResult.section_code === task.section_code &&
           executionResult.plan_code === task.plan_code
-          ? { ...task, status: "complate", lastest_date: new Date().toISOString().split("T")[0] }
+          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
           : task,
         ),
       })),
@@ -232,7 +247,7 @@ export default function MaintenanceExecutionPage() {
           extensionResult.equip_no === task.equip_no &&
           extensionResult.section_code === task.section_code &&
           extensionResult.plan_code === task.plan_code
-          ? { ...task, status: 'extension', extension_date: extensionResult.extension_date }
+          ? { ...task, status: "EXTENSION", extension_date: extensionResult.extension_date }
           : task,
         ),
       })),
@@ -264,7 +279,7 @@ export default function MaintenanceExecutionPage() {
 
   const handleSelectAll = () => {
     const allTaskIds = filteredEquipment.flatMap((eq) =>
-      eq.children.filter((task) => task.status !== "complate").map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`),
+      eq.children.filter((task) => task.status !== "COMPLATE").map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`),
     )
 
     if (selectedWorks.length === allTaskIds.length) {
@@ -312,7 +327,7 @@ export default function MaintenanceExecutionPage() {
             data.section_code === task.section_code &&
             data.plan_code === task.plan_code
           )
-          ? { ...task, status: "complate", lastest_date: new Date().toISOString().split("T")[0] }
+          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
           : task,
         ),
       })),
@@ -363,7 +378,7 @@ export default function MaintenanceExecutionPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("delayed")}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("DELAYED")}</div>
                 <p className="text-xs text-muted-foreground">즉시 실행 필요</p>
               </CardContent>
             </Card>
@@ -374,7 +389,7 @@ export default function MaintenanceExecutionPage() {
                 <Calendar className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus("normal") + getTasksByStatus("extension")}</div>
+                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus("NORMAL") + getTasksByStatus("EXTENSION")}</div>
                 <p className="text-xs text-muted-foreground">실행 대기</p>
               </CardContent>
             </Card>
@@ -385,7 +400,7 @@ export default function MaintenanceExecutionPage() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{getTasksByStatus("complate")}</div>
+                <div className="text-2xl font-bold text-green-600">{getTasksByStatus("COMPLATE")}</div>
                 <p className="text-xs text-muted-foreground">실행 완료</p>
               </CardContent>
             </Card>
@@ -402,7 +417,7 @@ export default function MaintenanceExecutionPage() {
                     checked={
                       selectedWorks.length > 0 &&
                       selectedWorks.length ===
-                        filteredEquipment.flatMap((eq) => eq.children.filter((task) => task.status !== "complate")).length
+                        filteredEquipment.flatMap((eq) => eq.children.filter((task) => task.status !== "COMPLATE")).length
                     }
                     onCheckedChange={handleSelectAll}
                   />
@@ -430,10 +445,10 @@ export default function MaintenanceExecutionPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 카테고리</SelectItem>
-                    <SelectItem value="engine">Engine</SelectItem>
-                    <SelectItem value="deck">Deck</SelectItem>
-                    <SelectItem value="etc">Etc</SelectItem>
+                    <SelectItem value="ALL">전체 카테고리</SelectItem>
+                    <SelectItem value="ENGINE">Engine</SelectItem>
+                    <SelectItem value="DECK">Deck</SelectItem>
+                    <SelectItem value="ETC">Etc</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -478,7 +493,7 @@ export default function MaintenanceExecutionPage() {
                               id={`${task.equip_no}-${task.section_code}-${task.plan_code}`}
                               checked={selectedWorks.includes(`${task.equip_no}-${task.section_code}-${task.plan_code}`)}
                               onCheckedChange={() => handleTaskSelection(`${task.equip_no}-${task.section_code}-${task.plan_code}`, eq.equip_name, task)}
-                              disabled={task.status === "complate"}
+                              disabled={task.status === "COMPLATE"}
                               className="mt-1"
                             />
                             <div className="flex items-center gap-2">
@@ -487,11 +502,7 @@ export default function MaintenanceExecutionPage() {
                                 <div className="flex items-center gap-2 mb-1">
                                   <h4 className="font-semibold">{task.plan_name}</h4>
                                   <span className="text-sm text-gray-500">({task.plan_code})</span>
-                                  {task.critical && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      Critical
-                                    </Badge>
-                                  )}
+                                  {task.critical && getCriticalBadge(task.critical)}
                                   {getStatusBadge(task.status)}
                                 </div>
                                 <p className="text-sm text-gray-600 mb-2">{task.specifications}</p>
@@ -500,19 +511,19 @@ export default function MaintenanceExecutionPage() {
                                   <span>담당자: {task.manager}</span>
                                   <span>작업자수: {task.workers}</span>
                                   <span>작업자별 작업시간: {task.work_hours}시간</span>
-                                  {task.status === 'complate' && (
+                                  {task.status === "COMPLATE" && (
                                     <span className="text-green-600">완료일: {task.lastest_date}</span>
                                   )}
                                 </div>
                               </div>
                             </div>
                           </div>
-                          {task.status !== "complate" && task.status === "delayed" && (
+                          {task.status !== "COMPLATE" && task.status === "DELAYED" && (
                             <Button onClick={() => handleExtension(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
                               연장 신청
                             </Button>
                           )}
-                          {task.status !== "complate" && (
+                          {task.status !== "COMPLATE" && (
                             <Button onClick={() => handleExecuteTask(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
                               개별 실행
                             </Button>
@@ -583,7 +594,7 @@ export default function MaintenanceExecutionPage() {
                               className="text-sm"
                             />
                           </div>
-                          {task.status === 'delayed' && (
+                          {task.status === "DELAYED" && (
                             <div>
                               <Label className="text-xs">지연 사유</Label>
                               <Textarea
@@ -608,7 +619,7 @@ export default function MaintenanceExecutionPage() {
                 <Button 
                   onClick={handleSaveBulkExecution} 
                   className="bg-blue-600 hover:bg-blue-700"
-                  disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === 'delayed' && !item.delay_reason)).length > 0}
+                  disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === "DELAYED" && !item.delay_reason)).length > 0}
                   style={{cursor: 'pointer'}}
                 >
                   일괄 등록 완료
@@ -666,7 +677,7 @@ export default function MaintenanceExecutionPage() {
                       rows={3}
                     />
                   </div>
-                  {selectedWork.status === 'delayed' && (
+                  {selectedWork.status === "DELAYED" && (
                     <div>
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
@@ -686,7 +697,7 @@ export default function MaintenanceExecutionPage() {
                   <Button 
                     onClick={handleSaveExecution} 
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={!executionResult.work_details || (executionResult.status === 'delayed' && !executionResult.delay_reason) }
+                    disabled={!executionResult.work_details || (executionResult.status === "DELAYED" && !executionResult.delay_reason) }
                     style={{cursor: 'pointer'}}
                   >
                     등록 완료

@@ -204,7 +204,7 @@ export default function InventoryStatusPage() {
   }
 
   const handleShipClick = (shipName: string) => {
-    const shipId = shipList.find((ship) => ship.name === shipName)?.id || "all"
+    const shipId = shipList.find((ship) => ship.name === shipName)?.id || "ALL"
     router.push(`/admin/inventory/ship/${shipId}?period=${selectedPeriod}`)
   }
 

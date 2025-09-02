@@ -136,6 +136,21 @@ export default function MaintenanceWorkManagementPage() {
 
     return `${interval} ${intervalTerm} 마다`
   }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
+    }
+  }
 
   const renderMaintenance = (parent: Section, level = 2) => {
     let filtered = maintenancePlans;
@@ -153,11 +168,7 @@ export default function MaintenanceWorkManagementPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{item.plan_name}</span>
                       <span className="text-sm text-gray-500">({item.plan_code})</span>
-                      {item.critical && (
-                        <Badge variant="destructive" className="text-xs">
-                          Critical
-                        </Badge>
-                      )}
+                      { item.critical && getCriticalBadge(item.critical)}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
                       {item.interval && (
@@ -436,19 +447,11 @@ export default function MaintenanceWorkManagementPage() {
 
   const handleSelfMaintenanceChange = (checked : boolean) => {
     setAddMaintenance((prev: any) => ({ ...prev, self_maintenance: checked ? 'Y' : 'N'}))
-  };
-
-  const handleCriticalChange = (checked : boolean) => {
-    setAddMaintenance((prev: any) => ({ ...prev, critical: checked ? 'Y' : 'N'}))
-  };
+  }
 
   const handleEditSelfMaintenanceChange = (checked : boolean) => {
     setSelectedMaintenance((prev: any) => ({ ...prev, self_maintenance: checked ? 'Y' : 'N'}))
-  };
-
-  const handleEditCriticalChange = (checked : boolean) => {
-    setSelectedMaintenance((prev: any) => ({ ...prev, critical: checked ? 'Y' : 'N'}))
-  };
+  }
 
   const updateSubQuantityOfSection = (item: any) => {
     // 1. map()을 사용하여 새로운 배열을 생성합니다.
@@ -789,22 +792,33 @@ export default function MaintenanceWorkManagementPage() {
                         <Input 
                           id="lastest_date" 
                           type="date"
+                          className="w-36"
                           onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastest_date">정비 구분</Label>
+                        <Select 
+                          defaultValue="NORMAL"
+                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, critical: value }))}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="NORMAL">일상정비</SelectItem>
+                            <SelectItem value="CRITICAL">Critical</SelectItem>
+                            <SelectItem value="DOCK">Dock</SelectItem>
+                            <SelectItem value="CMS">CMS</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="col-span-2 flex items-center space-x-2">
                         <Checkbox 
                           id="self_maintenance" 
                           onCheckedChange ={handleSelfMaintenanceChange}
                         />
-                        <Label htmlFor="critical">자체 정비</Label>
-                      </div>
-                      <div className="col-span-2 flex items-center space-x-2">
-                        <Checkbox 
-                          id="critical" 
-                          onCheckedChange ={handleCriticalChange}
-                        />
-                        <Label htmlFor="critical">Critical 작업</Label>
+                        <Label htmlFor="self_maintenance">자체 정비</Label>
                       </div>
                       <div className="col-span-2 space-y-2">
                         <Label htmlFor="instructions">정비 지시사항</Label>
@@ -1026,7 +1040,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {equipments.map(eq => (
-                          <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                          <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1105,9 +1119,9 @@ export default function MaintenanceWorkManagementPage() {
                         <SelectValue placeholder="위치 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="D">DOCK</SelectItem>
-                        <SelectItem value="P">IN PORT</SelectItem>
-                        <SelectItem value="S">SAILING</SelectItem>
+                        <SelectItem value="D">Dock</SelectItem>
+                        <SelectItem value="P">In Port</SelectItem>
+                        <SelectItem value="S">Sailing</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1125,9 +1139,27 @@ export default function MaintenanceWorkManagementPage() {
                     <Input 
                       id="lastest_date" 
                       type="date"
+                      className="w-36"
                       defaultValue={selectedMaintenance.lastest_date}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastest_date">정비 구분</Label>
+                    <Select 
+                      defaultValue={selectedMaintenance.critical}
+                      onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, critical: value }))}
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NORMAL">일상정비</SelectItem>
+                        <SelectItem value="CRITICAL">Critical</SelectItem>
+                        <SelectItem value="DOCK">Dock</SelectItem>
+                        <SelectItem value="CMS">CMS</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="col-span-2 flex items-center space-x-2">
                     <Checkbox 
@@ -1135,15 +1167,7 @@ export default function MaintenanceWorkManagementPage() {
                       checked={selectedMaintenance.self_maintenance === "Y" ? true : false}
                       onCheckedChange ={handleEditSelfMaintenanceChange}
                     />
-                    <Label htmlFor="critical">자체 정비</Label>
-                  </div>
-                  <div className="col-span-2 flex items-center space-x-2">
-                    <Checkbox 
-                      id="critical" 
-                      checked={selectedMaintenance.critical === "Y" ? true : false}
-                      onCheckedChange ={handleEditCriticalChange}
-                    />
-                    <Label htmlFor="critical">Critical 작업</Label>
+                    <Label htmlFor="self_maintenance">자체 정비</Label>
                   </div>
                   <div className="col-span-2 space-y-2">
                     <Label htmlFor="instructions">정비 지시사항</Label>
@@ -1171,6 +1195,7 @@ export default function MaintenanceWorkManagementPage() {
                     !selectedMaintenance?.interval_term ||
                     !selectedMaintenance?.manager ||
                     !selectedMaintenance?.lastest_date}
+                  style={{cursor: 'pointer'}}
                 >수정</Button>
               </div>
             </DialogContent>

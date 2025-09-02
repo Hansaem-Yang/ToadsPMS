@@ -42,8 +42,8 @@ export default function MaintenanceWorkManagementPage() {
   const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
   const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
   const [searchTerm, setSearchTerm] = useState("")
-  const [shipFilter, setShipFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [shipFilter, setShipFilter] = useState("ALL")
+  const [statusFilter, setStatusFilter] = useState("ALL")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   // State for work history dialogs
@@ -92,7 +92,7 @@ export default function MaintenanceWorkManagementPage() {
   useEffect(() => {
     let filtered = maintenanceData
 
-    if (shipFilter !== "all") {
+    if (shipFilter !== "ALL") {
       filtered = filtered.filter((item) => item.vessel_no === shipFilter)
     }
 
@@ -100,7 +100,7 @@ export default function MaintenanceWorkManagementPage() {
       filtered = filterBySearch(filtered, searchTerm)
     }
 
-    if (statusFilter !== "all") {
+    if (statusFilter !== "ALL") {
       filtered = filterByStatus(filtered, statusFilter)
     }
 
@@ -154,16 +154,31 @@ export default function MaintenanceWorkManagementPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "delayed":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
-      case "extension":
+      case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
-      case "normal":
+      case "NORMAL":
         return <Badge variant="secondary">예정</Badge>
-      case "complate":
+      case "COMPLATE":
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
     }
   }
 
@@ -219,11 +234,7 @@ export default function MaintenanceWorkManagementPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{`${item.name}`}</span>
                       <span className="text-sm text-gray-500">({item.id})</span>
-                      {item.critical && (
-                        <Badge variant="destructive" className="text-xs">
-                          Critical
-                        </Badge>
-                      )}
+                      {item.critical && getCriticalBadge(item.critical)}
                       {item.type === "TASK" && (
                         <Button
                           variant="ghost"
@@ -340,7 +351,7 @@ export default function MaintenanceWorkManagementPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus(maintenanceData, "delayed")}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus(maintenanceData, "DELAYED")}</div>
                 <p className="text-xs text-muted-foreground">즉시 조치 필요</p>
               </CardContent>
             </Card>
@@ -351,7 +362,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Calendar className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus(maintenanceData, "normal")}</div>
+                <div className="text-2xl font-bold text-orange-600">{getTasksByStatus(maintenanceData, "NORMAL")}</div>
                 <p className="text-xs text-muted-foreground">예정된 작업</p>
               </CardContent>
             </Card>
@@ -362,7 +373,7 @@ export default function MaintenanceWorkManagementPage() {
                 <Settings className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{getTasksByStatus(maintenanceData, "complate")}</div>
+                <div className="text-2xl font-bold text-green-600">{getTasksByStatus(maintenanceData, "COMPLATE")}</div>
                 <p className="text-xs text-muted-foreground">완료된 작업</p>
               </CardContent>
             </Card>
@@ -391,7 +402,7 @@ export default function MaintenanceWorkManagementPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 선박</SelectItem>
+                    <SelectItem value="ALL">전체 선박</SelectItem>
                     {vessels.map((vessel) => (
                       <SelectItem value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
                     ))}
@@ -402,11 +413,11 @@ export default function MaintenanceWorkManagementPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="delayed">지연</SelectItem>
-                    <SelectItem value="normal">예정</SelectItem>
-                    <SelectItem value="extension">연장</SelectItem>
-                    <SelectItem value="complate">완료</SelectItem>
+                    <SelectItem value="ALL">전체 상태</SelectItem>
+                    <SelectItem value="DELAYED">지연</SelectItem>
+                    <SelectItem value="NORMAL">예정</SelectItem>
+                    <SelectItem value="EXTENSION">연장</SelectItem>
+                    <SelectItem value="COMPLATE">완료</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

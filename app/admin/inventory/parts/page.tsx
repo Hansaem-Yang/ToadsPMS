@@ -94,8 +94,8 @@ const initialParts = [
 export default function PartsManagementPage() {
   const router = useRouter()
   const [activeMenu, setActiveMenu] = useState("parts")
-  const [selectedShip, setSelectedShip] = useState<string>("all")
-  const [selectedEquipment, setSelectedEquipment] = useState<string>("all")
+  const [selectedShip, setSelectedShip] = useState<string>("ALL")
+  const [selectedEquipment, setSelectedEquipment] = useState<string>("ALL")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isExcelUploadOpen, setIsExcelUploadOpen] = useState(false)
@@ -137,8 +137,8 @@ export default function PartsManagementPage() {
 
   const getFilteredParts = () => {
     return parts.filter((part) => {
-      if (selectedShip && selectedShip !== "all" && part.shipId !== selectedShip) return false
-      if (selectedEquipment && selectedEquipment !== "all" && part.equipmentId !== selectedEquipment) return false
+      if (selectedShip && selectedShip !== "ALL" && part.shipId !== selectedShip) return false
+      if (selectedEquipment && selectedEquipment !== "ALL" && part.equipmentId !== selectedEquipment) return false
       return true
     })
   }
@@ -156,7 +156,7 @@ export default function PartsManagementPage() {
   }
 
   const handleAddPart = () => {
-    if (!selectedShip || selectedShip === "all" || !selectedEquipment || selectedEquipment === "all") {
+    if (!selectedShip || selectedShip === "ALL" || !selectedEquipment || selectedEquipment === "ALL") {
       alert("선박과 장비를 선택해주세요.")
       return
     }
@@ -481,7 +481,7 @@ export default function PartsManagementPage() {
                           <SelectValue placeholder="전체 선박" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">전체 선박</SelectItem>
+                          <SelectItem value="ALL">전체 선박</SelectItem>
                           {mockShips.map((ship) => (
                             <SelectItem key={ship.id} value={ship.id}>
                               {ship.name}
@@ -497,7 +497,7 @@ export default function PartsManagementPage() {
                           <SelectValue placeholder="전체 장비" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">전체 장비</SelectItem>
+                          <SelectItem value="ALL">전체 장비</SelectItem>
                           {availableEquipment.map((equipment) => (
                             <SelectItem key={equipment.id} value={equipment.id}>
                               {equipment.name}

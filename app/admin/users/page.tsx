@@ -140,10 +140,16 @@ export default function ShipManagementPage() {
   }
 
   const handleAddSave = async () => {
+    const insertedData = {
+      ...addUser,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/admin/users/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addUser),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -166,10 +172,16 @@ export default function ShipManagementPage() {
   }
 
   const handleEditSave = async () => {
+    const updatedData = {
+      ...selectedUser,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+    
     const res = await fetch('/api/admin/users/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedUser),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();

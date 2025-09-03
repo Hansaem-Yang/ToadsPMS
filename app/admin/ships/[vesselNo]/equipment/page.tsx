@@ -114,10 +114,16 @@ export default function ShipEquipmentPage() {
   }
 
   const handleAddSave = async () => {
+    const insertedData = {
+      ...addEquipment,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch(`/api/admin/ships/${vesselNo}/equipment/insert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addEquipment),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -138,10 +144,16 @@ export default function ShipEquipmentPage() {
   }
 
   const handleEditSave = async () => {
+    const updatedData = {
+      ...selectedEquipment,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch(`/api/admin/ships/${vesselNo}/equipment/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedEquipment),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();

@@ -81,9 +81,9 @@ export async function GET(req: Request) {
           maintenance_count: 0,
           section_count: 0,
           regist_date: '',
-          regist_user: 0,
+          regist_user: '',
           modify_date: '',
-          modify_user: 0,
+          modify_user: '',
           children: []
         }
         
@@ -102,9 +102,9 @@ export async function GET(req: Request) {
           due_date: '',
           maintenance_count: 0,
           regist_date: '',
-          regist_user: 0,
+          regist_user: '',
           modify_date: '',
-          modify_user: 0,
+          modify_user: '',
           children: [],
         }
 

@@ -51,7 +51,11 @@ export default function MaintenanceExecutionPage() {
     extension_date: "",
     extension_days_until: 0,
     work_details: "",
-    delay_reason: ""
+    delay_reason: "",
+    regist_date: "",
+    regist_user: '',
+    modify_date: "",
+    modify_user: ''
   };
 
   
@@ -211,10 +215,16 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleSaveExecution = async () => {
+    const insertedData = {
+      ...executionResult,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/ship/execution/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(executionResult),
+      body: JSON.stringify(insertedData),
     });
     
     // 선택된 작업들의 상태를 완료로 업데이트
@@ -244,10 +254,16 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleSaveExtension = async () => {
+    const insertedData = {
+      ...extensionResult,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/ship/extension/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(extensionResult),
+      body: JSON.stringify(insertedData),
     });
     
     // 선택된 작업들의 상태를 완료로 업데이트
@@ -311,6 +327,8 @@ export default function MaintenanceExecutionPage() {
           partsUsed: "",
           notes: "",
           issues: "",
+          regist_user: userInfo.account_no,
+          modify_user: userInfo.account_no,
         })),
     )
 

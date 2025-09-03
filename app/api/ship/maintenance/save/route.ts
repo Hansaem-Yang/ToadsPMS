@@ -1,28 +1,11 @@
 import { NextResponse } from 'next/server';
 import { execute } from '@/db'; // 이전에 만든 query 함수
+import { MaintenancePlan } from '@/types/vessel/maintenance_plan';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { vessel_no
-          , equip_no
-          , section_code
-          , plan_code
-          , plan_name
-          , manufacturer
-          , model
-          , specifications
-          , lastest_date
-          , workers
-          , work_hours
-          , interval
-          , interval_term
-          , location
-          , self_maintenance
-          , manager
-          , important_items
-          , instructions
-          , critical } = body;
+    const item : MaintenancePlan = body;
 
     // DB에서 사용자 정보 확인
     const count = await execute(
@@ -45,7 +28,9 @@ export async function POST(req: Request) {
                    , @manager as manager
                    , @importantItems as important_items
                    , @instructions as instructions
-                   , @critical as critical) as b
+                   , @critical as critical
+                   , @registUser as regist_user
+                   , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no 
           and a.equip_no = b.equip_no 
           and a.section_code = b.section_code
@@ -67,6 +52,8 @@ export async function POST(req: Request) {
                   , a.important_items = b.important_items
                   , a.instructions = b.instructions
                   , a.critical = b.critical
+                  , a.modify_date = getdate()
+                  , a.modify_user = b.modify_user
         when not matched then
              insert (vessel_no
                    , equip_no
@@ -86,7 +73,9 @@ export async function POST(req: Request) {
                    , manager
                    , important_items
                    , instructions
-                   , critical)
+                   , critical
+                   , regist_date
+                   , regist_user)
              values (b.vessel_no
                    , b.equip_no
                    , b.section_code
@@ -105,27 +94,31 @@ export async function POST(req: Request) {
                    , b.manager
                    , b.important_items
                    , b.instructions
-                   , b.critical);`,
+                   , b.critical
+                   , getdate()
+                   , b.regist_user);`,
       [
-        { name: 'vesselNo', value: vessel_no },
-        { name: 'equipNo', value: equip_no },
-        { name: 'sectionCode', value: section_code },
-        { name: 'planCode', value: plan_code },
-        { name: 'planName', value: plan_name },
-        { name: 'manufacturer', value: manufacturer },
-        { name: 'model', value: model },
-        { name: 'specifications', value: specifications },
-        { name: 'lastestDate', value: lastest_date },
-        { name: 'workers', value: workers },
-        { name: 'workHours', value: work_hours },
-        { name: 'interval', value: interval },
-        { name: 'intervalTerm', value: interval_term },
-        { name: 'location', value: location },
-        { name: 'selfMaintenance', value: self_maintenance },
-        { name: 'manager', value: manager },
-        { name: 'importantItems', value: important_items },
-        { name: 'instructions', value: instructions },
-        { name: 'critical', value: critical }
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'sectionCode', value: item.section_code },
+        { name: 'planCode', value: item.plan_code },
+        { name: 'planName', value: item.plan_name },
+        { name: 'manufacturer', value: item.manufacturer },
+        { name: 'model', value: item.model },
+        { name: 'specifications', value: item.specifications },
+        { name: 'lastestDate', value: item.lastest_date },
+        { name: 'workers', value: item.workers },
+        { name: 'workHours', value: item.work_hours },
+        { name: 'interval', value: item.interval },
+        { name: 'intervalTerm', value: item.interval_term },
+        { name: 'location', value: item.location },
+        { name: 'selfMaintenance', value: item.self_maintenance },
+        { name: 'manager', value: item.manager },
+        { name: 'importantItems', value: item.important_items },
+        { name: 'instructions', value: item.instructions },
+        { name: 'critical', value: item.critical },
+        { name: 'registUser', value: item.regist_user },
+        { name: 'modifyUser', value: item.modify_user }
       ]
     );
 

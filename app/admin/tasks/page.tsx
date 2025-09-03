@@ -26,7 +26,7 @@ export default function TaskListPage() {
   const [statusFilter, setStatusFilter] = useState("ALL")
 
   const fetchTask = (() => {
-    fetch(`/api/admin/dashboard/${taskType}?vesselNo=${vesselNo}`)
+    fetch(`/api/admin/dashboard/${taskType.toLowerCase()}?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => {
         setMaintenances(data);

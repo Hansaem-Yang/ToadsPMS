@@ -5,7 +5,6 @@ import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -15,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import {
   User,
   Search,
@@ -23,7 +21,6 @@ import {
   Settings,
   FolderTree,
   History,
-  FileText,
 } from "lucide-react"
 import { Vessel } from '@/types/performance/vessel'; 
 import { MaintenanceWork } from '@/types/vessel/maintenance_work'; // ✅ interface import

@@ -12,7 +12,6 @@ export async function POST(req: Request) {
     const transantion = pool.transaction();
     await transantion.begin();
     try {
-      const due_date = item.extension_date? item.extension_date : item.due_date;
       let count = 0;
       let query = `
       insert into [maintenance_work] (
@@ -28,6 +27,8 @@ export async function POST(req: Request) {
             , section_code
             , plan_code
             , plan_date
+            , regist_date
+            , regist_user
       )
       values (
             (select isnull(max(work_order), 0) + 1 from [maintenance_work])
@@ -42,6 +43,8 @@ export async function POST(req: Request) {
             , @sectionCode
             , @planCode
             , @planDate
+            , getdate()
+            , @registUser
       );`;
 
       let params = [
@@ -55,6 +58,7 @@ export async function POST(req: Request) {
         { name: 'sectionCode', value: item.section_code }, 
         { name: 'planCode', value: item.plan_code }, 
         { name: 'planDate', value: item.extension_date? item.extension_date : item.due_date }, 
+        { name: 'registUser', value: item.regist_user }, 
       ];
 
       const request = new sql.Request(transantion);
@@ -66,6 +70,8 @@ export async function POST(req: Request) {
       query = `
       update maintenance_plan
          set lastest_date = getdate()
+           , modify_date = getdate()
+           , modify_user = @modifyUser
        where vessel_no = @vesselNo
          and equip_no = @equipNo
          and section_code = @sectionCode
@@ -76,6 +82,7 @@ export async function POST(req: Request) {
         { name: 'equipNo', value: item.equip_no }, 
         { name: 'sectionCode', value: item.section_code }, 
         { name: 'planCode', value: item.plan_code }, 
+        { name: 'modifyUser', value: item.modify_user }, 
       ];
       
       result = await request.query(query);
@@ -83,12 +90,15 @@ export async function POST(req: Request) {
       query = `
       update equipment
          set lastest_date = getdate()
+           , modify_date = getdate()
+           , modify_user = @modifyUser
        where vessel_no = @vesselNo
          and equip_no = @equipNo;`;
 
       params = [
         { name: 'vesselNo', value: item.vessel_no }, 
         { name: 'equipNo', value: item.equip_no }, 
+        { name: 'modifyUser', value: item.modify_user }, 
       ];
       
       result = await request.query(query);

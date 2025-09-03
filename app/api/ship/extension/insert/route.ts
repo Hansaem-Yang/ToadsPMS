@@ -25,6 +25,8 @@ export async function POST(req: Request) {
            , request_date
            , applicant
            , approval_status
+           , regist_date
+           , regist_user
       )
       values (
              @vesselNo
@@ -42,6 +44,8 @@ export async function POST(req: Request) {
            , getdate()
            , @applicant
            , 'R'
+           , getdate()
+           , @registUser
       );`;
 
       let params = [
@@ -52,6 +56,7 @@ export async function POST(req: Request) {
         { name: 'extensionDate', value: item.extension_date }, 
         { name: 'extensionReason', value: item.extension_reason }, 
         { name: 'applicant', value: item.applicant }, 
+        { name: 'registUser', value: item.regist_user },
       ];
 
       const request = new sql.Request(transantion);

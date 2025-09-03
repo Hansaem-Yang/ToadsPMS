@@ -349,10 +349,16 @@ export default function MaintenanceWorkManagementPage() {
   }
 
   const handleAddSectionSave = async () => {
+    const insertedData = {
+      ...addSection,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch(`/api/admin/ships/${vesselNo}/section/insert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addSection),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -373,10 +379,16 @@ export default function MaintenanceWorkManagementPage() {
   }
 
   const handleEditSectionSave = async () => {
+    const updatedData = {
+      ...selectedSection,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch(`/api/admin/ships/${vesselNo}/section/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedSection),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();
@@ -473,10 +485,16 @@ export default function MaintenanceWorkManagementPage() {
   }
 
   const handleAddMaintenanceSave = async () => {
+    const insertedData = {
+      ...addMaintenance,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch(`/api/admin/ships/${vesselNo}/maintenance/insert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addMaintenance),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -500,10 +518,16 @@ export default function MaintenanceWorkManagementPage() {
 
 
   const handleEditMaintenanceSave = async () => {
+    const updatedData = {
+      ...selectedMaintenance,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+    
     const res = await fetch(`/api/admin/ships/${vesselNo}/maintenance/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedMaintenance),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();

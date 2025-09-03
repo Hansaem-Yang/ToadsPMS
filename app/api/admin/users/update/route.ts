@@ -1,19 +1,11 @@
 import { NextResponse } from 'next/server';
 import { execute } from '@/db'; // 이전에 만든 query 함수
+import { User } from '@/types/user';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { 
-      account_no,
-      user_name,
-      user_ename,
-      email,
-      position,
-      ship_no,
-      user_auth,
-      use_yn
-    } = body;
+    const item: User = body;
 
     // DB에서 사용자 정보 확인
     const count = await execute(
@@ -25,16 +17,19 @@ export async function POST(req: Request) {
             , ship_no = @shipNo
             , user_auth = @userAuth
             , use_yn = @useYn
+            , modify_date = getdate()
+            , modify_user = @modifyUser
         where account_no = @accountNo;`,
       [
-        { name: 'accountNo', value: account_no },
-        { name: 'userName', value: user_name },
-        { name: 'userEname', value: user_ename },
-        { name: 'email', value: email },
-        { name: 'position', value: position },
-        { name: 'shipNo', value: ship_no },
-        { name: 'userAuth', value: user_auth },
-        { name: 'useYn', value: use_yn },
+        { name: 'accountNo', value: item.account_no },
+        { name: 'userName', value: item.user_name },
+        { name: 'userEname', value: item.user_ename },
+        { name: 'email', value: item.email },
+        { name: 'position', value: item.position },
+        { name: 'shipNo', value: item.ship_no },
+        { name: 'userAuth', value: item.user_auth },
+        { name: 'useYn', value: item.use_yn },
+        { name: 'modifyUser', value: item.modify_user },
       ]
     );
 

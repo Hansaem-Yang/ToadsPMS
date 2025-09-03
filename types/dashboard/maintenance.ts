@@ -28,4 +28,8 @@ export interface Maintenance {
     extension_days_until: number;
     work_details: string;
     delay_reason: string;
+    regist_date: string;
+    regist_user: string;
+    modify_date: string;
+    modify_user: string;
 }

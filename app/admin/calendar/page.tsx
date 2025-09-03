@@ -324,7 +324,7 @@ export default function AdminCalendarPage() {
                   >
 
                     {/* 1. 월 헤더 */}
-                    <div className="flex border-b w-max min-h-[30px]">
+                    <div className="flex border-b w-max max-h-[41px]">
                       {monthHeaders.map((header, index) => (
                         <div 
                           key={index}
@@ -335,7 +335,7 @@ export default function AdminCalendarPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex border-b w-max min-h-[50x]" style={{ height: "50px" }}> {/* w-max로 내용이 넘치도록 설정 */}
+                    <div className="flex border-b w-max max-h-[50x]" style={{ height: "50px" }}> {/* w-max로 내용이 넘치도록 설정 */}
                       {/* 2. 날짜 헤더 */}
                       {dateRange.map((date, index) => (
                         <div
@@ -432,24 +432,24 @@ export default function AdminCalendarPage() {
                                 </div>
 
                                 <div className="grid grid-cols-5 gap-4 text-sm">
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">담당자</span>
                                     <div className="font-medium">{task.manager}</div>
                                   </div>
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">작업 위치</span>
                                     <div className="font-medium capitalize">{task.location}</div>
                                   </div>
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">최근 정비</span>
                                     <div className="font-medium">{task.lastest_date}</div>
                                   </div>
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">예정일</span>
                                     <div className="font-medium">{task.due_date}</div>
                                   </div>
                                   {task.extension_date && (
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">연장일</span>
                                     <div className="font-medium">{task.extension_date}</div>
                                   </div>

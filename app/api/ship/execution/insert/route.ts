@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     const transantion = pool.transaction();
     await transantion.begin();
     try {
+      const due_date = item.extension_date? item.extension_date : item.due_date;
       let count = 0;
       let query = `
       insert into [maintenance_work] (
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
             , equip_no
             , section_code
             , plan_code
+            , plan_date
       )
       values (
             (select isnull(max(work_order), 0) + 1 from [maintenance_work])
@@ -39,6 +41,7 @@ export async function POST(req: Request) {
             , @equipNo
             , @sectionCode
             , @planCode
+            , @planDate
       );`;
 
       let params = [
@@ -51,6 +54,7 @@ export async function POST(req: Request) {
         { name: 'equipNo', value: item.equip_no }, 
         { name: 'sectionCode', value: item.section_code }, 
         { name: 'planCode', value: item.plan_code }, 
+        { name: 'planDate', value: item.extension_date? item.extension_date : item.due_date }, 
       ];
 
       const request = new sql.Request(transantion);

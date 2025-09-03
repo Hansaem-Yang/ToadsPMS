@@ -61,7 +61,8 @@ export async function GET(req: Request) {
            and d.equip_no = e.equip_no
            and d.section_code = e.section_code
            and d.plan_code = e.plan_code
-         where a.use_yn = 'Y'`
+         where a.use_yn = 'Y'
+         order by a.vessel_no, b.equip_no, c.section_code, d.plan_code, e.work_date`
     );
 
     let vessels: Vessel[] = [];

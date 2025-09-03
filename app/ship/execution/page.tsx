@@ -587,13 +587,13 @@ export default function MaintenanceExecutionPage() {
                             </div>
                           </div>
                           <div>
-                              <Label className="text-xs">사용 부품</Label>
-                              <Input
-                                placeholder="부품명"
-                                value={task.used_parts}
-                                onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
-                                className="text-sm"
-                              />
+                            <Label className="text-xs">사용 부품</Label>
+                            <Input
+                              placeholder="부품명"
+                              value={task.used_parts}
+                              onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
+                              className="text-sm"
+                            />
                           </div>
                           <div>
                             <Label className="text-xs">작업 내용</Label>

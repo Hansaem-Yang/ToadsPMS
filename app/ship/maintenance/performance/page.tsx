@@ -16,13 +16,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   User,
   Search,
   Calendar,
   Settings,
-  Ship,
   FolderTree,
   History,
   FileText,
@@ -35,12 +33,9 @@ export default function MaintenanceWorkManagementPage() {
   const [vessels, setVessels] = useState<Vessel[]>([])
   const [filteredData, setFilteredData] = useState<Vessel[]>(vessels)
   const [searchTerm, setSearchTerm] = useState("")
-  const [shipFilter, setShipFilter] = useState("ALL")
   
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
-  const [isDetailHistoryDialogOpen, setIsDetailHistoryDialogOpen] = useState(false)
   const [selectedHistoryItems, setSelectedHistoryItems] = useState<MaintenanceWork[]>([])
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string>("")
 
   const fetchVessels = (vesselNo: string) => {
@@ -74,10 +69,6 @@ export default function MaintenanceWorkManagementPage() {
   useEffect(() => {
     let filtered = vessels
 
-    if (shipFilter !== "ALL") {
-      filtered = filtered.filter((item) => item.vessel_no === shipFilter)
-    }
-
     if (searchTerm) {
       const lowerKeyword = searchTerm.toLowerCase();
 
@@ -105,7 +96,7 @@ export default function MaintenanceWorkManagementPage() {
     }
 
     setFilteredData(filtered)
-  }, [vessels, searchTerm, shipFilter])
+  }, [vessels, searchTerm])
 
   if (!userInfo) return null
 
@@ -185,12 +176,6 @@ export default function MaintenanceWorkManagementPage() {
     fetchMaintenanceWorks(task.vessel_no, task.equip_no, task.section_code, task.plan_code)
   }
 
-  // Function to handle history item selection
-  const handleHistoryItemClick = (historyItem: any) => {
-    setSelectedHistoryItem(historyItem)
-    setIsDetailHistoryDialogOpen(true)
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -263,7 +248,7 @@ export default function MaintenanceWorkManagementPage() {
                                 {eq.children.map((item, index) => (
                                   <tr 
                                     key={`${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`} 
-                                    className="border-b hover:bg-gray-50"
+                                    className="border-b hover:bg-gray-50 cursor-pointer"
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       handleHistoryClick(item)
@@ -294,13 +279,13 @@ export default function MaintenanceWorkManagementPage() {
 
           {/* Work History Dialog */}
           <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-[820px] max-h-[620px]">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <History className="w-5 h-5" />
                   작업 실적 이력 조회
                 </DialogTitle>
-                <DialogDescription>해당 작업의 정비 일정을 확인하고 상세 이력을 조회하세요</DialogDescription>
+                <DialogDescription>해당 작업의 정비 이력을 확인하세요</DialogDescription>
               </DialogHeader>
               <div className="max-h-96 overflow-y-auto">
                 {(() => {
@@ -311,107 +296,46 @@ export default function MaintenanceWorkManagementPage() {
                         <History className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                         <p>작업 이력이 없습니다.</p>
                         <p className="text-xs mt-2">Task ID: {selectedTaskId}</p>
-                      </div>
+                      </div> 
                     )
                   }
 
                   return historyData.map((history) => (
                     <div
                       key={history.work_order}
-                      className="p-4 border rounded-lg mb-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => handleHistoryItemClick(history)}
+                      className="p-4 border rounded-lg mb-3 hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-[130px]">
                           <Calendar className="w-4 h-4 text-blue-600" />
-                          <span className="font-medium">{history.work_date}</span>
-                          <Badge variant="default">완료</Badge>
+                          <span className="font-medium">{history.work_date}</span>&nbsp;
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <User className="w-3 h-3" />
-                          {history.manager}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span>정비내용: {history.work_details}</span>
+                          </div>
+                          {history.delay_reason && (
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <span>지연사유: {history.delay_reason} 시간</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>작업시간: {history.work_hours} 시간</span>
+                            {history.used_parts && (
+                              <span>부품: {history.used_parts}</span>
+                            )}
+                            {history.manager && (
+                              <div className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {history.manager}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{history.work_details}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>작업시간: {history.work_hours} 시간</span>
-                        {history.used_parts && (
-                          <span>부품: {history.used_parts}</span>
-                        )}
                       </div>
                     </div>
                   ))
                 })()}
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Detailed History Dialog */}
-          <Dialog open={isDetailHistoryDialogOpen} onOpenChange={setIsDetailHistoryDialogOpen}>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  정비 실적 상세 이력
-                </DialogTitle>
-                <DialogDescription>선택한 정비 작업의 상세 실적을 확인하세요</DialogDescription>
-              </DialogHeader>
-              {selectedHistoryItem && (
-                <div className="space-y-6">
-                  {/* 기본 정보 */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">작업 정보</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="equip_no">작업일자</Label>
-                          <span className="text-sm font-medium text-gray-500">{selectedHistoryItem.work_date}</span>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="equip_no">담당자</Label>
-                          <span className="text-sm font-medium text-gray-500">{selectedHistoryItem.manager}</span>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="equip_no">작업시간</Label>
-                          <span className="text-sm font-medium text-gray-500">{selectedHistoryItem.work_hours}시간</span>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="equip_no">상태</Label>
-                          <Badge variant="default">완료</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* 작업 설명 */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">작업 설명</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-500">{selectedHistoryItem.work_details}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* 사용 부품 */}
-                  {selectedHistoryItem.used_parts && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">사용 부품</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-500">{selectedHistoryItem.used_parts}</p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-              <div className="flex justify-end">
-                <Button variant="outline" onClick={() => setIsDetailHistoryDialogOpen(false)} style={{cursor: 'pointer'}}>
-                  닫기
-                </Button>
               </div>
             </DialogContent>
           </Dialog>

@@ -28,7 +28,8 @@ export async function GET(req: Request) {
         where vessel_no = @vesselNo
           and equip_no = @equipNo
           and section_code = @sectionCode
-          and plan_code = @planCode`,
+          and plan_code = @planCode
+        order by work_date desc`,
       [
         { name: 'vesselNo', value: vesselNo },
         { name: 'equipNo', value: equipNo },

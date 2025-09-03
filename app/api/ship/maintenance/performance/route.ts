@@ -55,12 +55,13 @@ export async function GET(req: Request) {
                                            ) AS rownum
                                      from [maintenance_work]) as a1
                                      where a1.rownum <= 5) as e
-             on d.vessel_no = e.vessel_no
+            on d.vessel_no = e.vessel_no
            and d.equip_no = e.equip_no
            and d.section_code = e.section_code
            and d.plan_code = e.plan_code
          where a.vessel_no = @vesselNo
-           and a.use_yn = 'Y'`,
+           and a.use_yn = 'Y'
+         order by a.vessel_no, b.equip_no, c.section_code, d.plan_code, e.work_date`,
       [
         { name: 'vesselNo', value: paramVesselNo }
       ]

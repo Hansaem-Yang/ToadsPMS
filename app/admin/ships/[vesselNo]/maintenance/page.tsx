@@ -192,7 +192,13 @@ export default function MaintenanceWorkManagementPage() {
                 {item.due_date && (
                   <span className="text-sm text-gray-500">다음: {item.due_date}</span>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => handleEditMaintenanceDialogOpen(item)} style={{cursor: 'pointer'}}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleEditMaintenanceDialogOpen(item)} 
+                  style={{cursor: 'pointer'}}
+                  disabled={userInfo.user_auth !== 'ADMIN'}
+                >
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
@@ -237,7 +243,13 @@ export default function MaintenanceWorkManagementPage() {
                 {item.due_date && (
                   <span className="text-sm text-gray-500">다음: {item.due_date}</span>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => handleEditSectionDialogOpen(item)} style={{cursor: 'pointer'}}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleEditSectionDialogOpen(item)} 
+                  style={{cursor: 'pointer'}}
+                  disabled={userInfo.user_auth !== 'ADMIN'}
+                >
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
@@ -555,14 +567,19 @@ export default function MaintenanceWorkManagementPage() {
                 <p className="text-gray-600">{vesselNo} 선박의 정비 작업을 관리하세요</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => (window.location.href = "/ship/calendar")} style={{cursor: 'pointer'}}>
+                <Button variant="outline" onClick={() => (window.location.href = "/admin/calendar")} style={{cursor: 'pointer'}}>
                   <Calendar className="w-4 h-4 mr-2" />
                   작업 캘린더
                 </Button>
                 {/* 섹션 추가 Dialog */}
                 <Dialog open={isAddSectionDialogOpen} onOpenChange={setIsAddSectionDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddSectionDialogOpen} style={{cursor: 'pointer'}}>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700" 
+                      onClick={handleAddSectionDialogOpen} 
+                      style={{cursor: 'pointer'}}
+                      disabled={userInfo.user_auth !== 'ADMIN'}
+                    >
                       <Plus className="w-4 h-4 mr-2" />새 섹션 추가
                     </Button>
                   </DialogTrigger>
@@ -630,7 +647,12 @@ export default function MaintenanceWorkManagementPage() {
                 {/* 정비 추가 Dialog */}
                 <Dialog open={isAddMaintenanceDialogOpen} onOpenChange={setIsAddMaintenanceDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddMaintenanceDialogOpen} style={{cursor: 'pointer'}}>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700" 
+                      onClick={handleAddMaintenanceDialogOpen} 
+                      style={{cursor: 'pointer'}}
+                      disabled={userInfo.user_auth !== 'ADMIN'}
+                    >
                       <Plus className="w-4 h-4 mr-2" />새 작업 추가
                     </Button>
                   </DialogTrigger>

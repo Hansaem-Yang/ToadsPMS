@@ -184,7 +184,10 @@ export default function ShipEquipmentPage() {
             <div className="flex justify-end">
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" style={{cursor: 'pointer'}}>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700" 
+                    style={{cursor: 'pointer'}}
+                    disabled>
                     <Plus className="w-4 h-4 mr-2" />새 장비 등록
                   </Button>
                 </DialogTrigger>
@@ -334,7 +337,11 @@ export default function ShipEquipmentPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}}
+                        disabled>
                         <Edit className="w-4 h-4" />
                       </Button>
                     </div>

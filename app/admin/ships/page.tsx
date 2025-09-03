@@ -243,7 +243,11 @@ export default function ShipManagementPage() {
               </div>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" style={{cursor: 'pointer'}}>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700" 
+                    style={{cursor: 'pointer'}}
+                    disabled={userInfo.user_auth !== 'ADMIN'}
+                  >
                     <Plus className="w-4 h-4 mr-2" />새 선박 등록
                   </Button>
                 </DialogTrigger>
@@ -377,10 +381,24 @@ export default function ShipManagementPage() {
                         accept=".xlsx, .xls"
                         style={{ display: 'none' }} // input 요소를 숨김
                       />
-                      <Button variant="ghost" size="sm" onClick={() => handleExcelUpload(item)} style={{cursor: 'pointer'}} title="엑셀 파일 업로드">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleExcelUpload(item)} 
+                        style={{cursor: 'pointer'}} 
+                        title="엑셀 파일 업로드"
+                        disabled={userInfo.user_auth !== 'ADMIN'}
+                      >
                         <Sheet className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}} title="선박 수정">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEditDialogOpen(item)} 
+                        style={{cursor: 'pointer'}} 
+                        title="선박 수정"
+                        disabled={userInfo.user_auth !== 'ADMIN'}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                     </div>

@@ -29,7 +29,7 @@ export async function GET(req: Request) {
                                         when a.due_date < getdate() and a.extension_date is not null and a.extension_date > getdate() then a.extension_date
                                         else a.due_date end, 121) as calendar_date
             , case when a.due_date < getdate() and a.lastest_date < getdate() and a.extension_date >= getdate() then 'EXTENSION'
-			             when a.due_date < getdate() then 'DELAY' 
+			             when a.due_date < getdate() then 'DELAYED' 
                    else 'NORMAL' end as status
          from (select d.vessel_no
                     , d.vessel_name
@@ -83,6 +83,7 @@ export async function GET(req: Request) {
         
         vessels.push(vessel);
         vesselNo = item.vessel_no;
+        calendarDate = '';
       }
 
       if (calendarDate !== item.calendar_date) {
@@ -97,8 +98,6 @@ export async function GET(req: Request) {
 
       calendar.children.push(item);
     });
-
-    console.log(vessels)
     
     // 성공 시 정보 반환
     return NextResponse.json(vessels);

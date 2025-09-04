@@ -83,7 +83,7 @@ export default function AdminCalendarPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
       case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
@@ -93,6 +93,21 @@ export default function AdminCalendarPage() {
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
     }
   }
 
@@ -309,7 +324,7 @@ export default function AdminCalendarPage() {
                   >
 
                     {/* 1. 월 헤더 */}
-                    <div className="flex border-b w-max min-h-[30px]">
+                    <div className="flex border-b w-max max-h-[41px]">
                       {monthHeaders.map((header, index) => (
                         <div 
                           key={index}
@@ -320,7 +335,7 @@ export default function AdminCalendarPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex border-b w-max min-h-[50x]" style={{ height: "50px" }}> {/* w-max로 내용이 넘치도록 설정 */}
+                    <div className="flex border-b w-max max-h-[50x]" style={{ height: "50px" }}> {/* w-max로 내용이 넘치도록 설정 */}
                       {/* 2. 날짜 헤더 */}
                       {dateRange.map((date, index) => (
                         <div
@@ -406,11 +421,7 @@ export default function AdminCalendarPage() {
                                     <div className="flex items-center gap-2 mt-2 text-sm">
                                       <span className="text-gray-500">({`${task.equip_no}-${task.section_code}-${task.plan_code}`})</span>
                                     </div>
-                                    {task.critical && (
-                                      <Badge variant="destructive" className="text-xs px-1 py-0">
-                                        Critical
-                                      </Badge>
-                                    )}
+                                    {task.critical && getCriticalBadge(task.critical)}
                                     {task.self_maintenance && task.self_maintenance === 'Y' && (
                                       <Badge variant="default" className="text-xs px-1 py-0">
                                         Self Maintenance
@@ -421,24 +432,24 @@ export default function AdminCalendarPage() {
                                 </div>
 
                                 <div className="grid grid-cols-5 gap-4 text-sm">
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">담당자</span>
                                     <div className="font-medium">{task.manager}</div>
                                   </div>
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">작업 위치</span>
                                     <div className="font-medium capitalize">{task.location}</div>
                                   </div>
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">최근 정비</span>
                                     <div className="font-medium">{task.lastest_date}</div>
                                   </div>
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">예정일</span>
                                     <div className="font-medium">{task.due_date}</div>
                                   </div>
                                   {task.extension_date && (
-                                  <div>
+                                  <div className="flex gap-2">
                                     <span className="text-gray-600">연장일</span>
                                     <div className="font-medium">{task.extension_date}</div>
                                   </div>

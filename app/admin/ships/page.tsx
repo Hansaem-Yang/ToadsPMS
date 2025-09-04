@@ -60,9 +60,9 @@ export default function ShipManagementPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(
-        (vessel: { vessel_name: string; vessel_no: string }) =>
-          vessel.vessel_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          vessel.vessel_no.toLowerCase().includes(searchTerm.toLowerCase())
+        vessel =>
+          vessel.vessel_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          vessel.vessel_no?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -100,10 +100,16 @@ export default function ShipManagementPage() {
   }
 
   const handleAddSave = async () => {
+    const insertedData = {
+      ...addVessel,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/admin/ships/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addVessel),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -185,10 +191,16 @@ export default function ShipManagementPage() {
   }
 
   const handleEditSave = async () => {
+    const updatedData = {
+      ...selectedVessel,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/admin/ships/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedVessel),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();
@@ -231,7 +243,10 @@ export default function ShipManagementPage() {
               </div>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" style={{cursor: 'pointer'}}>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700" 
+                    style={{cursor: 'pointer'}}
+                  >
                     <Plus className="w-4 h-4 mr-2" />새 선박 등록
                   </Button>
                 </DialogTrigger>
@@ -365,10 +380,22 @@ export default function ShipManagementPage() {
                         accept=".xlsx, .xls"
                         style={{ display: 'none' }} // input 요소를 숨김
                       />
-                      <Button variant="ghost" size="sm" onClick={() => handleExcelUpload(item)} style={{cursor: 'pointer'}} title="엑셀 파일 업로드">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleExcelUpload(item)} 
+                        style={{cursor: 'pointer'}} 
+                        title="엑셀 파일 업로드"
+                      >
                         <Sheet className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}} title="선박 수정">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEditDialogOpen(item)} 
+                        style={{cursor: 'pointer'}} 
+                        title="선박 수정"
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                     </div>

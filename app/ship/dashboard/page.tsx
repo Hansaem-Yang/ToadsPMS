@@ -41,7 +41,7 @@ export default function ShipUserDashboard() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
       case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
@@ -51,6 +51,21 @@ export default function ShipUserDashboard() {
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
     }
   }
 
@@ -155,14 +170,14 @@ export default function ShipUserDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card
               className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => handleTaskClick("delayed")}
+              onClick={() => handleTaskClick("DELAYED")}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">지연된 작업</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus('DELAY')}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("DELAYED")}</div>
                 <p className="text-xs text-muted-foreground">즉시 조치 필요</p>
               </CardContent>
             </Card>
@@ -176,7 +191,7 @@ export default function ShipUserDashboard() {
                 <Calendar className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{getTasksByCalendar('NORMAL', 'WEEK') + getTasksByCalendar('EXTENSION', 'WEEK')}</div>
+                <div className="text-2xl font-bold text-orange-600">{getTasksByCalendar("NORMAL", 'WEEK') + getTasksByCalendar("EXTENSION", 'WEEK')}</div>
                 <p className="text-xs text-muted-foreground">이번 주 예정</p>
               </CardContent>
             </Card>
@@ -190,7 +205,7 @@ export default function ShipUserDashboard() {
                 <Clock className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{getTasksByCalendar('NORMAL', 'MONTH') + getTasksByCalendar('EXTENSION', 'MONTH')}</div>
+                <div className="text-2xl font-bold text-blue-600">{getTasksByCalendar("NORMAL", 'MONTH') + getTasksByCalendar("EXTENSION", 'MONTH')}</div>
                 <p className="text-xs text-muted-foreground">이번 달 예정</p>
               </CardContent>
             </Card>
@@ -204,7 +219,7 @@ export default function ShipUserDashboard() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{getTasksByStatus('COMPLATE')}</div>
+                <div className="text-2xl font-bold text-green-600">{getTasksByStatus("COMPLATE")}</div>
                 <p className="text-xs text-muted-foreground">이번 달 완료</p>
               </CardContent>
             </Card>
@@ -222,7 +237,7 @@ export default function ShipUserDashboard() {
               <CardContent>
                 <div className="space-y-6">
                   {filteredEquipment.map((equipment) => (
-                    equipment.children.some((task) => task.status === 'DELAY' || task.status === 'NORMAL' || task.status === 'EXTENSION') && (
+                    equipment.children.some((task) => task.status === "DELAYED" || task.status === "NORMAL" || task.status === "EXTENSION") && (
                     <div key={equipment.equip_no} className="border rounded-lg p-4 bg-white">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -246,11 +261,7 @@ export default function ShipUserDashboard() {
                               <div>
                                 <div className="flex items-center gap-3 text-xs text-gray-500">
                                   <p className="text-sm font-medium">{task.plan_name}</p>
-                                  {task.critical && (
-                                    <Badge variant="destructive" className="text-xs px-1 py-0">
-                                      Critical
-                                    </Badge>
-                                  )}
+                                  {task.critical && getCriticalBadge(task.critical)}
                                   {getStatusBadge(task.status)}
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -297,11 +308,7 @@ export default function ShipUserDashboard() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium">{task.plan_name}</h4>
-                            {task.critical && (
-                              <Badge variant="destructive" className="text-xs">
-                                Critical
-                              </Badge>
-                            )}
+                            {task.critical && getCriticalBadge(task.critical)}
                           </div>
                           <p className="text-sm text-gray-500">{task.equip_name}</p>
                           <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">

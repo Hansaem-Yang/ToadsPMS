@@ -60,7 +60,7 @@ export async function POST(req: Request) {
             query = 
               `update [equipment]
                   set equip_name = @equipName
-                    , category = @category
+                    , category = lower(@category)
                     , manufacturer = @manufacturer
                     , model = @model
                     , machine = @machine
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
                       @vesselNo
                     , (select format(isnull(max(equip_no), 0) + 1, '00') from [equipment] where vessel_no = @vesselNo)
                     , @equipName
-                    , @category
+                    , lower(@category)
                     , @manufacturer
                     , @model
                     , @machine

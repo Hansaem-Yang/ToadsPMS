@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { execute } from '@/db'; // 이전에 만든 query 함수
+import { Equipment } from '@/types/vessel/equipment';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { vessel_no, equip_name, category, manufacturer, model, description } = body;
+    const item: Equipment = body;
 
     // DB에서 사용자 정보 확인
     const count = await execute(
@@ -16,6 +17,8 @@ export async function POST(req: Request) {
              , manufacturer
              , model
              , description
+             , regist_date
+             , regist_user
        )
        values (
                @vesselNo
@@ -25,14 +28,18 @@ export async function POST(req: Request) {
              , @manufacturer
              , @model
              , @description
+             , getdate()
+             , @registUser
        );`,
       [
-        { name: 'vesselNo', value: vessel_no },
-        { name: 'equipName', value: equip_name },
-        { name: 'category', value: category },
-        { name: 'manufacturer', value: manufacturer },
-        { name: 'model', value: model },
-        { name: 'description', value: description },
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'equipName', value: item.equip_name },
+        { name: 'category', value: item.category },
+        { name: 'manufacturer', value: item.manufacturer },
+        { name: 'model', value: item.model },
+        { name: 'description', value: item.description },
+        { name: 'registUser', value: item.regist_user },
       ]
     );
 

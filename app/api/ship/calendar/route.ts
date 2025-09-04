@@ -31,7 +31,7 @@ export async function GET(req: Request) {
                                         when a.due_date < getdate() and a.extension_date is not null and a.extension_date > getdate() then a.extension_date
                                         else a.due_date end, 121) as calendar_date
             , case when a.due_date < getdate() and a.lastest_date < getdate() and a.extension_date >= getdate() then 'EXTENSION'
-			             when a.due_date < getdate() then 'DELAY' 
+			             when a.due_date < getdate() then 'DELAYED' 
                    else 'NORMAL' end as status
          from (select a.vessel_no
                     , c.equip_no
@@ -87,6 +87,7 @@ export async function GET(req: Request) {
 
         equipments.push(equipment);
         equipNo = item.equip_no;
+        calendarDate = '';
       }
 
       if (calendarDate !== item.calendar_date) {

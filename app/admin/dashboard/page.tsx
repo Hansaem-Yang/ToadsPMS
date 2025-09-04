@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                       <Button
                         variant="outline"
                         className="h-auto p-3 flex flex-col items-center gap-2 bg-transparent"
-                        onClick={() => handleTaskClick("delayed", vessel.vessel_no, vessel.vessel_name)}
+                        onClick={() => handleTaskClick("DELAYED", vessel.vessel_no, vessel.vessel_name)}
                         style={{cursor: 'pointer'}}
                       >
                         <div className="flex items-center gap-2">

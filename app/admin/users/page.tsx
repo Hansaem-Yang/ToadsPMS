@@ -140,10 +140,16 @@ export default function ShipManagementPage() {
   }
 
   const handleAddSave = async () => {
+    const insertedData = {
+      ...addUser,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/admin/users/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addUser),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -166,10 +172,16 @@ export default function ShipManagementPage() {
   }
 
   const handleEditSave = async () => {
+    const updatedData = {
+      ...selectedUser,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+    
     const res = await fetch('/api/admin/users/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedUser),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();
@@ -223,7 +235,10 @@ export default function ShipManagementPage() {
               </div>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" style={{cursor: 'pointer'}}>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700" 
+                    style={{cursor: 'pointer'}}
+                  >
                     <Plus className="w-4 h-4 mr-2" />새 사용자 등록
                   </Button>
                 </DialogTrigger>
@@ -314,6 +329,7 @@ export default function ShipManagementPage() {
                         <SelectContent>
                           <SelectItem value="ADMIN">육상 관리자</SelectItem>
                           <SelectItem value="USER">육상 사용자</SelectItem>
+                          <SelectItem value="VADMIN">선박 관리자</SelectItem>
                           <SelectItem value="VESSEL">선박 사용자</SelectItem>
                         </SelectContent>
                       </Select>
@@ -406,7 +422,12 @@ export default function ShipManagementPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEditDialogOpen(item)} 
+                        style={{cursor: 'pointer'}}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                     </div>
@@ -529,7 +550,7 @@ export default function ShipManagementPage() {
                         <SelectValue placeholder="선박 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                          <SelectItem key=' ' value=' '>선박 선택</SelectItem>
+                        <SelectItem key=' ' value=' '>선박 선택</SelectItem>
                         {vessels.map(vessel => (
                           <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>{vessel.vessel_short_name} - {vessel.vessel_name}</SelectItem>
                         ))}
@@ -547,6 +568,7 @@ export default function ShipManagementPage() {
                       <SelectContent>
                         <SelectItem value="ADMIN">본사 관리자</SelectItem>
                         <SelectItem value="USER">본사 사용자</SelectItem>
+                        <SelectItem value="VADMIN">선박 관리자</SelectItem>
                         <SelectItem value="VESSEL">선박 사용자</SelectItem>
                       </SelectContent>
                     </Select>

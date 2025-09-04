@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSql, getPool } from '@/db'; // 이전에 만든 query 함수
+import { getSql, getPool, query, execute } from '@/db'; // 이전에 만든 query 함수
 import { MaintenanceWork } from '@/types/vessel/maintenance_work';
 
 export async function POST(req: Request) {
   try {
+    const remoteSiteUrl = process.env.REMOTE_SITE_URL;
     const body = await req.json();
     const item : MaintenanceWork = body;
 
@@ -13,81 +14,84 @@ export async function POST(req: Request) {
     await transantion.begin();
     try {
       let count = 0;
-      let query = `
+      let queryString = `
       insert into [maintenance_work] (
-              work_order
+              vessel_no
+            , work_order
+            , equip_no
+            , section_code
+            , plan_code
+            , plan_date
             , work_date
             , manager
             , work_details
             , used_parts
             , work_hours
             , delay_reason
-            , vessel_no
-            , equip_no
-            , section_code
-            , plan_code
+            , regist_date
+            , regist_user
       )
       values (
-            (select isnull(max(work_order), 0) + 1 from [maintenance_work])
+              @vesselNo
+            , (select isnull(max(work_order), 0) + 1 
+                 from [maintenance_work]
+                where vessel_no = @vesselNo)
+            , @equipNo
+            , @sectionCode
+            , @planCode
+            , @planDate
             , getdate()
             , @manager
             , @workDetails
             , @usedParts
             , @workHours
             , @delayReason
-            , @vesselNo
-            , @equipNo
-            , @sectionCode
-            , @planCode
+            , getdate()
+            , @registUser
       );`;
 
       let params = [
+        { name: 'vesselNo', value: item.vessel_no }, 
+        { name: 'equipNo', value: item.equip_no }, 
+        { name: 'sectionCode', value: item.section_code }, 
+        { name: 'planCode', value: item.plan_code }, 
+        { name: 'planDate', value: item.extension_date? item.extension_date : item.due_date }, 
         { name: 'manager', value: item.manager }, 
         { name: 'workDetails', value: item.work_details }, 
         { name: 'usedParts', value: item.used_parts }, 
         { name: 'workHours', value: item.work_hours }, 
         { name: 'delayReason', value: item.delay_reason }, 
-        { name: 'vesselNo', value: item.vessel_no }, 
-        { name: 'equipNo', value: item.equip_no }, 
-        { name: 'sectionCode', value: item.section_code }, 
-        { name: 'planCode', value: item.plan_code }, 
+        { name: 'registUser', value: item.regist_user }, 
+        { name: 'modifyUser', value: item.modify_user }, 
       ];
 
       const request = new sql.Request(transantion);
 
       params?.forEach(p => request.input(p.name, p.value));
-      let result = await request.query(query);
+      let result = await request.query(queryString);
       count += result.rowsAffected[0];
 
-      query = `
+      queryString = `
       update maintenance_plan
          set lastest_date = getdate()
+           , modify_date = getdate()
+           , modify_user = @modifyUser
        where vessel_no = @vesselNo
          and equip_no = @equipNo
          and section_code = @sectionCode
          and plan_code = @planCode;`;
-
-      params = [
-        { name: 'vesselNo', value: item.vessel_no }, 
-        { name: 'equipNo', value: item.equip_no }, 
-        { name: 'sectionCode', value: item.section_code }, 
-        { name: 'planCode', value: item.plan_code }, 
-      ];
       
-      result = await request.query(query);
+      result = await request.query(queryString);
 
-      query = `
+      queryString = `
       update equipment
          set lastest_date = getdate()
+           , modify_date = getdate()
+           , modify_user = @modifyUser
        where vessel_no = @vesselNo
          and equip_no = @equipNo;`;
-
-      params = [
-        { name: 'vesselNo', value: item.vessel_no }, 
-        { name: 'equipNo', value: item.equip_no }, 
-      ];
       
-      result = await request.query(query);
+      result = await request.query(queryString);
 
       if (count === 0) {
         transantion.rollback();
@@ -95,6 +99,74 @@ export async function POST(req: Request) {
       }
 
       transantion.commit();
+        
+      // 저장된 정비 정보 조회
+      const sendData: MaintenanceWork[] = await query(
+        `select vessel_no
+              , work_order
+              , equip_no
+              , section_code
+              , plan_code
+              , plan_date
+              , work_date
+              , manager
+              , work_details
+              , used_parts
+              , work_hours
+              , delay_reason
+              , regist_date
+              , regist_user
+           from [maintenance_work]
+          where vessel_no = @vesselNo
+            and equip_no = @equipNo
+            and section_code = @sectionCode
+            and plan_code = @planCode
+            and work_order = (select max(work_order) 
+                               from [maintenance_work]
+                              where vessel_no = @vesselNo
+                                and equip_no = @equipNo
+                                and section_code = @sectionCode
+                                and plan_code = @planCode
+                                and regist_user = @registUser);`,
+        [
+          { name: 'vesselNo', value: item.vessel_no },
+          { name: 'equipNo', value: item.equip_no },
+          { name: 'sectionCode', value: item.section_code },
+          { name: 'planCode', value: item.plan_code }, 
+          { name: 'registUser', value: item.regist_user },
+        ]
+      );
+      
+      // 선박에서 저장된 정비 정보 전송
+      if (sendData[0]) {
+        fetch(`${remoteSiteUrl}/api/data/execution/set`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sendData[0]),
+        })
+        .then(res => {
+          if (res.ok) {
+            // 정비 정보의 마지막 전송일자 수정
+            execute(
+              `update [maintenance_work]
+                  set last_send_date = getdate()
+                where vessel_no = @vesselNo
+                  and work_order = @workOrder;`,
+              [
+                { name: 'vesselNo', value: sendData[0].vessel_no },
+                { name: 'workOrder', value: sendData[0].work_order },
+              ]
+            );
+          }
+          
+          return res.json();
+        })
+        .catch(err => {
+          console.error('Error triggering cron job:', err);
+        });
+      }
       // 성공 정보 반환
       return NextResponse.json({ success: true });
     } catch (err) {

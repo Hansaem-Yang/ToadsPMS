@@ -42,8 +42,8 @@ export default function MaintenanceWorkManagementPage() {
   const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
   const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
   const [searchTerm, setSearchTerm] = useState("")
-  const [shipFilter, setShipFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [shipFilter, setShipFilter] = useState("ALL")
+  const [statusFilter, setStatusFilter] = useState("ALL")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   // State for work history dialogs
@@ -92,7 +92,7 @@ export default function MaintenanceWorkManagementPage() {
   useEffect(() => {
     let filtered = maintenanceData
 
-    if (shipFilter !== "all") {
+    if (shipFilter !== "ALL") {
       filtered = filtered.filter((item) => item.vessel_no === shipFilter)
     }
 
@@ -100,7 +100,7 @@ export default function MaintenanceWorkManagementPage() {
       filtered = filterBySearch(filtered, searchTerm)
     }
 
-    if (statusFilter !== "all") {
+    if (statusFilter !== "ALL") {
       filtered = filterByStatus(filtered, statusFilter)
     }
 
@@ -154,7 +154,7 @@ export default function MaintenanceWorkManagementPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
       case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
@@ -164,6 +164,21 @@ export default function MaintenanceWorkManagementPage() {
         return <Badge variant="default">완료</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
     }
   }
 
@@ -219,10 +234,21 @@ export default function MaintenanceWorkManagementPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{`${item.name}`}</span>
                       <span className="text-sm text-gray-500">({item.id})</span>
-                      {item.critical && (
-                        <Badge variant="destructive" className="text-xs">
-                          Critical
-                        </Badge>
+                      {item.critical && getCriticalBadge(item.critical)}
+                      {item.type === "TASK" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleHistoryClick(item.vessel_no, item.id)
+                          }}
+                          className="hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-300 transition-all"
+                          title="작업 이력 조회"
+                          style={{cursor: 'pointer'}}
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Button>
                       )}
                     </div>
                     {item.type === "TASK" && (
@@ -253,27 +279,6 @@ export default function MaintenanceWorkManagementPage() {
                   </span>
                 )}
                 {item.status && getStatusBadge(item.status)}
-                
-
-                <div className="flex items-center space-x-2">
-                  {item.type === "TASK" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        console.log("[v0] Gear button clicked for task:", item.id, "Type:", item.type)
-                        console.log("[v0] Task data:", item)
-                        handleHistoryClick(item.vessel_no, item.id)
-                      }}
-                      className="hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-300 transition-all"
-                      title="작업 이력 조회"
-                      style={{cursor: 'pointer'}}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -346,7 +351,7 @@ export default function MaintenanceWorkManagementPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus(maintenanceData, "DELAY")}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus(maintenanceData, "DELAYED")}</div>
                 <p className="text-xs text-muted-foreground">즉시 조치 필요</p>
               </CardContent>
             </Card>
@@ -397,7 +402,7 @@ export default function MaintenanceWorkManagementPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 선박</SelectItem>
+                    <SelectItem value="ALL">전체 선박</SelectItem>
                     {vessels.map((vessel) => (
                       <SelectItem value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
                     ))}
@@ -408,8 +413,8 @@ export default function MaintenanceWorkManagementPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="DELAY">지연</SelectItem>
+                    <SelectItem value="ALL">전체 상태</SelectItem>
+                    <SelectItem value="DELAYED">지연</SelectItem>
                     <SelectItem value="NORMAL">예정</SelectItem>
                     <SelectItem value="EXTENSION">연장</SelectItem>
                     <SelectItem value="COMPLATE">완료</SelectItem>

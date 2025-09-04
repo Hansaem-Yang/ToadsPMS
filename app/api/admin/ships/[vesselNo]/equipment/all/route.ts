@@ -17,7 +17,7 @@ export async function GET(req: Request) {
             , a.model
             , a.specifications
             , a.description
-            , a.lastest_date
+            , convert(varchar(10), a.lastest_date, 121) as lastest_date
             , min(convert(varchar(10), b.due_date, 121)) as due_date
             , count(b.plan_code) as maintenance_count
             , (select count(1) from section where vessel_no = a.vessel_no and equip_no = a.equip_no) as section_count
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
             , a.model
             , a.specifications
             , a.description
-            , a.lastest_date`,
+            , convert(varchar(10), a.lastest_date, 121)`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

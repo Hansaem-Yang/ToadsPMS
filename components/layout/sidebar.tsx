@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Ship, Settings, Calendar, Wrench, ClipboardList, CheckSquare, Users } from "lucide-react"
+import { LayoutDashboard, Ship, Settings, Calendar, Wrench, ClipboardList, CheckSquare, Users, List } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -16,6 +16,7 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/admin/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/admin/ships", label: "선박 관리", icon: Ship },
     { href: "/admin/maintenance", label: "정비 현황", icon: Wrench },
+    { href: "/admin/maintenance/performance", label: "정비 실적 현황", icon: List },
     { href: "/admin/calendar", label: "작업 캘린더", icon: Calendar },
     { href: "/admin/users", label: "사용자 관리", icon: Users },
   ]
@@ -24,6 +25,7 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/admin/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/admin/ships", label: "선박 관리", icon: Ship },
     { href: "/admin/maintenance", label: "정비 현황", icon: Wrench },
+    { href: "/admin/maintenance/performance", label: "정비 실적 현황", icon: List },
     { href: "/admin/calendar", label: "작업 캘린더", icon: Calendar },
   ]
 
@@ -32,6 +34,7 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/ship/equipment", label: "장비 관리", icon: Settings },
     { href: "/ship/maintenance", label: "정비 등록", icon: ClipboardList },
     { href: "/ship/execution", label: "정비 실행", icon: CheckSquare },
+    { href: "/ship/maintenance/performance", label: "정비 실적 현황", icon: List },
     { href: "/ship/calendar", label: "작업 캘린더", icon: Calendar },
   ]
 

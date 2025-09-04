@@ -8,7 +8,7 @@ export interface Vessel {
     maintenance_count: number;
     crew: number;
     regist_date: string;
-    regist_user: number;
+    regist_user: string;
     modify_date: string;
-    modify_user: number;
+    modify_user: string;
 }

@@ -31,7 +31,7 @@ export async function GET(req: Request) {
             , convert(varchar(10), a.due_date, 121) as due_date 
             , convert(varchar(10), a.extension_date, 121) as extension_date 
             , case when a.due_date < getdate() and a.lastest_date < getdate() and a.extension_date >= getdate() then 'EXTENSION'
-			             when a.due_date < getdate() then 'DELAY' 
+			             when a.due_date < getdate() then 'DELAYED' 
                    when a.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and a.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)) then 'COMPLATE'
                    else 'NORMAL' end as status
             , datediff(day, getdate(), a.due_date) as days_until
@@ -123,6 +123,8 @@ export async function GET(req: Request) {
 
         vessels.push(vessel);
         vesselNo = item.vessel_no;
+        equipNo = '';
+        sectionCode = '';
       }
 
       if (item.equip_no !== null) {
@@ -162,6 +164,7 @@ export async function GET(req: Request) {
 
           vessel?.children.push(equipment);
           equipNo = item.equip_no;
+          sectionCode = '';
         }
 
         if (item.section_code !== null) {

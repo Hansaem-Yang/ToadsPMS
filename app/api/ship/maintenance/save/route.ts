@@ -1,28 +1,12 @@
 import { NextResponse } from 'next/server';
-import { execute } from '@/db'; // 이전에 만든 query 함수
+import { execute, query } from '@/db'; // 이전에 만든 query 함수
+import { MaintenancePlan } from '@/types/vessel/maintenance_plan';
 
 export async function POST(req: Request) {
   try {
+    const remoteSiteUrl = process.env.REMOTE_SITE_URL;
     const body = await req.json();
-    const { vessel_no
-          , equip_no
-          , section_code
-          , plan_code
-          , plan_name
-          , manufacturer
-          , model
-          , specifications
-          , lastest_date
-          , workers
-          , work_hours
-          , interval
-          , interval_term
-          , location
-          , self_maintenance
-          , manager
-          , important_items
-          , instructions
-          , critical } = body;
+    const item : MaintenancePlan = body;
 
     // DB에서 사용자 정보 확인
     const count = await execute(
@@ -45,7 +29,9 @@ export async function POST(req: Request) {
                    , @manager as manager
                    , @importantItems as important_items
                    , @instructions as instructions
-                   , @critical as critical) as b
+                   , @critical as critical
+                   , @registUser as regist_user
+                   , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no 
           and a.equip_no = b.equip_no 
           and a.section_code = b.section_code
@@ -67,6 +53,8 @@ export async function POST(req: Request) {
                   , a.important_items = b.important_items
                   , a.instructions = b.instructions
                   , a.critical = b.critical
+                  , a.modify_date = getdate()
+                  , a.modify_user = b.modify_user
         when not matched then
              insert (vessel_no
                    , equip_no
@@ -86,7 +74,9 @@ export async function POST(req: Request) {
                    , manager
                    , important_items
                    , instructions
-                   , critical)
+                   , critical
+                   , regist_date
+                   , regist_user)
              values (b.vessel_no
                    , b.equip_no
                    , b.section_code
@@ -105,32 +95,112 @@ export async function POST(req: Request) {
                    , b.manager
                    , b.important_items
                    , b.instructions
-                   , b.critical);`,
+                   , b.critical
+                   , getdate()
+                   , b.regist_user);`,
       [
-        { name: 'vesselNo', value: vessel_no },
-        { name: 'equipNo', value: equip_no },
-        { name: 'sectionCode', value: section_code },
-        { name: 'planCode', value: plan_code },
-        { name: 'planName', value: plan_name },
-        { name: 'manufacturer', value: manufacturer },
-        { name: 'model', value: model },
-        { name: 'specifications', value: specifications },
-        { name: 'lastestDate', value: lastest_date },
-        { name: 'workers', value: workers },
-        { name: 'workHours', value: work_hours },
-        { name: 'interval', value: interval },
-        { name: 'intervalTerm', value: interval_term },
-        { name: 'location', value: location },
-        { name: 'selfMaintenance', value: self_maintenance },
-        { name: 'manager', value: manager },
-        { name: 'importantItems', value: important_items },
-        { name: 'instructions', value: instructions },
-        { name: 'critical', value: critical }
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'sectionCode', value: item.section_code },
+        { name: 'planCode', value: item.plan_code },
+        { name: 'planName', value: item.plan_name },
+        { name: 'manufacturer', value: item.manufacturer },
+        { name: 'model', value: item.model },
+        { name: 'specifications', value: item.specifications },
+        { name: 'lastestDate', value: item.lastest_date },
+        { name: 'workers', value: item.workers },
+        { name: 'workHours', value: item.work_hours },
+        { name: 'interval', value: item.interval },
+        { name: 'intervalTerm', value: item.interval_term },
+        { name: 'location', value: item.location },
+        { name: 'selfMaintenance', value: item.self_maintenance },
+        { name: 'manager', value: item.manager },
+        { name: 'importantItems', value: item.important_items },
+        { name: 'instructions', value: item.instructions },
+        { name: 'critical', value: item.critical },
+        { name: 'registUser', value: item.regist_user },
+        { name: 'modifyUser', value: item.modify_user }
       ]
     );
 
     if (count === 0) {
       return NextResponse.json({ success: false, message: 'Data was not saved.' }, { status: 401 });
+    }
+        
+    // 저장된 정비 정보 조회
+    const sendData: MaintenancePlan[] = await query(
+      `select vessel_no
+            , equip_no
+            , section_code
+            , plan_code
+            , plan_name
+            , manufacturer
+            , model
+            , specifications
+            , lastest_date
+            , workers
+            , work_hours
+            , interval
+            , interval_term
+            , location
+            , self_maintenance
+            , manager
+            , important_items
+            , instructions
+            , critical
+            , regist_date
+            , regist_user
+         from [maintenance_plan]
+        where vessel_no = @vesselNo
+          and equip_no = @equipNo
+          and section_code = @sectionCode
+          and plan_code = (select max(plan_code) 
+                             from [maintenance_plan]
+                            where vessel_no = @vesselNo
+                              and equip_no = @equipNo
+                              and section_code = @sectionCode
+                              and regist_user = @registUser);`,
+      [
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'sectionCode', value: item.section_code },
+        { name: 'registUser', value: item.regist_user },
+      ]
+    );
+    
+    // 선박에서 저장된 정비 정보 전송
+    if (sendData[0]) {
+      fetch(`${remoteSiteUrl}/api/data/maintenance/set`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sendData[0]),
+      })
+      .then(res => {
+        if (res.ok) {
+          // 정비 정보의 마지막 전송일자 수정
+          execute(
+            `update [maintenance_plan]
+                set last_send_date = getdate()
+              where vessel_no = @vesselNo
+                and equip_no = @equipNo
+                and section_code = @sectionCode
+                and plan_code = @planCode;`,
+            [
+              { name: 'vesselNo', value: sendData[0].vessel_no },
+              { name: 'equipNo', value: sendData[0].equip_no },
+              { name: 'sectionCode', value: sendData[0].section_code },
+              { name: 'planCode', value: sendData[0].plan_code },
+            ]
+          );
+        }
+        
+        return res.json();
+      })
+      .catch(err => {
+        console.error('Error triggering cron job:', err);
+      });
     }
 
     // 성공 정보 반환

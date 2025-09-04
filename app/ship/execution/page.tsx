@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -19,6 +20,8 @@ import { Maintenance } from '@/types/dashboard/maintenance';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
 
 export default function MaintenanceExecutionPage() {
+  const searchParams = useSearchParams()
+  const equipName = searchParams.get("equipName") || ""
   const initialMaintenanceItem: Maintenance = {
     vessel_no: "",
     vessel_name: "",
@@ -48,7 +51,11 @@ export default function MaintenanceExecutionPage() {
     extension_date: "",
     extension_days_until: 0,
     work_details: "",
-    delay_reason: ""
+    delay_reason: "",
+    regist_date: "",
+    regist_user: '',
+    modify_date: "",
+    modify_user: ''
   };
 
   
@@ -62,6 +69,7 @@ export default function MaintenanceExecutionPage() {
     extension_seq: "",
     extension_date: "",
     extension_reason: "",
+    request_date: "",
     due_date: "",
     next_due_date: "",
     applicant: "",
@@ -75,10 +83,11 @@ export default function MaintenanceExecutionPage() {
   };
 
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [params, setParams] = useState<any>(null)
   const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [selectedWork, setSelectedWork] = useState<any>(null)
   const [isExecutionDialogOpen, setIsExecutionDialogOpen] = useState(false)
   const [executionResult, setExecutionResult] = useState<Maintenance>(initialMaintenanceItem)
@@ -109,6 +118,10 @@ export default function MaintenanceExecutionPage() {
       setUserInfo(user)
 
       fetchEquipmentTasks(user.ship_no)
+      
+      if (equipName) {
+        setParams(equipName)
+      }
     } catch (error) {
       // Redirect handled by requireAuth
     }
@@ -116,16 +129,33 @@ export default function MaintenanceExecutionPage() {
 
   useEffect(() => {
     let filtered = equipmentWorks
+      
+    if (params) {
+      setSearchTerm(params);
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (eq) =>
-          eq.equip_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eq.children.some((task) => task.plan_name.toLowerCase().includes(searchTerm.toLowerCase())),
-      )
+      setParams('');
     }
 
-    if (categoryFilter !== "all") {
+    if (searchTerm) {
+      const lowerKeyword = searchTerm.toLowerCase();
+
+      filtered = filtered.map(equipment => {
+        const filteredSections = equipment.children.filter(plan => {
+            return (
+              plan.plan_name.toLowerCase().includes(lowerKeyword)
+            );
+          });
+
+        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
+          return { ...equipment, children: filteredSections };
+        }
+
+        return null;
+      })
+      .filter((e) => e !== null);
+    }
+
+    if (categoryFilter !== "ALL") {
       filtered = filtered.filter((eq) => eq.category === categoryFilter)
     }
 
@@ -136,7 +166,7 @@ export default function MaintenanceExecutionPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
       case "EXTENSION":
         return <Badge variant="outline">연장</Badge>
@@ -148,10 +178,25 @@ export default function MaintenanceExecutionPage() {
         return <Badge variant="outline">{status}</Badge>
     }
   }
+  
+  const getCriticalBadge = (critical: string) => {
+    switch (critical) {
+      case "NORMAL":
+        return <Badge variant="outline" className="text-xs">일상정비</Badge>
+      case "CRITICAL":
+        return <Badge variant="destructive" className="text-xs">Critical</Badge>
+      case "DOCK":
+        return <Badge variant="secondary" className="text-xs">Dock</Badge>
+      case "CMS":
+        return <Badge variant="default" className="text-xs">CMS</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>
+    }
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "DELAY":
+      case "DELAYED":
         return <AlertTriangle className="w-4 h-4 text-red-600" />
       case "EXTENSION":
         return <PlusCircle className="w-4 h-4 text-orange-600" />
@@ -171,12 +216,23 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleSaveExecution = async () => {
+    const insertedData = {
+      ...executionResult,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/ship/execution/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(executionResult),
+      body: JSON.stringify(insertedData),
     });
     
+    if (!res.ok)
+    {
+      alert('작업 실행 등록 중 오류가 발생하였습니다.');
+      return;
+    }
     // 선택된 작업들의 상태를 완료로 업데이트
     setEquipmentWorks((prev) =>
       prev.map((eq) => ({
@@ -204,10 +260,16 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleSaveExtension = async () => {
+    const insertedData = {
+      ...extensionResult,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/ship/extension/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(extensionResult),
+      body: JSON.stringify(insertedData),
     });
     
     // 선택된 작업들의 상태를 완료로 업데이트
@@ -218,7 +280,7 @@ export default function MaintenanceExecutionPage() {
           extensionResult.equip_no === task.equip_no &&
           extensionResult.section_code === task.section_code &&
           extensionResult.plan_code === task.plan_code
-          ? { ...task, status: 'EXTENSION', extension_date: extensionResult.extension_date }
+          ? { ...task, status: "EXTENSION", extension_date: extensionResult.extension_date }
           : task,
         ),
       })),
@@ -271,6 +333,8 @@ export default function MaintenanceExecutionPage() {
           partsUsed: "",
           notes: "",
           issues: "",
+          regist_user: userInfo.account_no,
+          modify_user: userInfo.account_no,
         })),
     )
 
@@ -349,7 +413,7 @@ export default function MaintenanceExecutionPage() {
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("DELAY")}</div>
+                <div className="text-2xl font-bold text-red-600">{getTasksByStatus("DELAYED")}</div>
                 <p className="text-xs text-muted-foreground">즉시 실행 필요</p>
               </CardContent>
             </Card>
@@ -416,11 +480,10 @@ export default function MaintenanceExecutionPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 카테고리</SelectItem>
-                    <SelectItem value="추진시스템">추진시스템</SelectItem>
-                    <SelectItem value="전력시스템">전력시스템</SelectItem>
-                    <SelectItem value="항해장비">항해장비</SelectItem>
-                    <SelectItem value="안전장비">안전장비</SelectItem>
+                    <SelectItem value="ALL">전체 카테고리</SelectItem>
+                    <SelectItem value="ENGINE">Engine</SelectItem>
+                    <SelectItem value="DECK">Deck</SelectItem>
+                    <SelectItem value="ETC">Etc</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -429,7 +492,7 @@ export default function MaintenanceExecutionPage() {
 
           {/* 장비별 작업 목록 */}
           <div className="space-y-6">
-            {equipmentWorks.map((eq) => (
+            {filteredEquipment.map((eq) => (
               <Card key={eq.equip_no}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -474,11 +537,7 @@ export default function MaintenanceExecutionPage() {
                                 <div className="flex items-center gap-2 mb-1">
                                   <h4 className="font-semibold">{task.plan_name}</h4>
                                   <span className="text-sm text-gray-500">({task.plan_code})</span>
-                                  {task.critical && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      Critical
-                                    </Badge>
-                                  )}
+                                  {task.critical && getCriticalBadge(task.critical)}
                                   {getStatusBadge(task.status)}
                                 </div>
                                 <p className="text-sm text-gray-600 mb-2">{task.specifications}</p>
@@ -487,14 +546,14 @@ export default function MaintenanceExecutionPage() {
                                   <span>담당자: {task.manager}</span>
                                   <span>작업자수: {task.workers}</span>
                                   <span>작업자별 작업시간: {task.work_hours}시간</span>
-                                  {task.status === 'COMPLATE' && (
+                                  {task.status === "COMPLATE" && (
                                     <span className="text-green-600">완료일: {task.lastest_date}</span>
                                   )}
                                 </div>
                               </div>
                             </div>
                           </div>
-                          {task.status !== "COMPLATE" && task.status === "DELAY" && (
+                          {task.status !== "COMPLATE" && task.status === "DELAYED" && (
                             <Button onClick={() => handleExtension(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
                               연장 신청
                             </Button>
@@ -552,13 +611,13 @@ export default function MaintenanceExecutionPage() {
                             </div>
                           </div>
                           <div>
-                              <Label className="text-xs">사용 부품</Label>
-                              <Input
-                                placeholder="부품명"
-                                value={task.used_parts}
-                                onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
-                                className="text-sm"
-                              />
+                            <Label className="text-xs">사용 부품</Label>
+                            <Input
+                              placeholder="부품명"
+                              value={task.used_parts}
+                              onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
+                              className="text-sm"
+                            />
                           </div>
                           <div>
                             <Label className="text-xs">작업 내용</Label>
@@ -570,7 +629,7 @@ export default function MaintenanceExecutionPage() {
                               className="text-sm"
                             />
                           </div>
-                          {task.status === 'DELAY' && (
+                          {task.status === "DELAYED" && (
                             <div>
                               <Label className="text-xs">지연 사유</Label>
                               <Textarea
@@ -595,7 +654,7 @@ export default function MaintenanceExecutionPage() {
                 <Button 
                   onClick={handleSaveBulkExecution} 
                   className="bg-blue-600 hover:bg-blue-700"
-                  disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === 'DELAY' && !item.delay_reason)).length > 0}
+                  disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === "DELAYED" && !item.delay_reason)).length > 0}
                   style={{cursor: 'pointer'}}
                 >
                   일괄 등록 완료
@@ -653,7 +712,7 @@ export default function MaintenanceExecutionPage() {
                       rows={3}
                     />
                   </div>
-                  {selectedWork.status === 'DELAY' && (
+                  {selectedWork.status === "DELAYED" && (
                     <div>
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
@@ -673,7 +732,7 @@ export default function MaintenanceExecutionPage() {
                   <Button 
                     onClick={handleSaveExecution} 
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={!executionResult.work_details || (executionResult.status === 'DELAY' && !executionResult.delay_reason) }
+                    disabled={!executionResult.work_details || (executionResult.status === "DELAYED" && !executionResult.delay_reason) }
                     style={{cursor: 'pointer'}}
                   >
                     등록 완료

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { execute } from '@/db'; // 이전에 만든 query 함수
+import { Section } from '@/types/vessel/section';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { vessel_no, equip_no, section_code, section_name, description } = body;
+    const item: Section = body;
 
     // DB에서 사용자 정보 확인
     const count = await execute(
@@ -13,29 +14,39 @@ export async function POST(req: Request) {
                    , @equipNo as equip_no
                    , @sectionCode as section_code
                    , @sectionName as section_name
-                   , @description as description) as b
+                   , @description as description
+                   , @registUser as regist_user
+                   , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no and a.equip_no = b.equip_no and a.section_code = b.section_code)
         when matched then
              update
                 set a.section_name = b.section_name
                   , a.description = b.description
+                  , a.modify_date = getdate()
+                  , a.modify_user = b.modify_user
         when not matched then
              insert (vessel_no
                    , equip_no
                    , section_code
                    , section_name
-                   , description)
+                   , description
+                   , regist_date
+                   , regist_user)
              values (b.vessel_no
                    , b.equip_no
                    , (select format(isnull(max(section_code), 0) + 1, '000') from [section] where vessel_no = b.vessel_no and equip_no = b.equip_no)
                    , b.section_name
-                   , b.description);`,
+                   , b.description
+                   , getdate()
+                   , b.regist_user);`,
       [
-        { name: 'vesselNo', value: vessel_no },
-        { name: 'equipNo', value: equip_no },
-        { name: 'sectionCode', value: section_code },
-        { name: 'sectionName', value: section_name },
-        { name: 'description', value: description },
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'sectionCode', value: item.section_code },
+        { name: 'sectionName', value: item.section_name },
+        { name: 'description', value: item.description },
+        { name: 'registUser', value: item.regist_user },
+        { name: 'modifyUser', value: item.modify_user },
       ]
     );
 

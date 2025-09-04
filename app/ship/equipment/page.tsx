@@ -26,7 +26,7 @@ export default function ShipEquipmentPage() {
   const [equipments, setEquipments] = useState<Equipment[]>([])
   const [filteredEquipment, setFilteredEquipment] = useState(equipments)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [addEquipment, setAddEquipment] = useState<Equipment>()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -63,7 +63,7 @@ export default function ShipEquipmentPage() {
       )
     }
 
-    if (categoryFilter !== "all") {
+    if (categoryFilter !== "ALL") {
       filtered = filtered.filter((eq: { category: string }) => eq.category === categoryFilter)
     }
 
@@ -107,10 +107,16 @@ export default function ShipEquipmentPage() {
   }
 
   const handleAddSave = async () => {
+    const insertedData = {
+      ...addEquipment,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/ship/equipment/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addEquipment),
+      body: JSON.stringify(insertedData),
     });
 
     const data = await res.json();
@@ -131,10 +137,16 @@ export default function ShipEquipmentPage() {
   }
 
   const handleEditSave = async () => {
+    const updatedData = {
+      ...selectedEquipment,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
     const res = await fetch('/api/ship/equipment/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedEquipment),
+      body: JSON.stringify(updatedData),
     });
 
     const data = await res.json();
@@ -147,6 +159,13 @@ export default function ShipEquipmentPage() {
     } else {
       alert(data.message);
     }
+  }
+  
+  // Function to handle history button click
+  const handleDetailsClick = (vesselNo: string, equipName: string) => {
+    const encodedParam = encodeURIComponent(equipName);
+    
+    window.location.href = `/ship/execution?equipName=${encodedParam}`;
   }
 
   return (
@@ -165,7 +184,11 @@ export default function ShipEquipmentPage() {
             <div className="flex justify-end">
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" style={{cursor: 'pointer'}}>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700" 
+                    style={{cursor: 'pointer'}}
+                    disabled={userInfo.user_auth !== 'VADMIN'}
+                  >
                     <Plus className="w-4 h-4 mr-2" />새 장비 등록
                   </Button>
                 </DialogTrigger>
@@ -200,11 +223,9 @@ export default function ShipEquipmentPage() {
                           <SelectValue placeholder="카테고리 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PROBULSION">추진시스템</SelectItem>
-                          <SelectItem value="POWER">전력시스템</SelectItem>
-                          <SelectItem value="NAVIGATIONAL">항해장비</SelectItem>
-                          <SelectItem value="SAFETY">안전장비</SelectItem>
-                          <SelectItem value="COMMUNICATION">통신장비</SelectItem>
+                          <SelectItem value="ENGINE">Engine</SelectItem>
+                          <SelectItem value="DECK">Deck</SelectItem>
+                          <SelectItem value="ETC">Etc</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -289,12 +310,10 @@ export default function ShipEquipmentPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 카테고리</SelectItem>
-                    <SelectItem value="추진시스템">추진시스템</SelectItem>
-                    <SelectItem value="전력시스템">전력시스템</SelectItem>
-                    <SelectItem value="항해장비">항해장비</SelectItem>
-                    <SelectItem value="안전장비">안전장비</SelectItem>
-                    <SelectItem value="통신장비">통신장비</SelectItem>
+                    <SelectItem value="ALL">전체 카테고리</SelectItem>
+                    <SelectItem value="ENGINE">Engine</SelectItem>
+                    <SelectItem value="DECK">Deck</SelectItem>
+                    <SelectItem value="ETC">Etc</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -319,7 +338,12 @@ export default function ShipEquipmentPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEditDialogOpen(item)} style={{cursor: 'pointer'}}
+                        disabled={userInfo.user_auth !== 'VADMIN'}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                     </div>
@@ -357,7 +381,15 @@ export default function ShipEquipmentPage() {
                           <span className="text-sm">다음: {item.due_date}</span>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" style={{cursor: 'pointer'}}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDetailsClick(item.vessel_no, item.equip_name)
+                        }}
+                        style={{cursor: 'pointer'}}
+                      >
                         <Settings className="w-4 h-4 mr-2" />
                         상세보기
                       </Button>
@@ -415,13 +447,9 @@ export default function ShipEquipmentPage() {
                         <SelectValue placeholder="카테고리 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PROBULSION">추진시스템</SelectItem>
-                        <SelectItem value="POWER">전력시스템</SelectItem>
-                        <SelectItem value="NAVIGATIONAL">항해장비</SelectItem>
-                        <SelectItem value="COMMUNICATION">통신장비</SelectItem>
-                        <SelectItem value="SAFETY">안전장비</SelectItem>
-                        <SelectItem value="UNLOADING">하역장비</SelectItem>
-                        <SelectItem value="OTHER">기타장비</SelectItem>
+                        <SelectItem value="ENGINE">Engine</SelectItem>
+                        <SelectItem value="DECK">Deck</SelectItem>
+                        <SelectItem value="ETC">Etc</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

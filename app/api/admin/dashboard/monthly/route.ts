@@ -32,7 +32,7 @@ export async function GET(req: Request) {
             , convert(varchar(10), b.next_due_date, 121) as next_due_date 
             , convert(varchar(10), b.extension_date, 121) as extension_date 
             , case when b.due_date < getdate() and b.lastest_date < getdate() and b.extension_date >= getdate() then 'EXTENSION'
-                    when b.due_date < getdate() then 'DELAY' 
+                    when b.due_date < getdate() then 'DELAYED' 
                     when b.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)) then 'COMPLATE'
                     else 'NORMAL' end as status
             , datediff(day, getdate(), b.due_date) as days_until
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
           and b.due_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.due_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0))
-          and (b.extension_date is null or (b.extension_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.extension_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0))))`,
+          and b.extension_date is null or (b.extension_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.extension_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)))`,
       [
         { name: 'vesselNo', value: vessel_no },
       ]

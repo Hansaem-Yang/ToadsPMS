@@ -69,6 +69,7 @@ export default function MaintenanceExecutionPage() {
     extension_seq: "",
     extension_date: "",
     extension_reason: "",
+    request_date: "",
     due_date: "",
     next_due_date: "",
     applicant: "",
@@ -227,6 +228,11 @@ export default function MaintenanceExecutionPage() {
       body: JSON.stringify(insertedData),
     });
     
+    if (!res.ok)
+    {
+      alert('작업 실행 등록 중 오류가 발생하였습니다.');
+      return;
+    }
     // 선택된 작업들의 상태를 완료로 업데이트
     setEquipmentWorks((prev) =>
       prev.map((eq) => ({

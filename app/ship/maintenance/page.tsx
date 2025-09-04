@@ -236,7 +236,7 @@ export default function MaintenanceWorkManagementPage() {
                   size="sm" 
                   onClick={() => handleEditMaintenanceDialogOpen(item)} 
                   style={{cursor: 'pointer'}}
-                  disabled
+                  disabled={userInfo.user_auth !== 'VADMIN'}
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
@@ -287,7 +287,7 @@ export default function MaintenanceWorkManagementPage() {
                   size="sm" 
                   onClick={() => handleEditSectionDialogOpen(item)} 
                   style={{cursor: 'pointer'}}
-                  disabled
+                  disabled={userInfo.user_auth !== 'VADMIN'}
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
@@ -617,7 +617,8 @@ export default function MaintenanceWorkManagementPage() {
                       className="bg-blue-600 hover:bg-blue-700" 
                       onClick={handleAddSectionDialogOpen} 
                       style={{cursor: 'pointer'}}
-                      disabled>
+                      disabled={userInfo.user_auth !== 'VADMIN'}
+                    >
                       <Plus className="w-4 h-4 mr-2" />새 섹션 추가
                     </Button>
                   </DialogTrigger>
@@ -689,7 +690,8 @@ export default function MaintenanceWorkManagementPage() {
                       className="bg-blue-600 hover:bg-blue-700" 
                       onClick={handleAddMaintenanceDialogOpen} 
                       style={{cursor: 'pointer'}}
-                      disabled>
+                      disabled={userInfo.user_auth !== 'VADMIN'}
+                    >
                       <Plus className="w-4 h-4 mr-2" />새 작업 추가
                     </Button>
                   </DialogTrigger>

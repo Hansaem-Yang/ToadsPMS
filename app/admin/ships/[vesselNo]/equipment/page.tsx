@@ -191,7 +191,6 @@ export default function ShipEquipmentPage() {
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700" 
                     style={{cursor: 'pointer'}}
-                    disabled={userInfo.user_auth !== 'ADMIN'}
                   >
                     <Plus className="w-4 h-4 mr-2" />새 장비 등록
                   </Button>
@@ -347,7 +346,6 @@ export default function ShipEquipmentPage() {
                         size="sm" 
                         onClick={() => handleEditDialogOpen(item)} 
                         style={{cursor: 'pointer'}}
-                        disabled={userInfo.user_auth !== 'ADMIN'}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>

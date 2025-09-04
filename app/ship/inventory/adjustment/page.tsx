@@ -427,9 +427,7 @@ export default function InventoryAdjustmentPage() {
                                   onClick={() => handleAdjustment(part, selectedEquipmentData.equipmentName)}
                                   size="sm"
                                   variant="outline"
-                                  disabled={
-                                    part.actualStock === "" || Number.parseInt(part.actualStock) === part.systemStock
-                                  }
+                                  disabled={part.actualStock === "" || Number.parseInt(part.actualStock) === part.systemStock}
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>

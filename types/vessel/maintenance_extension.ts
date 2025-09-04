@@ -8,12 +8,13 @@ export interface MaintenanceExtension {
     extension_seq: string;
     extension_date: string;
     extension_reason: string;
-    due_date: string;
-    next_due_date: string;
+    request_date: string;
     applicant: string;
     approval_status: string;
     approval_date: string;
     approver: string;
+    due_date: string;
+    next_due_date: string;
     regist_date: string;
     regist_user: string;
     modify_date: string;

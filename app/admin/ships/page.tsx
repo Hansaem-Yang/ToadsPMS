@@ -246,7 +246,6 @@ export default function ShipManagementPage() {
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700" 
                     style={{cursor: 'pointer'}}
-                    disabled={userInfo.user_auth !== 'ADMIN'}
                   >
                     <Plus className="w-4 h-4 mr-2" />새 선박 등록
                   </Button>
@@ -387,7 +386,6 @@ export default function ShipManagementPage() {
                         onClick={() => handleExcelUpload(item)} 
                         style={{cursor: 'pointer'}} 
                         title="엑셀 파일 업로드"
-                        disabled={userInfo.user_auth !== 'ADMIN'}
                       >
                         <Sheet className="w-4 h-4" />
                       </Button>
@@ -397,7 +395,6 @@ export default function ShipManagementPage() {
                         onClick={() => handleEditDialogOpen(item)} 
                         style={{cursor: 'pointer'}} 
                         title="선박 수정"
-                        disabled={userInfo.user_auth !== 'ADMIN'}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>

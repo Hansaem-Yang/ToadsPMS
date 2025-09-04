@@ -238,7 +238,6 @@ export default function ShipManagementPage() {
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700" 
                     style={{cursor: 'pointer'}}
-                    disabled={userInfo.user_auth !== 'ADMIN'}
                   >
                     <Plus className="w-4 h-4 mr-2" />새 사용자 등록
                   </Button>
@@ -330,6 +329,7 @@ export default function ShipManagementPage() {
                         <SelectContent>
                           <SelectItem value="ADMIN">육상 관리자</SelectItem>
                           <SelectItem value="USER">육상 사용자</SelectItem>
+                          <SelectItem value="VADMIN">선박 관리자</SelectItem>
                           <SelectItem value="VESSEL">선박 사용자</SelectItem>
                         </SelectContent>
                       </Select>
@@ -427,7 +427,6 @@ export default function ShipManagementPage() {
                         size="sm" 
                         onClick={() => handleEditDialogOpen(item)} 
                         style={{cursor: 'pointer'}}
-                        disabled={userInfo.user_auth !== 'ADMIN'}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -551,7 +550,7 @@ export default function ShipManagementPage() {
                         <SelectValue placeholder="선박 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                          <SelectItem key=' ' value=' '>선박 선택</SelectItem>
+                        <SelectItem key=' ' value=' '>선박 선택</SelectItem>
                         {vessels.map(vessel => (
                           <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>{vessel.vessel_short_name} - {vessel.vessel_name}</SelectItem>
                         ))}
@@ -569,6 +568,7 @@ export default function ShipManagementPage() {
                       <SelectContent>
                         <SelectItem value="ADMIN">본사 관리자</SelectItem>
                         <SelectItem value="USER">본사 사용자</SelectItem>
+                        <SelectItem value="VADMIN">선박 관리자</SelectItem>
                         <SelectItem value="VESSEL">선박 사용자</SelectItem>
                       </SelectContent>
                     </Select>

@@ -137,22 +137,22 @@ export default function MaintenanceWorkManagementPage() {
     const cells = []
 
     cells.push(
-      <td key="code" className="py-3 text-gray-500">
+      <td key="code" className="py-3 text-gray-500 text-center">
         {`${item.equip_no}-${item.section_code}-${item.plan_code}`}
       </td>,
-      <td key="section" className="py-3 font-bold text-gray-500">
+      <td key="section" className="py-3 text-gray-500">
         {item.section_name}
       </td>,
-      <td key="maintenance" className="py-3 font-bold text-gray-500">
+      <td key="maintenance" className="py-3 text-gray-500">
         {item.plan_name}
       </td>,
-      <td key="interval" className="py-3 text-center font-bold text-gray-500">
+      <td key="interval" className="py-3 text-center text-gray-500">
         {`${item.interval} ${item.interval_term}`}
       </td>,
-      <td key="last_date" className="py-3 text-center font-bold text-gray-500">
+      <td key="last_date" className="py-3 text-center text-gray-500">
         {item.last_date}
       </td>,
-      <td key="due_date" className="py-3 text-center">
+      <td key="due_date" className="py-3 text-center text-gray-500">
         {item.due_date}
       </td>
     )
@@ -163,7 +163,7 @@ export default function MaintenanceWorkManagementPage() {
       
       return (
         cells.push(
-          <td key={`work_date_${count}`} className="py-3 text-center">
+          <td key={`work_date_${count}`} className="py-3 text-center text-gray-500">
             {work}
           </td>
         )
@@ -172,7 +172,7 @@ export default function MaintenanceWorkManagementPage() {
 
     for (let i = count + 1; i <= 5; i++) {
       cells.push(
-        <td key={`work_date_${i}`} className="py-3 text-center"></td>
+        <td key={`work_date_${i}`} className="py-3 text-center text-gray-500"></td>
       )
     }
 

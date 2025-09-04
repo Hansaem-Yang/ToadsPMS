@@ -5,11 +5,6 @@ import { Equipment } from '@/types/performance/equipment';
 import { Maintenance } from '@/types/performance/maintenance';
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-
-  const vesselNo = searchParams.get('vesselNo');
-  const equipNo = searchParams.get('equipNo');
-
   try {
     // DB에서 데쉬보드 정보 확인
     const items: Maintenance[] = await query(
@@ -41,23 +36,23 @@ export async function GET(req: Request) {
             on c.vessel_no = d.vessel_no
            and c.equip_no = d.equip_no
            and c.section_code = d.section_code
-           left outer join (select a1.vessel_no
-                                 , a1.equip_no
-                                 , a1.section_code
-                                 , a1.plan_code
-                                 , a1.work_date
-                             from (select vessel_no
-                                         , equip_no
-                                         , section_code
-                                         , plan_code
-                                         , work_date
-                                         , ROW_NUMBER() OVER (
-                                               PARTITION BY vessel_no, equip_no, section_code, plan_code
-                                               ORDER BY work_date DESC
-                                           ) AS rownum
-                                     from [maintenance_work]) as a1
-                                     where a1.rownum <= 5) as e
-             on d.vessel_no = e.vessel_no
+          left outer join (select a1.vessel_no
+                                , a1.equip_no
+                                , a1.section_code
+                                , a1.plan_code
+                                , a1.work_date
+                            from (select vessel_no
+                                       , equip_no
+                                       , section_code
+                                       , plan_code
+                                       , work_date
+                                       , ROW_NUMBER() OVER (
+                                             PARTITION BY vessel_no, equip_no, section_code, plan_code
+                                             ORDER BY work_date DESC
+                                         ) AS rownum
+                                   from [maintenance_work]) as a1
+                                  where a1.rownum <= 5) as e
+            on d.vessel_no = e.vessel_no
            and d.equip_no = e.equip_no
            and d.section_code = e.section_code
            and d.plan_code = e.plan_code

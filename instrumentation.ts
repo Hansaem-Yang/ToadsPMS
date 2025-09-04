@@ -2,8 +2,35 @@
 
 // 이 함수는 서버가 시작될 때 딱 한 번만 호출됩니다.
 export async function register() {
-
   const siteUrl = process.env.LOCAL_SITE_URL;
+    
+  fetch(`${siteUrl}/api/scheduler/send`)
+    .then(res => {
+      if (!res.ok) {
+        console.error('Failed to trigger cron job:', res.statusText);
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('Cron job trigger response:', data);
+    })
+    .catch(err => {
+      console.error('Error triggering cron job:', err);
+    });
+
+  fetch(`${siteUrl}/api/scheduler/receive`)
+    .then(res => {
+      if (!res.ok) {
+        console.error('Failed to trigger cron job:', res.statusText);
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('Cron job trigger response:', data);
+    })
+    .catch(err => {
+      console.error('Error triggering cron job:', err);
+    });
     
   if (process.env.NODE_ENV === 'production') {
     const cron = await import('node-cron');

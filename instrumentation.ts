@@ -42,5 +42,5 @@ export async function register() {
   //         console.error('Error triggering cron job:', err);
   //       });
   //   });
-  // }
+  }
 }

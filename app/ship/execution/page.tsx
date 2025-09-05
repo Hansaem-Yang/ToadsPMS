@@ -594,7 +594,7 @@ export default function MaintenanceExecutionPage() {
                               <Input
                                 type="number"
                                 placeholder="시간"
-                                value={task.work_hours}
+                                defaultValue={task.work_hours}
                                 onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_hours", e.target.value)}
                                 className="text-sm"
                               />
@@ -604,7 +604,7 @@ export default function MaintenanceExecutionPage() {
                               <Input
                                 type="date"
                                 placeholder="시간"
-                                value={task.next_due_date}
+                                defaultValue={task.next_due_date}
                                 className="text-sm"
                                 disabled
                               />
@@ -614,7 +614,7 @@ export default function MaintenanceExecutionPage() {
                             <Label className="text-xs">사용 부품</Label>
                             <Input
                               placeholder="부품명"
-                              value={task.used_parts}
+                              defaultValue={task.used_parts}
                               onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
                               className="text-sm"
                             />
@@ -623,7 +623,7 @@ export default function MaintenanceExecutionPage() {
                             <Label className="text-xs">작업 내용</Label>
                             <Textarea
                               placeholder="이 작업에 대한 내용..."
-                              value={task.work_details}
+                              defaultValue={task.work_details}
                               onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_details", e.target.value)}
                               rows={2}
                               className="text-sm"
@@ -634,7 +634,7 @@ export default function MaintenanceExecutionPage() {
                               <Label className="text-xs">지연 사유</Label>
                               <Textarea
                                 placeholder="이 작업에 대한 지연 사유..."
-                                value={task.delay_reason}
+                                defaultValue={task.delay_reason}
                                 onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "delay_reason", e.target.value)}
                                 rows={2}
                                 className="text-sm"
@@ -677,7 +677,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="number"
                         placeholder="시간"
-                        value={selectedWork.work_hours}
+                        defaultValue={selectedWork.work_hours}
                         onChange={(e) => updateTaskData(selectedWork.equip_no, selectedWork.section_code, selectedWork.plan_code, "work_hours", e.target.value)}
                         className="text-sm"
                       />
@@ -687,7 +687,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="시간"
-                        value={selectedWork.next_due_date}
+                        defaultValue={selectedWork.next_due_date}
                         className="text-sm"
                         disabled
                       />
@@ -698,7 +698,7 @@ export default function MaintenanceExecutionPage() {
                     <Input
                       id="parts-used"
                       placeholder="부품명"
-                      value={selectedWork.used_parts}
+                      defaultValue={selectedWork.used_parts}
                       onChange={(e) => setExecutionResult((prev) => ({ ...prev, used_parts: e.target.value }))}
                     />
                   </div>
@@ -707,7 +707,7 @@ export default function MaintenanceExecutionPage() {
                     <Textarea
                       id="notes"
                       placeholder="이 작업에 대한 내용을 입력하세요..."
-                      value={selectedWork.work_details}
+                      defaultValue={selectedWork.work_details}
                       onChange={(e) => setExecutionResult((prev) => ({ ...prev, work_details: e.target.value }))}
                       rows={3}
                     />
@@ -717,7 +717,7 @@ export default function MaintenanceExecutionPage() {
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
                         placeholder="이 작업에 대한 지연 사유..."
-                        value={selectedWork.delay_reason}
+                        defaultValue={selectedWork.delay_reason}
                         onChange={(e) => setExecutionResult((prev) => ({ ...prev, delay_reason: e.target.value }))}
                         rows={2}
                         className="text-sm"

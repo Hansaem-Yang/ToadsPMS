@@ -80,6 +80,7 @@ export default function MaintenanceExecutionPage() {
     regist_user: "",
     modify_date: "",
     modify_user: "",
+    approval_reason: ""
   };
 
   const [userInfo, setUserInfo] = useState<any>(null)

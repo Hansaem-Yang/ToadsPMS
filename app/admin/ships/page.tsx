@@ -437,7 +437,7 @@ export default function ShipManagementPage() {
                         style={{cursor: 'pointer'}}
                       >
                         <Wrench className="w-4 h-4 mr-2" />
-                        정비 계획
+                        정비 관리
                       </Button>
                     </div>
                   </div>

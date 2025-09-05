@@ -16,6 +16,7 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/admin/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/admin/ships", label: "선박 관리", icon: Ship },
     { href: "/admin/maintenance", label: "정비 현황", icon: Wrench },
+    { href: "/admin/maintenance/extension", label: "정비 연장 신청 현황", icon: List },
     { href: "/admin/maintenance/performance", label: "정비 실적 현황", icon: List },
     { href: "/admin/calendar", label: "작업 캘린더", icon: Calendar },
     { href: "/admin/users", label: "사용자 관리", icon: Users },
@@ -25,6 +26,7 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/admin/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/admin/ships", label: "선박 관리", icon: Ship },
     { href: "/admin/maintenance", label: "정비 현황", icon: Wrench },
+    { href: "/admin/maintenance/extension", label: "정비 연장 신청 현황", icon: List },
     { href: "/admin/maintenance/performance", label: "정비 실적 현황", icon: List },
     { href: "/admin/calendar", label: "작업 캘린더", icon: Calendar },
   ]

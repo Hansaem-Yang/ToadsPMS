@@ -38,7 +38,7 @@ export async function POST(req: Request) {
           , @extensionReason
           , getdate()
           , @applicant
-          , 'R'
+          , 'REQUEST'
           , getdate()
           , @registUser
       );`,

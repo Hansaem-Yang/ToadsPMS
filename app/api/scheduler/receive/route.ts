@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
   try {
     const lastReceiveDates: any[] = await query(
-      `select convert(varchar(10), isnull(max(a.last_receive_date), getdate()), 121) as last_receive_date
+      `select max(a.last_receive_date) as last_receive_date
          from (select last_receive_date
                  from [vessel]
                 where vessel_no = @vesselNo
@@ -37,7 +37,9 @@ export async function GET(req: Request) {
       [
         { name: 'vesselNo', value: vesselNo }
       ]
-    );
+    ); 
+
+    console.log(`${vesselNo}, ${lastReceiveDates[0].last_receive_date}`)
     
     const sendPmsData : PMSData = {
       vessel_no: vesselNo,
@@ -61,6 +63,7 @@ export async function GET(req: Request) {
     if (response.ok) {
       const receivePmsData = await response.json();
 
+      console.log(receivePmsData);
       const sql = await getSql();
       const pool = await getPool();
       const transantion = pool.transaction();
@@ -159,7 +162,7 @@ export async function GET(req: Request) {
                       , regist_date
                       , regist_user)
                 values (b.vessel_no
-                      , (select format(isnull(max(equip_no), 0) + 1, '00') from [equipment] where vessel_no = b.vessel_no)
+                      , b.equip_no
                       , b.equip_name
                       , b.category
                       , b.manufacturer
@@ -218,7 +221,7 @@ export async function GET(req: Request) {
                       , regist_user)
                 values (b.vessel_no
                       , b.equip_no
-                      , (select format(isnull(max(section_code), 0) + 1, '000') from [section] where vessel_no = b.vessel_no and equip_no = b.equip_no)
+                      , b.section_code
                       , b.section_name
                       , b.description
                       , getdate()
@@ -317,7 +320,7 @@ export async function GET(req: Request) {
                 values (b.vessel_no
                       , b.equip_no
                       , b.section_code
-                      , (select format(isnull(max(plan_code), 0) + 1, '000') from [maintenance_plan] where vessel_no = b.vessel_no and equip_no = b.equip_no and section_code = b.section_code)
+                      , b.plan_code
                       , b.plan_name
                       , b.manufacturer
                       , b.model

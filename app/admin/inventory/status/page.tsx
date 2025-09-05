@@ -316,7 +316,7 @@ export default function InventoryStatusPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
         <div className="w-64 bg-white shadow-sm border-r">
           <div className="p-6">

@@ -242,7 +242,7 @@ export default function AdminCalendarPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-hidden">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
         <Sidebar userType={userInfo.user_auth} />
         <main className="flex-1 p-6 overflow-y-auto">

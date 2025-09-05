@@ -127,7 +127,7 @@ export default function InitialStockPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = requireAuth()
       setUserInfo(user)
       if (mockShipInventoryData.equipment.length > 0) {
         setSelectedEquipment(mockShipInventoryData.equipment[0].equipmentId)

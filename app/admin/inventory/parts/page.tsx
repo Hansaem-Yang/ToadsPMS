@@ -40,7 +40,10 @@ const mockShips = [
   { id: "SHIP-003", name: "인천호" },
 ]
 
-const mockEquipment = {
+interface MockEquipment {
+  [key: string]: any[] | undefined;
+}
+const mockEquipment: MockEquipment = {
   "SHIP-001": [
     { id: "EQ-001", name: "주엔진" },
     { id: "EQ-002", name: "보조엔진" },
@@ -160,8 +163,10 @@ export default function PartsManagementPage() {
 
   const getEquipmentName = (equipmentId: string) => {
     for (const shipEquipment of Object.values(mockEquipment)) {
-      const equipment = shipEquipment.find((eq) => eq.id === equipmentId)
-      if (equipment) return equipment.name
+      if (shipEquipment) {
+        const equipment = shipEquipment.find((eq) => eq.id === equipmentId)
+        if (equipment) return equipment.name
+      }
     }
     return ""
   }

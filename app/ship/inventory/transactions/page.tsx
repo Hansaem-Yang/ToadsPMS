@@ -142,7 +142,7 @@ export default function ShipInventoryTransactionsPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = requireAuth()
       setUserInfo(user)
       // Set default date range (last 7 days)
       const today = new Date()

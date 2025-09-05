@@ -122,7 +122,7 @@ export default function ShipInventoryLossPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = requireAuth()
       setUserInfo(user)
       setRegistrant(user.username || "")
     } catch (error) {

@@ -89,7 +89,7 @@ export default function ShipInventoryPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = requireAuth()
       setUserInfo(user)
     } catch (error) {
       // Redirect handled by requireAuth

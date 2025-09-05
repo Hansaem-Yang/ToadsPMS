@@ -94,7 +94,7 @@ export default function ShipWarehouseManagementPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = requireAuth()
       setUserInfo(user)
     } catch (error) {
       // Redirect handled by requireAuth

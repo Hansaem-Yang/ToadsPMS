@@ -49,7 +49,7 @@ export default function TaskListPage() {
     let filtered = maintenances;
 
     // Filter by ship ID if specified
-    if (vesselNo) {
+    if (vesselNo && filtered.length > 0) {
       filtered = filtered.filter((task: { vessel_no: string }) => task.vessel_no === vesselNo);
     }
 

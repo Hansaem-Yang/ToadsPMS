@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Package, BarChart3, AlertTriangle, History } from "lucide-react"
 
 export default function InventoryStatisticsPage() {
   const router = useRouter()
+  const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("statistics")
 
   const menuItems = [
@@ -18,6 +20,15 @@ export default function InventoryStatisticsPage() {
     { id: "statistics", label: "통계", icon: BarChart3 },
     { id: "parts", label: "부품 관리", icon: Package },
   ]
+    
+  useEffect(() => {
+    try {
+      const user = requireAuth()
+      setUserInfo(user)
+    } catch (error) {
+      // Redirect handled by requireAuth
+    }
+  }, [])
 
   const handleMenuClick = (menuId: string) => {
     if (menuId === "dashboard") {

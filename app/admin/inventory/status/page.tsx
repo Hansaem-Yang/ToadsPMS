@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -159,6 +160,7 @@ const shipList = [
 
 export default function InventoryStatusPage() {
   const router = useRouter()
+  const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("status")
   const [selectedPeriod, setSelectedPeriod] = useState<"daily" | "weekly" | "monthly">("daily")
   const [selectedGroupBy, setSelectedGroupBy] = useState<"ship" | "equipment" | "part">("ship")
@@ -252,6 +254,15 @@ export default function InventoryStatusPage() {
     )
     return headers
   }
+    
+  useEffect(() => {
+    try {
+      const user = requireAuth()
+      setUserInfo(user)
+    } catch (error) {
+      // Redirect handled by requireAuth
+    }
+  }, [])
 
   const getTableCells = (item: any, index: number) => {
     const cells = []

@@ -108,7 +108,7 @@ export default function AdminInventoryLossPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("admin")
+      const user = requireAuth()
       setUserInfo(user)
     } catch (error) {
       // Redirect handled by requireAuth

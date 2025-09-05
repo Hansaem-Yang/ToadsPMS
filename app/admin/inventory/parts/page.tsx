@@ -2,8 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -93,6 +94,7 @@ const initialParts = [
 
 export default function PartsManagementPage() {
   const router = useRouter()
+  const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("parts")
   const [selectedShip, setSelectedShip] = useState<string>("ALL")
   const [selectedEquipment, setSelectedEquipment] = useState<string>("ALL")
@@ -134,6 +136,15 @@ export default function PartsManagementPage() {
       router.push("/admin/inventory/parts")
     }
   }
+  
+  useEffect(() => {
+    try {
+      const user = requireAuth()
+      setUserInfo(user)
+    } catch (error) {
+      // Redirect handled by requireAuth
+    }
+  }, [])
 
   const getFilteredParts = () => {
     return parts.filter((part) => {

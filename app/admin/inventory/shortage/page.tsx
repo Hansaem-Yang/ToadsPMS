@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -85,6 +86,7 @@ const mockShortageData = [
 
 export default function ShortagePage() {
   const router = useRouter()
+  const [userInfo, setUserInfo] = useState<any>(null)
   const [selectedShip, setSelectedShip] = useState<string>("ALL")
   const [selectedPriority, setSelectedPriority] = useState<string>("ALL")
   const [searchTerm, setSearchTerm] = useState("")
@@ -98,6 +100,15 @@ export default function ShortagePage() {
     { id: "statistics", label: "통계", icon: BarChart3 },
     { id: "parts", label: "부품 관리", icon: Package },
   ]
+    
+  useEffect(() => {
+    try {
+      const user = requireAuth()
+      setUserInfo(user)
+    } catch (error) {
+      // Redirect handled by requireAuth
+    }
+  }, [])
 
   const handleMenuClick = (menuId: string) => {
     if (menuId === "dashboard") {

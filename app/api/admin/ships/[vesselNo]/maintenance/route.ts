@@ -112,7 +112,8 @@ export async function GET(req: Request) {
         sectionCode = item.section_code;
       }
 
-      section.children.push(item);
+      if (item.plan_code !== null)
+        section.children.push(item);
     });
 
     // 성공 시 데쉬보드 정보 반환

@@ -72,7 +72,8 @@ export async function GET(req: Request) {
                  left outer join [maintenance_plan] as d
                    on c.vessel_no = d.vessel_no
                   and c.equip_no = d.equip_no
-                  and c.section_code = d.section_code) as a
+                  and c.section_code = d.section_code
+                where a.use_yn = 'Y') as a
        order by a.vessel_no, a.equip_no, a.section_code, a.plan_code`);
 
 
@@ -207,12 +208,14 @@ export async function GET(req: Request) {
             sectionCode = item.section_code;
           }
 
-          maintenance = item;
-          maintenance.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
-          maintenance.name = item.plan_name;
-          maintenance.type = "TASK";
+          if (item.plan_code !== null) {
+            maintenance = item;
+            maintenance.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
+            maintenance.name = item.plan_name;
+            maintenance.type = "TASK";
 
-          section?.children.push(maintenance);
+            section?.children.push(maintenance);
+          }
         }
       }
     });

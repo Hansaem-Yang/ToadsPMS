@@ -990,8 +990,8 @@ export default function MaintenanceWorkManagementPage() {
           <Dialog open={isEditMaintenanceDialogOpen} onOpenChange={setIsEditMaintenanceDialogOpen}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>섹션 정보 수정</DialogTitle>
-                <DialogDescription>섹션의 정보를 수정하세요</DialogDescription>
+                <DialogTitle>유지보수 작업 정보 수정</DialogTitle>
+                <DialogDescription>유지보수 작업의 정보를 수정하세요</DialogDescription>
               </DialogHeader>
               {selectedMaintenance && (
                 <div className="grid grid-cols-2 gap-4 py-4">

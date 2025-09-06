@@ -106,7 +106,7 @@ export default function ShipCalendarPage() {
       case "CMS":
         return <Badge variant="default" className="text-xs">CMS</Badge>
       default:
-        return <Badge variant="outline" className="text-xs">{status}</Badge>
+        return ''
     }
   }
 

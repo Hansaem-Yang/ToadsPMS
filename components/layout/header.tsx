@@ -31,7 +31,7 @@ export function Header({ userType }: HeaderProps) {
             <Ship className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div onClick={Home}><h1 className="text-xl font-bold text-gray-900">선박 유지보수 관리</h1></div>
+            <div onClick={Home} style={{cursor: 'pointer'}}><h1 className="text-xl font-bold text-gray-900">선박 유지보수 관리</h1></div>
             <p className="text-sm text-gray-500">
               {userInfo.user_auth === "ADMIN" ? "본사 관리자" : userInfo.user_auth === "USER" ? "본사 사용자" : `선박 사용자 - ${userInfo.ship_no}`}
             </p>

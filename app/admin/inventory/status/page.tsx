@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -160,7 +159,6 @@ const shipList = [
 
 export default function InventoryStatusPage() {
   const router = useRouter()
-  const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("status")
   const [selectedPeriod, setSelectedPeriod] = useState<"daily" | "weekly" | "monthly">("daily")
   const [selectedGroupBy, setSelectedGroupBy] = useState<"ship" | "equipment" | "part">("ship")
@@ -206,7 +204,7 @@ export default function InventoryStatusPage() {
   }
 
   const handleShipClick = (shipName: string) => {
-    const shipId = shipList.find((ship) => ship.name === shipName)?.id || "ALL"
+    const shipId = shipList.find((ship) => ship.name === shipName)?.id || "all"
     router.push(`/admin/inventory/ship/${shipId}?period=${selectedPeriod}`)
   }
 
@@ -254,15 +252,6 @@ export default function InventoryStatusPage() {
     )
     return headers
   }
-    
-  useEffect(() => {
-    try {
-      const user = requireAuth()
-      setUserInfo(user)
-    } catch (error) {
-      // Redirect handled by requireAuth
-    }
-  }, [])
 
   const getTableCells = (item: any, index: number) => {
     const cells = []
@@ -327,7 +316,7 @@ export default function InventoryStatusPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header userType={userInfo.user_auth} />
+      <Header />
       <div className="flex">
         <div className="w-64 bg-white shadow-sm border-r">
           <div className="p-6">

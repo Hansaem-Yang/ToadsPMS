@@ -111,7 +111,7 @@ export default function PartsReceivingPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth()
+      const user = requireAuth("ship")
       setUserInfo(user)
     } catch (error) {
       // Redirect handled by requireAuth
@@ -228,7 +228,7 @@ export default function PartsReceivingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header userType={userInfo.user_auth} />
+      <Header />
       <div className="flex">
         <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
           <div className="p-4">

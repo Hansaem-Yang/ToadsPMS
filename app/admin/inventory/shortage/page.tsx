@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -86,9 +85,8 @@ const mockShortageData = [
 
 export default function ShortagePage() {
   const router = useRouter()
-  const [userInfo, setUserInfo] = useState<any>(null)
-  const [selectedShip, setSelectedShip] = useState<string>("ALL")
-  const [selectedPriority, setSelectedPriority] = useState<string>("ALL")
+  const [selectedShip, setSelectedShip] = useState<string>("all")
+  const [selectedPriority, setSelectedPriority] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [activeMenu, setActiveMenu] = useState("shortage")
 
@@ -100,15 +98,6 @@ export default function ShortagePage() {
     { id: "statistics", label: "통계", icon: BarChart3 },
     { id: "parts", label: "부품 관리", icon: Package },
   ]
-    
-  useEffect(() => {
-    try {
-      const user = requireAuth()
-      setUserInfo(user)
-    } catch (error) {
-      // Redirect handled by requireAuth
-    }
-  }, [])
 
   const handleMenuClick = (menuId: string) => {
     if (menuId === "dashboard") {
@@ -144,8 +133,8 @@ export default function ShortagePage() {
   }
 
   const filteredShortageData = mockShortageData.filter((item) => {
-    const matchesShip = selectedShip === "ALL" || item.shipId === selectedShip
-    const matchesPriority = selectedPriority === "ALL" || item.priority === selectedPriority
+    const matchesShip = selectedShip === "all" || item.shipId === selectedShip
+    const matchesPriority = selectedPriority === "all" || item.priority === selectedPriority
     const matchesSearch =
       item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.partCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,7 +149,7 @@ export default function ShortagePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header userType={userInfo.user_auth} />
+      <Header />
       <div className="flex">
         <div className="w-64 bg-white shadow-sm border-r">
           <div className="p-6">
@@ -253,7 +242,7 @@ export default function ShortagePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ALL">전체 선박</SelectItem>
+                      <SelectItem value="all">전체 선박</SelectItem>
                       <SelectItem value="SHIP-001">한국호</SelectItem>
                       <SelectItem value="SHIP-002">부산호</SelectItem>
                     </SelectContent>
@@ -263,7 +252,7 @@ export default function ShortagePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ALL">전체 우선순위</SelectItem>
+                      <SelectItem value="all">전체 우선순위</SelectItem>
                       <SelectItem value="높음">높음</SelectItem>
                       <SelectItem value="중간">중간</SelectItem>
                       <SelectItem value="낮음">낮음</SelectItem>

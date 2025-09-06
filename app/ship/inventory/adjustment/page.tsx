@@ -102,7 +102,7 @@ export default function InventoryAdjustmentPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth()
+      const user = requireAuth("ship")
       setUserInfo(user)
       if (mockShipInventoryData.equipment.length > 0) {
         setSelectedEquipment(mockShipInventoryData.equipment[0].equipmentId)
@@ -257,7 +257,7 @@ export default function InventoryAdjustmentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header userType={userInfo.user_auth} />
+      <Header />
       <div className="flex">
         <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
           <div className="p-4">
@@ -427,7 +427,9 @@ export default function InventoryAdjustmentPage() {
                                   onClick={() => handleAdjustment(part, selectedEquipmentData.equipmentName)}
                                   size="sm"
                                   variant="outline"
-                                  disabled={part.actualStock === "" || Number.parseInt(part.actualStock) === part.systemStock}
+                                  disabled={
+                                    part.actualStock === "" || Number.parseInt(part.actualStock) === part.systemStock
+                                  }
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>

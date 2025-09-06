@@ -2,9 +2,8 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -40,10 +39,7 @@ const mockShips = [
   { id: "SHIP-003", name: "인천호" },
 ]
 
-interface MockEquipment {
-  [key: string]: any[] | undefined;
-}
-const mockEquipment: MockEquipment = {
+const mockEquipment = {
   "SHIP-001": [
     { id: "EQ-001", name: "주엔진" },
     { id: "EQ-002", name: "보조엔진" },
@@ -97,10 +93,9 @@ const initialParts = [
 
 export default function PartsManagementPage() {
   const router = useRouter()
-  const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("parts")
-  const [selectedShip, setSelectedShip] = useState<string>("ALL")
-  const [selectedEquipment, setSelectedEquipment] = useState<string>("ALL")
+  const [selectedShip, setSelectedShip] = useState<string>("all")
+  const [selectedEquipment, setSelectedEquipment] = useState<string>("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isExcelUploadOpen, setIsExcelUploadOpen] = useState(false)
@@ -139,20 +134,11 @@ export default function PartsManagementPage() {
       router.push("/admin/inventory/parts")
     }
   }
-  
-  useEffect(() => {
-    try {
-      const user = requireAuth()
-      setUserInfo(user)
-    } catch (error) {
-      // Redirect handled by requireAuth
-    }
-  }, [])
 
   const getFilteredParts = () => {
     return parts.filter((part) => {
-      if (selectedShip && selectedShip !== "ALL" && part.shipId !== selectedShip) return false
-      if (selectedEquipment && selectedEquipment !== "ALL" && part.equipmentId !== selectedEquipment) return false
+      if (selectedShip && selectedShip !== "all" && part.shipId !== selectedShip) return false
+      if (selectedEquipment && selectedEquipment !== "all" && part.equipmentId !== selectedEquipment) return false
       return true
     })
   }
@@ -163,16 +149,14 @@ export default function PartsManagementPage() {
 
   const getEquipmentName = (equipmentId: string) => {
     for (const shipEquipment of Object.values(mockEquipment)) {
-      if (shipEquipment) {
-        const equipment = shipEquipment.find((eq) => eq.id === equipmentId)
-        if (equipment) return equipment.name
-      }
+      const equipment = shipEquipment.find((eq) => eq.id === equipmentId)
+      if (equipment) return equipment.name
     }
     return ""
   }
 
   const handleAddPart = () => {
-    if (!selectedShip || selectedShip === "ALL" || !selectedEquipment || selectedEquipment === "ALL") {
+    if (!selectedShip || selectedShip === "all" || !selectedEquipment || selectedEquipment === "all") {
       alert("선박과 장비를 선택해주세요.")
       return
     }
@@ -299,7 +283,7 @@ export default function PartsManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header userType={userInfo.user_auth} />
+      <Header />
       <div className="flex">
         <div className="w-64 bg-white shadow-sm border-r">
           <div className="p-6">
@@ -497,7 +481,7 @@ export default function PartsManagementPage() {
                           <SelectValue placeholder="전체 선박" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체 선박</SelectItem>
+                          <SelectItem value="all">전체 선박</SelectItem>
                           {mockShips.map((ship) => (
                             <SelectItem key={ship.id} value={ship.id}>
                               {ship.name}
@@ -513,7 +497,7 @@ export default function PartsManagementPage() {
                           <SelectValue placeholder="전체 장비" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체 장비</SelectItem>
+                          <SelectItem value="all">전체 장비</SelectItem>
                           {availableEquipment.map((equipment) => (
                             <SelectItem key={equipment.id} value={equipment.id}>
                               {equipment.name}

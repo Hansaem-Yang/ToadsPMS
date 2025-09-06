@@ -161,32 +161,32 @@ export default function InventoryTransactionsPage() {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("transactions")
-  const [selectedShip, setSelectedShip] = useState<string>("ALL")
+  const [selectedShip, setSelectedShip] = useState<string>("all")
   const [startDate, setStartDate] = useState(getWeekAgoDate())
   const [endDate, setEndDate] = useState(getTodayDate())
 
-  const [selectedTransactionType, setSelectedTransactionType] = useState("ALL")
-  const [selectedEquipment, setSelectedEquipment] = useState("ALL")
-  const [selectedPart, setSelectedPart] = useState("ALL")
-  const [selectedWarehouse, setSelectedWarehouse] = useState("ALL")
+  const [selectedTransactionType, setSelectedTransactionType] = useState("all")
+  const [selectedEquipment, setSelectedEquipment] = useState("all")
+  const [selectedPart, setSelectedPart] = useState("all")
+  const [selectedWarehouse, setSelectedWarehouse] = useState("all")
   const [availableParts, setAvailableParts] = useState(mockPartsList)
 
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([])
   const [hasSearched, setHasSearched] = useState(false)
 
-  const [typeFilter, setTypeFilter] = useState("ALL")
+  const [typeFilter, setTypeFilter] = useState("all")
   const [equipmentFilter, setEquipmentFilter] = useState("")
   const [partFilter, setPartFilter] = useState("")
   const [warehouseFilter, setWarehouseFilter] = useState("")
 
   useEffect(() => {
-    if (selectedEquipment && selectedEquipment !== "ALL") {
+    if (selectedEquipment && selectedEquipment !== "all") {
       const equipmentPartIds =
         mockEquipmentPartMapping[selectedEquipment as keyof typeof mockEquipmentPartMapping] || []
       const filteredParts = mockPartsList.filter((part) => equipmentPartIds.includes(part.id))
       setAvailableParts(filteredParts)
-      if (selectedPart && selectedPart !== "ALL" && !equipmentPartIds.includes(selectedPart)) {
-        setSelectedPart("ALL")
+      if (selectedPart && selectedPart !== "all" && !equipmentPartIds.includes(selectedPart)) {
+        setSelectedPart("all")
       }
     } else {
       setAvailableParts(mockPartsList)
@@ -244,17 +244,17 @@ export default function InventoryTransactionsPage() {
     }
 
     // Filter by ship
-    if (selectedShip !== "ALL") {
+    if (selectedShip !== "all") {
       filtered = filtered.filter((transaction) => transaction.shipId === selectedShip)
     }
 
     // Filter by transaction type
-    if (selectedTransactionType !== "ALL") {
+    if (selectedTransactionType !== "all") {
       filtered = filtered.filter((transaction) => transaction.type === selectedTransactionType)
     }
 
     // Filter by equipment
-    if (selectedEquipment !== "ALL") {
+    if (selectedEquipment !== "all") {
       const equipment = mockEquipmentList.find((eq) => eq.id === selectedEquipment)
       if (equipment) {
         filtered = filtered.filter((transaction) => transaction.equipmentName === equipment.name)
@@ -262,7 +262,7 @@ export default function InventoryTransactionsPage() {
     }
 
     // Filter by part
-    if (selectedPart !== "ALL") {
+    if (selectedPart !== "all") {
       const part = mockPartsList.find((p) => p.id === selectedPart)
       if (part) {
         filtered = filtered.filter((transaction) => transaction.partName === part.name)
@@ -270,7 +270,7 @@ export default function InventoryTransactionsPage() {
     }
 
     // Filter by warehouse
-    if (selectedWarehouse !== "ALL") {
+    if (selectedWarehouse !== "all") {
       const warehouse = mockWarehouseList.find((w) => w.id === selectedWarehouse)
       if (warehouse) {
         filtered = filtered.filter((transaction) => transaction.warehouse === warehouse.name)
@@ -284,7 +284,7 @@ export default function InventoryTransactionsPage() {
   const applyTableFilters = (transactions: any[]) => {
     let filtered = transactions
 
-    if (typeFilter !== "ALL") {
+    if (typeFilter !== "all") {
       filtered = filtered.filter((txn) => txn.type === typeFilter)
     }
 
@@ -360,7 +360,7 @@ export default function InventoryTransactionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header userType={userInfo.user_auth} />
+      <Header />
       <div className="flex">
         <div className="w-64 bg-white shadow-sm border-r">
           <div className="p-6">
@@ -423,7 +423,7 @@ export default function InventoryTransactionsPage() {
                           <SelectValue placeholder="전체 선박" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체 선박</SelectItem>
+                          <SelectItem value="all">전체 선박</SelectItem>
                           {shipList.map((ship) => (
                             <SelectItem key={ship.id} value={ship.id}>
                               {ship.name}
@@ -439,7 +439,7 @@ export default function InventoryTransactionsPage() {
                           <SelectValue placeholder="전체" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체</SelectItem>
+                          <SelectItem value="all">전체</SelectItem>
                           <SelectItem value="입고">입고</SelectItem>
                           <SelectItem value="출고">출고</SelectItem>
                           <SelectItem value="재고조정">재고조정</SelectItem>
@@ -454,7 +454,7 @@ export default function InventoryTransactionsPage() {
                           <SelectValue placeholder="전체" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체</SelectItem>
+                          <SelectItem value="all">전체</SelectItem>
                           {mockEquipmentList.map((equipment) => (
                             <SelectItem key={equipment.id} value={equipment.id}>
                               {equipment.name}
@@ -470,7 +470,7 @@ export default function InventoryTransactionsPage() {
                           <SelectValue placeholder="전체" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체</SelectItem>
+                          <SelectItem value="all">전체</SelectItem>
                           {availableParts.map((part) => (
                             <SelectItem key={part.id} value={part.id}>
                               {part.name} ({part.code})
@@ -486,7 +486,7 @@ export default function InventoryTransactionsPage() {
                           <SelectValue placeholder="전체" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">전체</SelectItem>
+                          <SelectItem value="all">전체</SelectItem>
                           {mockWarehouseList.map((warehouse) => (
                             <SelectItem key={warehouse.id} value={warehouse.id}>
                               {warehouse.name}
@@ -528,7 +528,7 @@ export default function InventoryTransactionsPage() {
                                 <SelectValue placeholder="전체" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="ALL">전체</SelectItem>
+                                <SelectItem value="all">전체</SelectItem>
                                 {getUniqueTypes().map((type) => (
                                   <SelectItem key={type} value={type}>
                                     {type}

@@ -197,7 +197,7 @@ export default function ShipTaskListPage() {
                 대시보드로 돌아가기
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{getTypeTitle(taskType)}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{getTypeTitle(taskType)}</h1>
                 <p className="text-gray-600">{userInfo.ship_no} 선박의 작업 목록</p>
               </div>
             </div>

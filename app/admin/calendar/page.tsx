@@ -247,7 +247,7 @@ export default function AdminCalendarPage() {
         <Sidebar userType={userInfo.user_auth} />
         <main className="flex-1 p-6 overflow-y-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Vessel Maintenance Gantt Chart</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Vessel Maintenance Gantt Chart</h1>
             <p className="text-gray-600"></p>
           </div>
           <div className="space-y-6">

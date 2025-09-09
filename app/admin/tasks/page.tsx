@@ -146,7 +146,7 @@ export default function TaskListPage() {
                 돌아가기
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{getTypeTitle(taskType)}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{getTypeTitle(taskType)}</h1>
                 {vesselNo && <p className="text-gray-600">{vesselName} 선박</p>}
               </div>
             </div>

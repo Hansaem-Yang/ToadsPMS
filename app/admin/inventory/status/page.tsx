@@ -1,228 +1,92 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { Package, BarChart3, AlertTriangle, History } from "lucide-react"
+import { Ship, AlertTriangle } from "lucide-react"
+import { Vessel } from '@/types/inventory/status/vessel'; // ✅ interface import
+import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface import
 
-const mockInventoryData = {
-  daily: [
-    {
-      date: "2024-01-20",
-      shipName: "한국호",
-      equipmentName: "주엔진",
-      partName: "피스톤 링",
-      partCode: "PR-001",
-      inbound: 20,
-      outbound: 8,
-      loss: 2, // Added loss field to mock data
-      stock: 45,
-      unit: "개",
-    },
-    {
-      date: "2024-01-20",
-      shipName: "부산호",
-      equipmentName: "보조엔진",
-      partName: "연료 필터",
-      partCode: "FF-001",
-      inbound: 15,
-      outbound: 3,
-      loss: 1, // Added loss field to mock data
-      stock: 32,
-      unit: "개",
-    },
-    {
-      date: "2024-01-19",
-      shipName: "한국호",
-      equipmentName: "주엔진",
-      partName: "실린더 라이너",
-      partCode: "CL-001",
-      inbound: 12,
-      outbound: 4,
-      loss: 0, // Added loss field to mock data
-      stock: 28,
-      unit: "개",
-    },
-  ],
-  weekly: [
-    {
-      week: "2024-W03",
-      shipName: "한국호",
-      equipmentName: "주엔진",
-      partName: "피스톤 링",
-      partCode: "PR-001",
-      inbound: 60,
-      outbound: 25,
-      loss: 5, // Added loss field to mock data
-      stock: 45,
-      unit: "개",
-    },
-    {
-      week: "2024-W03",
-      shipName: "부산호",
-      equipmentName: "보조엔진",
-      partName: "연료 필터",
-      partCode: "FF-001",
-      inbound: 45,
-      outbound: 18,
-      loss: 2, // Added loss field to mock data
-      stock: 32,
-      unit: "개",
-    },
-  ],
-  monthly: [
-    {
-      month: "2024-01",
-      shipName: "한국호",
-      equipmentName: "주엔진",
-      partName: "피스톤 링",
-      partCode: "PR-001",
-      inbound: 180,
-      outbound: 95,
-      loss: 15, // Added loss field to mock data
-      stock: 45,
-      unit: "개",
-    },
-    {
-      month: "2024-01",
-      shipName: "부산호",
-      equipmentName: "보조엔진",
-      partName: "연료 필터",
-      partCode: "FF-001",
-      inbound: 120,
-      outbound: 68,
-      loss: 8, // Added loss field to mock data
-      stock: 32,
-      unit: "개",
-    },
-  ],
-}
-
-const mockShortageData = [
-  {
-    shipName: "한국호",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    currentStock: 5,
-    minStock: 20,
-    shortage: 15,
-    unit: "개",
-    lastUsed: "2024-01-18",
-  },
-  {
-    shipName: "부산호",
-    equipmentName: "보조엔진",
-    partName: "연료 필터",
-    partCode: "FF-001",
-    currentStock: 8,
-    minStock: 25,
-    shortage: 17,
-    unit: "개",
-    lastUsed: "2024-01-19",
-  },
-]
-
-const mockLossData = [
-  {
-    shipName: "한국호",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    lossQuantity: 2,
-    unit: "개",
-    lossDate: "2024-01-18",
-    reason: "작업 중 파손",
-  },
-  {
-    shipName: "부산호",
-    equipmentName: "보조엔진",
-    partName: "연료 필터",
-    partCode: "FF-001",
-    lossQuantity: 1,
-    unit: "개",
-    lossDate: "2024-01-19",
-    reason: "노후로 인한 손상",
-  },
-]
-
-const shipList = [
-  { id: "SHIP-001", name: "한국호" },
-  { id: "SHIP-002", name: "부산호" },
-  { id: "SHIP-003", name: "인천호" },
-  { id: "SHIP-004", name: "울산호" },
-  { id: "SHIP-005", name: "광주호" },
-]
 
 export default function InventoryStatusPage() {
   const router = useRouter()
-  const [activeMenu, setActiveMenu] = useState("status")
+  const [userInfo, setUserInfo] = useState<any>(null);  
+  const [daily, setDaily] = useState<Vessel[]>([]);
+  const [weekly, setWeekly] = useState<Vessel[]>([]);
+  const [monthly, setMonthly] = useState<Vessel[]>([]);
+  const [inventoryData, setInventoryData] = useState<Vessel[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<"daily" | "weekly" | "monthly">("daily")
-  const [selectedGroupBy, setSelectedGroupBy] = useState<"ship" | "equipment" | "part">("ship")
 
-  const menuItems = [
-    { id: "dashboard", label: "대시보드", icon: BarChart3 },
-    { id: "status", label: "재고 현황", icon: Package },
-    { id: "transactions", label: "입출고 내역", icon: History },
-    { id: "shortage", label: "부족 부품", icon: AlertTriangle },
-    { id: "statistics", label: "통계", icon: BarChart3 },
-    { id: "parts", label: "부품 관리", icon: Package },
-  ]
+  const fetchInventory = () => {
+    fetch(`/api/admin/inventory/status/${selectedPeriod}`)
+      .then(res => res.json())
+      .then(data => {
+        switch(selectedPeriod) {
+          case 'daily':
+            setDaily(data);
+            break;
+          case 'weekly':
+            setWeekly(data);
+            break;
+          case 'monthly':
+            setMonthly(data);
+            break;
+        }
+        setInventoryData(data);
+      })
+      .catch(err => console.error(err));
+  };
 
-  const getCurrentInventoryData = () => {
-    return mockInventoryData[selectedPeriod] || []
-  }
-
-  const getGroupedData = () => {
-    const data = getCurrentInventoryData()
-    const grouped: Record<string, any[]> = {}
-
-    data.forEach((item) => {
-      let key = ""
-      switch (selectedGroupBy) {
-        case "ship":
-          key = item.shipName
-          break
-        case "equipment":
-          key = `${item.shipName} - ${item.equipmentName}`
-          break
-        case "part":
-          key = item.partName
-          break
-      }
-
-      if (!grouped[key]) {
-        grouped[key] = []
-      }
-      grouped[key].push(item)
-    })
-
-    return grouped
-  }
-
-  const handleShipClick = (shipName: string) => {
-    const shipId = shipList.find((ship) => ship.name === shipName)?.id || "all"
-    router.push(`/admin/inventory/ship/${shipId}?period=${selectedPeriod}`)
-  }
-
-  const handleMenuClick = (menuId: string) => {
-    if (menuId === "dashboard") {
-      router.push("/admin/dashboard")
-    } else if (menuId === "status") {
-      router.push("/admin/inventory/status")
-    } else if (menuId === "transactions") {
-      router.push("/admin/inventory/transactions")
-    } else if (menuId === "shortage") {
-      router.push("/admin/inventory/shortage")
-    } else if (menuId === "statistics") {
-      router.push("/admin/inventory/statistics")
-    } else if (menuId === "parts") {
-      router.push("/admin/inventory/parts")
+  useEffect(() => {
+    try {
+      const user = requireAuth();
+      setUserInfo(user);
+      
+      fetchInventory();
+    } catch (error) {
+      // Redirect handled by requireAuth
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    try {
+      switch(selectedPeriod) {
+        case 'daily':
+          if (daily.length === 0) {
+            fetchInventory();
+          }
+          else {
+            setInventoryData(daily);
+          }
+          break;
+        case 'weekly':
+          if (weekly.length === 0) {
+            alert("?");
+            fetchInventory();
+          }
+          else {
+            setInventoryData(weekly);
+          }
+          break;
+        case 'monthly':
+          if (monthly.length === 0) {
+            fetchInventory();
+          }
+          else {
+            setInventoryData(monthly);
+          }
+          break;
+      }
+    } catch (error) {
+      // Redirect handled by requireAuth
+    }
+  }, [selectedPeriod])
+
+  if (!userInfo) return null
 
   const handleShortageClick = () => {
     router.push("/admin/inventory/shortage")
@@ -232,23 +96,36 @@ export default function InventoryStatusPage() {
     router.push("/admin/inventory/loss")
   }
 
-  const groupedData = getGroupedData()
-  const shortageCount = mockShortageData.length
-  const lossCount = mockLossData.length // Added loss count
+  const totalShortage = (items: Inventory[]): number => {
+    return items.reduce((total, item) => {
+      total += item.stock_qty < item.standard_qty ? item.standard_qty - item.stock_qty : 0;
+
+      return total;
+    }, 0)
+  }
+  
+  const totalLoss = (items: Inventory[]): number => {
+    return items.reduce((total, item) => {
+      total += item.loss_qty;
+
+      return total;
+    }, 0)
+  }
+  
+  const shortageCount = inventoryData.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
+  const lossCount = inventoryData.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
 
   const getTableHeaders = () => {
     const headers = []
-    if (selectedGroupBy !== "ship") headers.push({ key: "ship", label: "선박", align: "text-left" })
-    if (selectedGroupBy !== "equipment") headers.push({ key: "equipment", label: "장비", align: "text-left" })
-    if (selectedGroupBy !== "part") headers.push({ key: "part", label: "부품명", align: "text-left" })
     headers.push(
-      { key: "partCode", label: "부품코드", align: "text-left" },
-      { key: "inbound", label: "입고", align: "text-center" },
-      { key: "outbound", label: "출고", align: "text-center" },
-      { key: "loss", label: "손망실", align: "text-center" },
-      { key: "stock", label: "재고", align: "text-center" },
-      { key: "unit", label: "단위", align: "text-center" },
-      { key: "period", label: "기간", align: "text-left" },
+      { key: "machine_name", label: "장비", align: "text-left" },
+      { key: "material_code", label: "부품코드", align: "text-left" },
+      { key: "receive_qty", label: "입고", align: "text-center" },
+      { key: "release_qty", label: "출고", align: "text-center" },
+      { key: "loss_qty", label: "손망실", align: "text-center" },
+      { key: "stock_qty", label: "재고", align: "text-center" },
+      { key: "material_unit", label: "단위", align: "text-center" },
+      { key: "period", label: "기간", align: "text-center" },
     )
     return headers
   }
@@ -256,58 +133,30 @@ export default function InventoryStatusPage() {
   const getTableCells = (item: any, index: number) => {
     const cells = []
 
-    if (selectedGroupBy !== "ship") {
-      cells.push(
-        <td key="ship" className="py-3 font-medium">
-          <button
-            onClick={() => handleShipClick(item.shipName)}
-            className="text-blue-600 hover:text-blue-800 hover:underline"
-          >
-            {item.shipName}
-          </button>
-        </td>,
-      )
-    }
-
-    if (selectedGroupBy !== "equipment") {
-      cells.push(
-        <td key="equipment" className="py-3 text-gray-600">
-          {item.equipmentName}
-        </td>,
-      )
-    }
-
-    if (selectedGroupBy !== "part") {
-      cells.push(
-        <td key="part" className="py-3 font-medium">
-          {item.partName}
-        </td>,
-      )
-    }
-
     cells.push(
-      <td key="partCode" className="py-3 text-gray-600">
-        {item.partCode}
+      <td key="machine_name" className="py-3 text-gray-600">
+        {item.machine_name}
       </td>,
-      <td key="inbound" className="py-3 text-center font-bold text-green-600">
-        +{item.inbound}
+      <td key="material_code" className="py-3 text-gray-600">
+        {item.material_code}
       </td>,
-      <td key="outbound" className="py-3 text-center font-bold text-red-600">
-        -{item.outbound}
+      <td key="receive_qty" className="py-3 text-center font-bold text-green-600">
+        +{item.receive_qty}
       </td>,
-      <td key="loss" className="py-3 text-center font-bold text-orange-600">
-        -{item.loss}
+      <td key="release_qty" className="py-3 text-center font-bold text-red-600">
+        -{item.release_qty}
       </td>,
-      <td key="stock" className="py-3 text-center font-bold text-blue-600">
-        {item.stock}
+      <td key="loss_qty" className="py-3 text-center font-bold text-orange-600">
+        -{item.loss_qty}
       </td>,
-      <td key="unit" className="py-3 text-center">
-        {item.unit}
+      <td key="stock_qty" className="py-3 text-center font-bold text-blue-600">
+        {item.stock_qty}
+      </td>,
+      <td key="material_unit" className="py-3 text-center">
+        {item.material_unit}
       </td>,
       <td key="period" className="py-3 text-gray-500">
-        {selectedPeriod === "daily" && item.date}
-        {selectedPeriod === "weekly" && item.week}
-        {selectedPeriod === "monthly" && item.month}
+        {item.period}
       </td>,
     )
 
@@ -316,41 +165,15 @@ export default function InventoryStatusPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
-        <div className="w-64 bg-white shadow-sm border-r">
-          <div className="p-6">
-            <h1 className="text-xl font-bold text-gray-900">재고 관리</h1>
-            <p className="text-sm text-gray-600">부품 재고 통합 관리</p>
-          </div>
-          <nav className="px-4 space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Button
-                  key={item.id}
-                  variant={activeMenu === item.id ? "default" : "ghost"}
-                  className={`w-full justify-start ${
-                    activeMenu === item.id
-                      ? "bg-blue-50 text-blue-700 border-blue-200"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                  onClick={() => handleMenuClick(item.id)}
-                >
-                  <Icon className="w-4 h-4 mr-3" />
-                  {item.label}
-                </Button>
-              )
-            })}
-          </nav>
-        </div>
-
+        <Sidebar userType={userInfo.user_auth} />
         <div className="flex-1 overflow-auto">
           <div className="p-6">
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">재고 현황</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">재고 현황</h2>
                   <p className="text-gray-600">선박별, 장비별, 부품별 재고 현황을 확인합니다</p>
                 </div>
                 <div className="flex gap-2">
@@ -365,19 +188,6 @@ export default function InventoryStatusPage() {
                       <SelectItem value="daily">일일</SelectItem>
                       <SelectItem value="weekly">주간</SelectItem>
                       <SelectItem value="monthly">월간</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={selectedGroupBy}
-                    onValueChange={(value: "ship" | "equipment" | "part") => setSelectedGroupBy(value)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ship">선박별</SelectItem>
-                      <SelectItem value="equipment">장비별</SelectItem>
-                      <SelectItem value="part">부품별</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -418,21 +228,11 @@ export default function InventoryStatusPage() {
               </div>
 
               <div className="space-y-4">
-                {Object.entries(groupedData).map(([groupName, items]) => (
-                  <Card key={groupName}>
+                {inventoryData.map(item => (
+                  <Card key={item.vessel_name}>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Package className="w-5 h-5" />
-                        {selectedGroupBy === "ship" ? (
-                          <button
-                            onClick={() => handleShipClick(groupName)}
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
-                          >
-                            {groupName}
-                          </button>
-                        ) : (
-                          groupName
-                        )}
+                        <Ship className="w-5 h-5" />{item.vessel_name}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -448,7 +248,7 @@ export default function InventoryStatusPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {items.map((item, index) => (
+                            {item.children.map((item, index) => (
                               <tr key={index} className="border-b hover:bg-gray-50">
                                 {getTableCells(item, index)}
                               </tr>
@@ -456,6 +256,11 @@ export default function InventoryStatusPage() {
                           </tbody>
                         </table>
                       </div>
+                      {item.children.length  === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>검색 조건에 맞는 부품이 없습니다</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

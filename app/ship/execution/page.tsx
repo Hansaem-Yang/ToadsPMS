@@ -389,7 +389,7 @@ export default function MaintenanceExecutionPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{userInfo.ship_name} - 정비 실행</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{userInfo.ship_name} - 정비 실행</h1>
                 <p className="text-gray-600">{userInfo?.ship_no} 선박의 정비 작업을 실행하고 결과를 등록하세요</p>
               </div>
             </div>

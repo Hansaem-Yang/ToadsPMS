@@ -63,7 +63,6 @@ export default function MaintenanceWorkManagementPage() {
   
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment>()
 
-
   const fetchEquipments = () => {
     fetch(`/api/admin/ships/${vesselNo}/maintenance?vesselNo=${vesselNo}`)
       .then(res => res.json())
@@ -561,7 +560,7 @@ export default function MaintenanceWorkManagementPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{vesselName} - 정비 등록</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{vesselName} - 정비 등록</h1>
                 <p className="text-gray-600">{vesselNo} 선박의 정비 작업을 관리하세요</p>
               </div>
               <div className="flex gap-2">
@@ -800,7 +799,6 @@ export default function MaintenanceWorkManagementPage() {
                         <Checkbox 
                           id="self_maintenance" 
                           onCheckedChange ={handleSelfMaintenanceChange}
-                          disabled
                         />
                         <Label htmlFor="self_maintenance">자체 정비</Label>
                       </div>
@@ -1152,7 +1150,6 @@ export default function MaintenanceWorkManagementPage() {
                       id="self_maintenance" 
                       checked={selectedMaintenance.self_maintenance === "Y" ? true : false}
                       onCheckedChange ={handleEditSelfMaintenanceChange}
-                      disabled
                     />
                     <Label htmlFor="self_maintenance">자체 정비</Label>
                   </div>

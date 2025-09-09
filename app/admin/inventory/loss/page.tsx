@@ -1,161 +1,84 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AlertTriangle, Package, Search, BarChart3, History } from "lucide-react"
-
-// Mock data for loss records
-const mockLossData = [
-  {
-    id: "LOSS-001",
-    date: "2024-01-20",
-    shipName: "한국호",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    quantity: 2,
-    unit: "개",
-    registrant: "김선장",
-    reason: "작업 중 파손",
-  },
-  {
-    id: "LOSS-002",
-    date: "2024-01-19",
-    shipName: "부산호",
-    equipmentName: "보조엔진",
-    partName: "연료 필터",
-    partCode: "FF-001",
-    quantity: 1,
-    unit: "개",
-    registrant: "이기관장",
-    reason: "노후로 인한 손상",
-  },
-  {
-    id: "LOSS-003",
-    date: "2024-01-18",
-    shipName: "한국호",
-    equipmentName: "GPS 시스템",
-    partName: "GPS 안테나",
-    partCode: "GPS-ANT-001",
-    quantity: 1,
-    unit: "개",
-    registrant: "박항해사",
-    reason: "강풍으로 인한 파손",
-  },
-]
-
-const shipList = [
-  { id: "SHIP-001", name: "한국호" },
-  { id: "SHIP-002", name: "부산호" },
-  { id: "SHIP-003", name: "인천호" },
-  { id: "SHIP-004", name: "울산호" },
-  { id: "SHIP-005", name: "광주호" },
-]
+import { AlertTriangle, Search  } from "lucide-react"
+import { Vessel as VesselCode } from '@/types/common/vessel'; // ✅ interface import
+import { Loss } from '@/types/inventory/loss/loss'; // ✅ interface import
 
 export default function AdminInventoryLossPage() {
-  const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null)
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0])
-  const [selectedShip, setSelectedShip] = useState<string>("all")
+  const [lossData, setLossData] = useState<Loss[]>([]);
+  const [filteredData, setFilteredData] = useState<Loss[]>(lossData)
+  const [vesselCodes, setVesselCodes] = useState<VesselCode[]>([])
+  const [selectedVessel, setSelectedVessel] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [filteredData, setFilteredData] = useState(mockLossData)
+  
+  const fetchVesselCodes = () => {
+    fetch(`/api/admin/common/vessel`)
+      .then(res => res.json())
+      .then(data => setVesselCodes(data))
+      .catch(err => console.error(err));
+  };
 
-  const handleMenuClick = (menuId: string) => {
-    if (menuId === "dashboard") {
-      router.push("/admin/dashboard")
-    } else if (menuId === "status") {
-      router.push("/admin/inventory/status")
-    } else if (menuId === "transactions") {
-      router.push("/admin/inventory/transactions")
-    } else if (menuId === "shortage") {
-      router.push("/admin/inventory/shortage")
-    } else if (menuId === "statistics") {
-      router.push("/admin/inventory/statistics")
-    } else if (menuId === "parts") {
-      router.push("/admin/inventory/parts")
-    }
-  }
-
-  const handleSearch = () => {
-    const filtered = mockLossData.filter((item) => {
-      const itemDate = new Date(item.date)
-      const start = new Date(startDate)
-      const end = new Date(endDate)
-      end.setHours(23, 59, 59, 999)
-
-      const dateMatch = itemDate >= start && itemDate <= end
-      const shipMatch = selectedShip === "all" || item.shipName === selectedShip
-      const searchMatch =
-        searchTerm === "" ||
-        item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.partCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.equipmentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.reason.toLowerCase().includes(searchTerm.toLowerCase())
-
-      return dateMatch && shipMatch && searchMatch
-    })
-
-    setFilteredData(filtered)
-  }
+  const fetchLoss = () => {
+    fetch(`/api/admin/inventory/loss`)
+      .then(res => res.json())
+      .then(data => {
+        setLossData(data);
+      })
+      .catch(err => console.error(err));
+  };
 
   useEffect(() => {
     try {
-      const user = requireAuth("admin")
+      const user = requireAuth()
       setUserInfo(user)
+
+      fetchVesselCodes();
+      fetchLoss();
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
 
   useEffect(() => {
-    handleSearch()
-  }, [startDate, endDate, selectedShip, searchTerm])
+    const filtered = lossData.filter((item) => {
+      const lossDate = new Date(item.loss_date)
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+
+      const dateMatch = lossDate >= start && lossDate <= end
+      const shipMatch = selectedVessel === "all" || item.vessel_no === selectedVessel
+      const searchMatch =
+        searchTerm === "" ||
+        item.material_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.material_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.machine_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.loss_reason.toLowerCase().includes(searchTerm.toLowerCase())
+
+      return dateMatch && shipMatch && searchMatch
+    })
+
+    setFilteredData(filtered)
+  }, [startDate, endDate, selectedVessel, searchTerm])
 
   if (!userInfo) return null
 
-  const menuItems = [
-    { id: "dashboard", label: "대시보드", icon: BarChart3 },
-    { id: "status", label: "재고 현황", icon: Package },
-    { id: "transactions", label: "입출고 내역", icon: History },
-    { id: "shortage", label: "부족 부품", icon: AlertTriangle },
-    { id: "statistics", label: "통계", icon: BarChart3 },
-    { id: "parts", label: "부품 관리", icon: Package },
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
-        <div className="w-64 bg-white shadow-sm border-r">
-          <div className="p-6">
-            <h1 className="text-xl font-bold text-gray-900">재고 관리</h1>
-            <p className="text-sm text-gray-600">부품 재고 통합 관리</p>
-          </div>
-          <nav className="px-4 space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  className="w-full justify-start text-gray-600 hover:text-gray-900"
-                  onClick={() => handleMenuClick(item.id)}
-                >
-                  <Icon className="w-4 h-4 mr-3" />
-                  {item.label}
-                </Button>
-              )
-            })}
-          </nav>
-        </div>
+        <Sidebar userType={userInfo.user_auth} />
 
         <main className="flex-1 p-6">
           <div className="space-y-6">
@@ -172,7 +95,7 @@ export default function AdminInventoryLossPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-4 gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                   <div>
                     <Label htmlFor="startDate">시작일</Label>
                     <Input
@@ -188,28 +111,30 @@ export default function AdminInventoryLossPage() {
                   </div>
                   <div>
                     <Label htmlFor="ship">선박</Label>
-                    <Select value={selectedShip} onValueChange={setSelectedShip}>
-                      <SelectTrigger>
+                    <Select value={selectedVessel} onValueChange={setSelectedVessel}>
+                      <SelectTrigger className="w-48">
                         <SelectValue placeholder="선박 선택" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">전체</SelectItem>
-                        {shipList.map((ship) => (
-                          <SelectItem key={ship.id} value={ship.name}>
-                            {ship.name}
+                        {vesselCodes.map((vessel) => (
+                          <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>
+                            {vessel.vessel_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="search">검색</Label>
-                    <Input
-                      id="search"
-                      placeholder="부품명, 코드, 사유..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                  <div className="flex-1 min-w-64">
+                    <div className="relative">
+                      <Label htmlFor="search">검색</Label>
+                      <Input
+                        id="search"
+                        placeholder="부품명, 부품코드, 손망실 사유..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)} 
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -228,8 +153,8 @@ export default function AdminInventoryLossPage() {
                     <table className="w-full text-sm">
                       <thead className="border-b">
                         <tr>
-                          <th className="text-left py-3 px-2">일자</th>
                           <th className="text-left py-3 px-2">선박</th>
+                          <th className="text-left py-3 px-2">일자</th>
                           <th className="text-left py-3 px-2">장비명</th>
                           <th className="text-left py-3 px-2">부품명</th>
                           <th className="text-left py-3 px-2">부품코드</th>
@@ -241,16 +166,16 @@ export default function AdminInventoryLossPage() {
                       </thead>
                       <tbody>
                         {filteredData.map((item) => (
-                          <tr key={item.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-2">{item.date}</td>
-                            <td className="py-3 px-2 font-medium">{item.shipName}</td>
-                            <td className="py-3 px-2">{item.equipmentName}</td>
-                            <td className="py-3 px-2 font-medium">{item.partName}</td>
-                            <td className="py-3 px-2 text-gray-600">{item.partCode}</td>
-                            <td className="py-3 px-2 text-center font-bold text-orange-600">{item.quantity}</td>
-                            <td className="py-3 px-2 text-center">{item.unit}</td>
+                          <tr key={item.loss_no} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-2 font-medium">{item.vessel_name}</td>
+                            <td className="py-3 px-2">{item.loss_date}</td>
+                            <td className="py-3 px-2">{item.machine_name}</td>
+                            <td className="py-3 px-2 font-medium">{item.material_name}</td>
+                            <td className="py-3 px-2 text-gray-600">{item.material_code}</td>
+                            <td className="py-3 px-2 text-center font-bold text-orange-600">{item.loss_qty}</td>
+                            <td className="py-3 px-2 text-center">{item.loss_unit}</td>
                             <td className="py-3 px-2">{item.registrant}</td>
-                            <td className="py-3 px-2 text-gray-600">{item.reason}</td>
+                            <td className="py-3 px-2 text-gray-600">{item.loss_reason}</td>
                           </tr>
                         ))}
                       </tbody>

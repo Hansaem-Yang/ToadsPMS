@@ -174,7 +174,7 @@ export default function MaintenanceWorkManagementPage() {
       <td key="approval_status" className="py-3 text-center text-gray-500">
         {item.approval_status}
       </td>,
-      <td key="approval_status" className="py-3 text-center text-gray-500">
+      <td key="approval" className="py-3 text-center text-gray-500">
         {item.approval_status === 'REQUEST' && (
           <div>
             <Button onClick={() => handleApprovalOrRejectClick(item, "APPROVAL")} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
@@ -345,7 +345,7 @@ export default function MaintenanceWorkManagementPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">정비 연장 신청 현황</h1>
+                <h1 className="text-2xl font-bold text-gray-900">정비 연장 신청 현황</h1>
                 <p className="text-gray-600">전체 선박의 정비에 대한 연장 신청 현황을 조회하세요</p>
               </div>
               <div className="flex gap-2">

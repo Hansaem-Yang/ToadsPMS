@@ -55,7 +55,7 @@ export default function AdminDashboard() {
         <Sidebar userType={userInfo.user_auth} />
         <main className="flex-1 p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
             <p className="text-gray-600">전체 선박의 유지보수 현황을 모니터링하세요</p>
           </div>
 

@@ -17,7 +17,6 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/admin/inventory/status", label: "재고 현황", icon: Package },
     { href: "/admin/inventory/transactions", label: "입출고 내역", icon: History },
     { href: "/admin/inventory/shortage", label: "부족 부품", icon: AlertTriangle },
-    { href: "/admin/inventory/statistics", label: "통계", icon: BarChart3 },
     { href: "/admin/inventory/material", label: "부품 관리", icon: Package },
   ]
 
@@ -26,7 +25,6 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/admin/inventory/status", label: "재고 현황", icon: Package },
     { href: "/admin/inventory/transactions", label: "입출고 내역", icon: History },
     { href: "/admin/inventory/shortage", label: "부족 부품", icon: AlertTriangle },
-    { href: "/admin/inventory/statistics", label: "통계", icon: BarChart3 },
     { href: "/admin/inventory/material", label: "부품 관리", icon: Package },
   ]
 

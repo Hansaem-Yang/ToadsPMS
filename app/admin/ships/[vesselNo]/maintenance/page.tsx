@@ -357,7 +357,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsAddSectionDialogOpen(true);
   }
 
-  const handleAddSectionSave = async () => {
+  const handleInsertSection = async () => {
     const insertedData = {
       ...addSection,
       regist_user: userInfo.account_no,
@@ -387,7 +387,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsEditSectionDialogOpen(true);
   }
 
-  const handleEditSectionSave = async () => {
+  const handleUpdateSection = async () => {
     const updatedData = {
       ...selectedSection,
       regist_user: userInfo.account_no,
@@ -493,7 +493,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsAddMaintenanceDialogOpen(true);
   }
 
-  const handleAddMaintenanceSave = async () => {
+  const handleInsertMaintenance = async () => {
     const insertedData = {
       ...addMaintenance,
       regist_user: userInfo.account_no,
@@ -526,7 +526,7 @@ export default function MaintenanceWorkManagementPage() {
   }
 
 
-  const handleEditMaintenanceSave = async () => {
+  const handleUpdateMaintenance = async () => {
     const updatedData = {
       ...selectedMaintenance,
       regist_user: userInfo.account_no,
@@ -630,7 +630,7 @@ export default function MaintenanceWorkManagementPage() {
                         취소
                       </Button>
                       <Button 
-                        onClick={handleAddSectionSave}
+                        onClick={handleInsertSection}
                         disabled={!addSection?.vessel_no || 
                           !addSection?.equip_no || 
                           !addSection?.section_code || 
@@ -816,7 +816,7 @@ export default function MaintenanceWorkManagementPage() {
                         취소
                       </Button>
                       <Button 
-                        onClick={handleAddMaintenanceSave}
+                        onClick={handleInsertMaintenance}
                         disabled={!addMaintenance?.vessel_no || 
                           !addMaintenance?.equip_no || 
                           !addMaintenance?.section_code || 
@@ -972,7 +972,7 @@ export default function MaintenanceWorkManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditSectionSave}
+                  onClick={handleUpdateSection}
                   disabled={!selectedSection?.vessel_no || 
                     !selectedSection?.equip_no || 
                     !selectedSection?.section_code || 
@@ -1169,7 +1169,7 @@ export default function MaintenanceWorkManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditMaintenanceSave}
+                  onClick={handleUpdateMaintenance}
                   disabled={!selectedMaintenance?.vessel_no || 
                     !selectedMaintenance?.equip_no || 
                     !selectedMaintenance?.section_code || 

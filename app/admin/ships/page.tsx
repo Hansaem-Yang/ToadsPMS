@@ -99,7 +99,7 @@ export default function ShipManagementPage() {
     setVessels(updatedVessels);
   }
 
-  const handleAddSave = async () => {
+  const handleInsert = async () => {
     const insertedData = {
       ...addVessel,
       regist_user: userInfo.account_no,
@@ -190,7 +190,7 @@ export default function ShipManagementPage() {
     setIsEditDialogOpen(true);
   }
 
-  const handleEditSave = async () => {
+  const handleUpdate = async () => {
     const updatedData = {
       ...selectedVessel,
       regist_user: userInfo.account_no,
@@ -307,7 +307,7 @@ export default function ShipManagementPage() {
                       취소
                     </Button>
                     <Button 
-                      onClick={handleAddSave}
+                      onClick={handleInsert}
                       disabled={!addVessel?.vessel_no || 
                         !addVessel?.vessel_name || 
                         !addVessel?.use_yn}
@@ -517,7 +517,7 @@ export default function ShipManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditSave}
+                  onClick={handleUpdate}
                   disabled={!selectedVessel?.vessel_no || 
                     !selectedVessel?.vessel_name || 
                     !selectedVessel?.use_yn}

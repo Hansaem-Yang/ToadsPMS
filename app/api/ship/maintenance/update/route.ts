@@ -59,82 +59,39 @@ export async function POST(req: Request) {
     if (count === 0) {
       return NextResponse.json({ success: false, message: 'Data was not updated.' }, { status: 401 });
     }
-        
-    // 저장된 정비 정보 조회
-    const sendData: MaintenancePlan[] = await query(
-      `select vessel_no
-            , equip_no
-            , section_code
-            , plan_code
-            , plan_name
-            , manufacturer
-            , model
-            , specifications
-            , lastest_date
-            , workers
-            , work_hours
-            , interval
-            , interval_term
-            , location
-            , self_maintenance
-            , manager
-            , important_items
-            , instructions
-            , critical
-            , regist_date
-            , regist_user
-         from [maintenance_plan]
-        where vessel_no = @vesselNo
-          and equip_no = @equipNo
-          and section_code = @sectionCode
-          and plan_code = (select max(plan_code) 
-                             from [maintenance_plan]
-                            where vessel_no = @vesselNo
-                              and equip_no = @equipNo
-                              and section_code = @sectionCode
-                              and regist_user = @registUser);`,
-      [
-        { name: 'vesselNo', value: item.vessel_no },
-        { name: 'equipNo', value: item.equip_no },
-        { name: 'sectionCode', value: item.section_code },
-        { name: 'registUser', value: item.regist_user },
-      ]
-    );
     
     // 선박에서 저장된 정비 정보 전송
-    if (sendData[0]) {
-      fetch(`${remoteSiteUrl}/api/data/maintenance/set`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sendData[0]),
-      })
-      .then(res => {
-        if (res.ok) {
-          // 정비 정보의 마지막 전송일자 수정
-          execute(
-            `update [maintenance_plan]
-                set last_send_date = getdate()
-              where vessel_no = @vesselNo
-                and equip_no = @equipNo
-                and section_code = @sectionCode
-                and plan_code = @planCode;`,
-            [
-              { name: 'vesselNo', value: sendData[0].vessel_no },
-              { name: 'equipNo', value: sendData[0].equip_no },
-              { name: 'sectionCode', value: sendData[0].section_code },
-              { name: 'planCode', value: sendData[0].plan_code },
-            ]
-          );
-        }
-        
-        return res.json();
-      })
-      .catch(err => {
-        console.error('Error triggering cron job:', err);
-      });
-    }
+    fetch(`${remoteSiteUrl}/api/data/maintenance/set`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(item),
+    })
+    .then(res => {
+      if (res.ok) {
+        // 정비 정보의 마지막 전송일자 수정
+        execute(
+          `update [maintenance_plan]
+              set last_send_date = getdate()
+            where vessel_no = @vesselNo
+              and equip_no = @equipNo
+              and section_code = @sectionCode
+              and plan_code = @planCode;`,
+          [
+            { name: 'vesselNo', value: item.vessel_no },
+            { name: 'equipNo', value: item.equip_no },
+            { name: 'sectionCode', value: item.section_code },
+            { name: 'planCode', value: item.plan_code },
+          ]
+        );
+      }
+      
+      return res.json();
+    })
+    .catch(err => {
+      console.error('Error triggering cron job:', err);
+    });
 
     // 성공 정보 반환
     return NextResponse.json({ success: true });

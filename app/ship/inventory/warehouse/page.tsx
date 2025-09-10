@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
+import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,180 +17,166 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import {
-  AlertTriangle,
-  Package,
   Search,
   Edit,
-  TrendingUp,
-  BarChart3,
-  Warehouse,
+  Warehouse as WarehouseIcon,
   Plus,
   Trash2,
-  History,
 } from "lucide-react"
-
-// Mock data for warehouses
-const mockWarehouses = [
-  {
-    warehouseId: "WH-001",
-    warehouseCode: "A-1",
-    warehouseName: "주엔진 부품창고",
-    location: "선수 1층",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-15",
-  },
-  {
-    warehouseId: "WH-002",
-    warehouseCode: "A-2",
-    warehouseName: "보조엔진 부품창고",
-    location: "선수 2층",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-12",
-  },
-  {
-    warehouseId: "WH-003",
-    warehouseCode: "B-1",
-    warehouseName: "항해장비 부품창고",
-    location: "선교 1층",
-    createdAt: "2024-01-11",
-    updatedAt: "2024-01-14",
-  },
-  {
-    warehouseId: "WH-004",
-    warehouseCode: "C-1",
-    warehouseName: "일반 소모품창고",
-    location: "선미 1층",
-    createdAt: "2024-01-12",
-    updatedAt: "2024-01-13",
-  },
-]
-
-const mockPartsWithWarehouse = [
-  { partId: "P-001", warehouseId: "WH-001", partName: "엔진 오일 필터" },
-  { partId: "P-002", warehouseId: "WH-002", partName: "연료 펌프" },
-  { partId: "P-003", warehouseId: "WH-001", partName: "냉각수 호스" },
-]
-
-const mockReceivingHistory = [
-  { receivingId: "R-001", warehouseId: "WH-001", date: "2024-01-15" },
-  { receivingId: "R-002", warehouseId: "WH-003", date: "2024-01-16" },
-]
-
-const mockOutgoingHistory = [{ outgoingId: "O-001", warehouseId: "WH-002", date: "2024-01-17" }]
+import { Warehouse } from '@/types/inventory/warehouse/warehouse'; // ✅ interface import
 
 export default function ShipWarehouseManagementPage() {
-  const router = useRouter()
+  const initialWarehouse : Warehouse = {
+    vessel_no: "",
+    vessel_name: "",
+    warehouse_no: "",
+    warehouse_name: "",
+    warehouse_location: "",
+    warehouse_desc: "",
+    use_yn: "",
+    receiving_count: 0,
+    releasing_count: 0,
+    regist_date: "",
+    regist_user: "",
+    modify_date: "",
+    modify_user: ""
+  }
+
   const [userInfo, setUserInfo] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [warehouses, setWarehouses] = useState(mockWarehouses)
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([])
+  const [filteredData, setFilteredData] = useState<Warehouse[]>(warehouses)
+
+  const [addWarehouse, setAddWarehouse] = useState<Warehouse>(initialWarehouse)
   const [isAddWarehouseDialogOpen, setIsAddWarehouseDialogOpen] = useState(false)
+  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse>(initialWarehouse)
   const [isEditWarehouseDialogOpen, setIsEditWarehouseDialogOpen] = useState(false)
-  const [selectedWarehouse, setSelectedWarehouse] = useState<any>(null)
-  const [formData, setFormData] = useState({
-    warehouseCode: "",
-    warehouseName: "",
-    location: "",
-  })
+
+  const fetchWarehouses = (vesselNo: string) => {
+    fetch(`/api/ship/inventory/warehouse?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setWarehouses(data))
+      .catch(err => console.error(err));
+  }
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = vesselRequireAuth()
       setUserInfo(user)
+
+      fetchWarehouses(user.ship_no)
+      
+      setAddWarehouse((prev: any) => ({ ...prev, vessel_no: user.ship_no }));
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
 
+  useEffect(() => {
+    let filtered = warehouses
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (warehouse) =>
+          warehouse.warehouse_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          warehouse.warehouse_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          warehouse.warehouse_location.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+
+    setFilteredData(filtered)
+  }, [warehouses, searchTerm])
+
   if (!userInfo) return null
 
-  const filteredWarehouses = warehouses.filter(
-    (warehouse) =>
-      warehouse.warehouseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      warehouse.warehouseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      warehouse.location.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  const checkWarehouseUsage = (warehouseId: string) => {
-    const partsUsage = mockPartsWithWarehouse.filter((part) => part.warehouseId === warehouseId)
-    const receivingUsage = mockReceivingHistory.filter((receiving) => receiving.warehouseId === warehouseId)
-    const outgoingUsage = mockOutgoingHistory.filter((outgoing) => outgoing.warehouseId === warehouseId)
-
+  const checkWarehouseUsage = (warehouse: any) => {
     return {
-      isUsed: partsUsage.length > 0 || receivingUsage.length > 0 || outgoingUsage.length > 0,
-      partsCount: partsUsage.length,
-      receivingCount: receivingUsage.length,
-      outgoingCount: outgoingUsage.length,
-      details: {
-        parts: partsUsage,
-        receiving: receivingUsage,
-        outgoing: outgoingUsage,
-      },
+      isUsed: warehouse.receiving_count > 0 || warehouse.releasing_count > 0,
+      receivingCount: warehouse.receiving_count,
+      outgoingCount: warehouse.releasing_count,
     }
   }
 
-  const handleAddWarehouse = () => {
-    if (!formData.warehouseCode.trim() || !formData.warehouseName.trim() || !formData.location.trim()) {
-      alert("모든 필드를 입력해주세요.")
-      return
-    }
+  const handleInsert = async () => {
+    const insertedData = {
+      ...addWarehouse,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
 
-    const newWarehouse = {
-      warehouseId: `WH-${String(warehouses.length + 1).padStart(3, "0")}`,
-      warehouseCode: formData.warehouseCode,
-      warehouseName: formData.warehouseName,
-      location: formData.location,
-      createdAt: new Date().toISOString().split("T")[0],
-      updatedAt: new Date().toISOString().split("T")[0],
-    }
+    const res = await fetch('/api/ship/inventory/warehouse/insert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(insertedData),
+    });
 
-    setWarehouses([...warehouses, newWarehouse])
-    setFormData({ warehouseCode: "", warehouseName: "", location: "" })
-    setIsAddWarehouseDialogOpen(false)
+    const result = await res.json();
+
+    if (result.success) {
+      alert("저장이 완료되었습니다.");
+
+      setWarehouses([...warehouses, result.data])
+      setAddWarehouse(initialWarehouse)
+      setAddWarehouse((prev: any) => ({ ...prev, vessel_no: userInfo.ship_no }));
+      setIsAddWarehouseDialogOpen(false)
+    } else {
+      alert(result.message);
+    }
   }
 
   const handleEditWarehouse = (warehouse: any) => {
     setSelectedWarehouse(warehouse)
-    setFormData({
-      warehouseCode: warehouse.warehouseCode,
-      warehouseName: warehouse.warehouseName,
-      location: warehouse.location,
-    })
     setIsEditWarehouseDialogOpen(true)
   }
 
-  const handleUpdateWarehouse = () => {
-    if (!formData.warehouseCode.trim() || !formData.warehouseName.trim() || !formData.location.trim()) {
-      alert("모든 필드를 입력해주세요.")
-      return
-    }
+  const updatedWarehouse = (item: any) => {
+      const updatedWarehouses = warehouses.map((warehouse) =>
+        warehouse.warehouse_no === item.warehouse_no
+          ? {
+              ...warehouse,
+              warehouse_no: item.warehouse_no,
+              warehouse_name: item.warehouse_name,
+              warehouse_location: item.warehouse_location,
+              modify_date: new Date().toISOString().split("T")[0].toString(),
+            }
+          : warehouse,
+      )
 
-    const updatedWarehouses = warehouses.map((warehouse) =>
-      warehouse.warehouseId === selectedWarehouse.warehouseId
-        ? {
-            ...warehouse,
-            warehouseCode: formData.warehouseCode,
-            warehouseName: formData.warehouseName,
-            location: formData.location,
-            updatedAt: new Date().toISOString().split("T")[0],
-          }
-        : warehouse,
-    )
-
-    setWarehouses(updatedWarehouses)
-    setFormData({ warehouseCode: "", warehouseName: "", location: "" })
-    setIsEditWarehouseDialogOpen(false)
-    setSelectedWarehouse(null)
+      return updatedWarehouses;
   }
 
-  const handleDeleteWarehouse = (warehouseId: string) => {
-    const usage = checkWarehouseUsage(warehouseId)
+  const handleUpdate = async () => {
+    const updatedData = {
+      ...selectedWarehouse,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
+    const res = await fetch('/api/ship/inventory/warehouse/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
+
+      setWarehouses(updatedWarehouse(selectedWarehouse))
+      setIsEditWarehouseDialogOpen(false)
+      setSelectedWarehouse(initialWarehouse)
+    } else {
+      alert(data.message);
+    }
+  }
+
+  const handleDelete = async (warehouse: any) => {
+    const usage = checkWarehouseUsage(warehouse)
 
     if (usage.isUsed) {
       let message = "이 창고는 다음과 같은 데이터에서 사용 중이므로 삭제할 수 없습니다:\n\n"
 
-      if (usage.partsCount > 0) {
-        message += `• 등록된 부품: ${usage.partsCount}개\n`
-      }
       if (usage.receivingCount > 0) {
         message += `• 입고 내역: ${usage.receivingCount}건\n`
       }
@@ -203,85 +189,30 @@ export default function ShipWarehouseManagementPage() {
       return
     }
 
-    if (confirm("정말로 이 창고를 삭제하시겠습니까?")) {
-      setWarehouses(warehouses.filter((warehouse) => warehouse.warehouseId !== warehouseId))
+    if (confirm("창고를 삭제하시겠습니까?")) {
+      const res = await fetch('/api/ship/inventory/warehouse/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(warehouse),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("삭제가 완료되었습니다.");
+
+        setWarehouses(warehouses.filter((item) => item.warehouse_no !== warehouse.warehouse_no))
+      } else {
+        alert(data.message);
+      }
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
-        <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">재고 관리</h2>
-            <nav className="space-y-2">
-              <button
-                onClick={() => router.push("/ship/dashboard")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50"
-              >
-                <BarChart3 className="w-4 h-4" />
-                메인으로 돌아가기
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Package className="w-4 h-4" />
-                재고관리 대시보드
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/status")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <BarChart3 className="w-4 h-4" />
-                재고현황
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/receiving")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <TrendingUp className="w-4 h-4" />
-                부품입고
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/transactions")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <History className="w-4 h-4" />
-                입출고 내역
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/initial-stock")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Package className="w-4 h-4" />
-                기초재고 등록
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/adjustment")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Edit className="w-4 h-4" />
-                재고 조정
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/loss")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                손망실 처리
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/warehouse")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors bg-blue-50 text-blue-700 border border-blue-200"
-              >
-                <Warehouse className="w-4 h-4" />
-                창고관리
-              </button>
-            </nav>
-          </div>
-        </div>
+        <Sidebar userType={userInfo.user_auth} />
 
         <main className="flex-1 p-6">
           <div className="space-y-6">
@@ -290,7 +221,7 @@ export default function ShipWarehouseManagementPage() {
                 <h1 className="text-2xl font-bold text-gray-900">창고관리</h1>
                 <p className="text-gray-600">선박 내 창고 정보를 등록하고 관리합니다</p>
               </div>
-              <Button onClick={() => setIsAddWarehouseDialogOpen(true)} className="flex items-center gap-2">
+              <Button onClick={() => setIsAddWarehouseDialogOpen(true)} className="flex items-center gap-2" style={{cursor:"pointer"}}>
                 <Plus className="w-4 h-4" />
                 창고 추가
               </Button>
@@ -300,7 +231,7 @@ export default function ShipWarehouseManagementPage() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="flex items-center gap-2">
-                    <Warehouse className="w-5 h-5" />
+                    <WarehouseIcon className="w-5 h-5" />
                     창고 목록
                   </CardTitle>
                   <div className="relative">
@@ -328,32 +259,33 @@ export default function ShipWarehouseManagementPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredWarehouses.map((warehouse) => {
-                        const usage = checkWarehouseUsage(warehouse.warehouseId)
+                      {filteredData.map((warehouse) => {
+                        const usage = checkWarehouseUsage(warehouse)
                         return (
-                          <tr key={warehouse.warehouseId} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-2 font-medium">{warehouse.warehouseCode}</td>
+                          <tr key={warehouse.warehouse_no} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-2 font-medium">{warehouse.warehouse_no}</td>
                             <td className="py-3 px-2">
-                              {warehouse.warehouseName}
+                              {warehouse.warehouse_name}
                               {usage.isUsed && (
                                 <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
                                   사용중
                                 </span>
                               )}
                             </td>
-                            <td className="py-3 px-2 text-gray-600">{warehouse.location}</td>
-                            <td className="py-3 px-2 text-center text-gray-500">{warehouse.createdAt}</td>
-                            <td className="py-3 px-2 text-center text-gray-500">{warehouse.updatedAt}</td>
+                            <td className="py-3 px-2 text-gray-600">{warehouse.warehouse_location}</td>
+                            <td className="py-3 px-2 text-center text-gray-500">{warehouse.regist_date}</td>
+                            <td className="py-3 px-2 text-center text-gray-500">{warehouse.modify_date}</td>
                             <td className="py-3 px-2 text-center">
                               <div className="flex justify-center gap-2">
-                                <Button onClick={() => handleEditWarehouse(warehouse)} size="sm" variant="ghost">
+                                <Button onClick={() => handleEditWarehouse(warehouse)} size="sm" variant="ghost" style={{cursor:"pointer"}}>
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button
-                                  onClick={() => handleDeleteWarehouse(warehouse.warehouseId)}
+                                  onClick={() => handleDelete(warehouse)}
                                   size="sm"
                                   variant="ghost"
                                   className={`${usage.isUsed ? "text-gray-400 cursor-not-allowed" : "text-red-600 hover:text-red-700"}`}
+                                  style={{cursor:"pointer"}}
                                   disabled={usage.isUsed}
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -365,7 +297,7 @@ export default function ShipWarehouseManagementPage() {
                       })}
                     </tbody>
                   </table>
-                  {filteredWarehouses.length === 0 && (
+                  {filteredData.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
                       {searchTerm ? "검색 결과가 없습니다." : "등록된 창고가 없습니다."}
                     </div>
@@ -383,21 +315,12 @@ export default function ShipWarehouseManagementPage() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="warehouseCode">창고코드 *</Label>
-                    <Input
-                      id="warehouseCode"
-                      placeholder="예: A-1"
-                      value={formData.warehouseCode}
-                      onChange={(e) => setFormData({ ...formData, warehouseCode: e.target.value })}
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="warehouseName">창고명 *</Label>
                     <Input
                       id="warehouseName"
                       placeholder="예: 주엔진 부품창고"
-                      value={formData.warehouseName}
-                      onChange={(e) => setFormData({ ...formData, warehouseName: e.target.value })}
+                      defaultValue={addWarehouse.warehouse_name}
+                      onChange={(e) => setAddWarehouse({ ...addWarehouse, warehouse_name: e.target.value })}
                     />
                   </div>
                   <div>
@@ -405,16 +328,22 @@ export default function ShipWarehouseManagementPage() {
                     <Input
                       id="location"
                       placeholder="예: 선수 1층"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      defaultValue={addWarehouse.warehouse_location}
+                      onChange={(e) => setAddWarehouse({ ...addWarehouse, warehouse_location: e.target.value })}
                     />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddWarehouseDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => setIsAddWarehouseDialogOpen(false)} style={{cursor:"pointer"}}>
                     취소
                   </Button>
-                  <Button onClick={handleAddWarehouse}>추가</Button>
+                  <Button 
+                    onClick={handleInsert} 
+                    style={{cursor:"pointer"}}
+                    disabled={!selectedWarehouse?.vessel_no || 
+                      !selectedWarehouse?.warehouse_name || 
+                      !selectedWarehouse?.warehouse_location}
+                  >추가</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -431,32 +360,39 @@ export default function ShipWarehouseManagementPage() {
                     <Label htmlFor="editWarehouseCode">창고코드 *</Label>
                     <Input
                       id="editWarehouseCode"
-                      value={formData.warehouseCode}
-                      onChange={(e) => setFormData({ ...formData, warehouseCode: e.target.value })}
+                      defaultValue={selectedWarehouse.warehouse_no}
+                      onChange={(e) => setSelectedWarehouse({ ...selectedWarehouse, warehouse_no: e.target.value })}
                     />
                   </div>
                   <div>
                     <Label htmlFor="editWarehouseName">창고명 *</Label>
                     <Input
                       id="editWarehouseName"
-                      value={formData.warehouseName}
-                      onChange={(e) => setFormData({ ...formData, warehouseName: e.target.value })}
+                      defaultValue={selectedWarehouse.warehouse_name}
+                      onChange={(e) => setSelectedWarehouse({ ...selectedWarehouse, warehouse_name: e.target.value })}
                     />
                   </div>
                   <div>
                     <Label htmlFor="editLocation">창고위치 *</Label>
                     <Input
                       id="editLocation"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      defaultValue={selectedWarehouse.warehouse_location}
+                      onChange={(e) => setSelectedWarehouse({ ...selectedWarehouse, warehouse_location: e.target.value })}
                     />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsEditWarehouseDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => setIsEditWarehouseDialogOpen(false)} style={{cursor:"pointer"}}>
                     취소
                   </Button>
-                  <Button onClick={handleUpdateWarehouse}>수정</Button>
+                  <Button 
+                    onClick={handleUpdate} 
+                    style={{cursor:"pointer"}}
+                    disabled={!selectedWarehouse?.vessel_no || 
+                      !selectedWarehouse?.warehouse_no || 
+                      !selectedWarehouse?.warehouse_name || 
+                      !selectedWarehouse?.warehouse_location}
+                  >수정</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

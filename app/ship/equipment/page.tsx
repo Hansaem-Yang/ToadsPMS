@@ -106,7 +106,7 @@ export default function ShipEquipmentPage() {
     setEquipments(updatedEquipments);
   }
 
-  const handleAddSave = async () => {
+  const handleInsert = async () => {
     const insertedData = {
       ...addEquipment,
       regist_user: userInfo.account_no,
@@ -136,7 +136,7 @@ export default function ShipEquipmentPage() {
     setIsEditDialogOpen(true);
   }
 
-  const handleEditSave = async () => {
+  const handleUpdate = async () => {
     const updatedData = {
       ...selectedEquipment,
       regist_user: userInfo.account_no,
@@ -259,7 +259,7 @@ export default function ShipEquipmentPage() {
                       취소
                     </Button>
                     <Button 
-                      onClick={handleAddSave}
+                      onClick={handleInsert}
                       disabled={!addEquipment?.vessel_no || 
                         !addEquipment?.equip_no || 
                         !addEquipment?.equip_name || 
@@ -484,7 +484,7 @@ export default function ShipEquipmentPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditSave}
+                  onClick={handleUpdate}
                   disabled={!selectedEquipment?.vessel_no || 
                     !selectedEquipment?.equip_no || 
                     !selectedEquipment?.equip_name || 

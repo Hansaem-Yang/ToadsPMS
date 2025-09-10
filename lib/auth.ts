@@ -42,7 +42,7 @@ export function vesselRequireAuth(): User {
     throw new Error("Not authenticated")
   }
 
-  if (user.user_auth && user.user_auth !== "VESSEL") {
+  if (user.user_auth && !(user.user_auth === "VESSEL" || user.user_auth === "VADMIN")) {
     throw new Error("Insufficient permissions")
   }
 

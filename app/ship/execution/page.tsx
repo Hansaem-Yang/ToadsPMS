@@ -216,7 +216,7 @@ export default function MaintenanceExecutionPage() {
     setIsExecutionDialogOpen(true)
   }
 
-  const handleSaveExecution = async () => {
+  const handleInsertExecution = async () => {
     const insertedData = {
       ...executionResult,
       regist_user: userInfo.account_no,
@@ -260,7 +260,7 @@ export default function MaintenanceExecutionPage() {
     setExtensionResult((prev) => ({ ...prev, applicant: userInfo.account_no }))
   }
 
-  const handleSaveExtension = async () => {
+  const handleInsertExtension = async () => {
     const insertedData = {
       ...extensionResult,
       regist_user: userInfo.account_no,
@@ -346,7 +346,7 @@ export default function MaintenanceExecutionPage() {
     setIsBulkExecutionDialogOpen(true)
   }
 
-  const handleSaveBulkExecution = async () => {
+  const handleInsertExecutions = async () => {
     const res = await fetch('/api/ship/execution/inserts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -653,7 +653,7 @@ export default function MaintenanceExecutionPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleSaveBulkExecution} 
+                  onClick={handleInsertExecutions} 
                   className="bg-blue-600 hover:bg-blue-700"
                   disabled={bulkExecutionData?.tasks.filter(item => !item.work_details || (item.status === "DELAYED" && !item.delay_reason)).length > 0}
                   style={{cursor: 'pointer'}}
@@ -731,7 +731,7 @@ export default function MaintenanceExecutionPage() {
                     취소
                   </Button>
                   <Button 
-                    onClick={handleSaveExecution} 
+                    onClick={handleInsertExecution} 
                     className="bg-blue-600 hover:bg-blue-700"
                     disabled={!executionResult.work_details || (executionResult.status === "DELAYED" && !executionResult.delay_reason) }
                     style={{cursor: 'pointer'}}
@@ -790,7 +790,7 @@ export default function MaintenanceExecutionPage() {
                     취소
                   </Button>
                   <Button 
-                    onClick={handleSaveExtension} 
+                    onClick={handleInsertExtension} 
                     className="bg-blue-600 hover:bg-blue-700"
                     disabled={!extensionResult.next_due_date || !(new Date(extensionResult.next_due_date) > today) || !extensionResult.extension_reason }
                     style={{cursor: 'pointer'}}

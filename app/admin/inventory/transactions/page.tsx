@@ -186,7 +186,6 @@ export default function InventoryTransactionsPage() {
 
   const [transactionsData, setTransactionsData] = useState<Transactions[]>([]);
   const [filteredData, setFilteredData] = useState<Transactions[]>(transactionsData)
-  
 
   const [searchData, setSearchData] = useState<Transactions>(initialTransaction);
   const [hasSearched, setHasSearched] = useState(false)

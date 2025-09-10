@@ -139,7 +139,7 @@ export default function ShipManagementPage() {
     setUsers(updatedUsers);
   }
 
-  const handleAddSave = async () => {
+  const handleInsert = async () => {
     const insertedData = {
       ...addUser,
       regist_user: userInfo.account_no,
@@ -171,7 +171,7 @@ export default function ShipManagementPage() {
     setIsEditDialogOpen(true);
   }
 
-  const handleEditSave = async () => {
+  const handleUpdate = async () => {
     const updatedData = {
       ...selectedUser,
       regist_user: userInfo.account_no,
@@ -202,7 +202,7 @@ export default function ShipManagementPage() {
     setIsEditPasswordDialogOpen(true);
   }
 
-  const handleEditPasswordSave = async () => {
+  const handleUpdatePassword = async () => {
     const res = await fetch('/api/admin/users/changePassword', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -353,7 +353,7 @@ export default function ShipManagementPage() {
                       취소
                     </Button>
                     <Button 
-                      onClick={handleAddSave}
+                      onClick={handleInsert}
                       disabled={!addUser?.user_name || 
                         !addUser?.email || 
                         !addUser?.password || 
@@ -594,7 +594,7 @@ export default function ShipManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditSave}
+                  onClick={handleUpdate}
                   disabled={!selectedUser?.user_name || 
                     !selectedUser?.user_auth || 
                     !selectedUser?.use_yn}
@@ -639,7 +639,7 @@ export default function ShipManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditPasswordSave}
+                  onClick={handleUpdatePassword}
                   disabled={!selectedUserPassword?.password || 
                     !selectedUserPassword?.password_check ||
                     selectedUserPassword?.password != selectedUserPassword?.password_check}

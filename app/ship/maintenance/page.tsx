@@ -37,25 +37,6 @@ import { Section } from '@/types/vessel/section'; // ✅ interface import
 import { MaintenancePlan } from '@/types/vessel/maintenance_plan'; // ✅ interface import
 
 export default function MaintenanceWorkManagementPage() {
-  const [userInfo, setUserInfo] = useState<any>(null)
-  const [equipments, setEquipments] = useState<Equipment[]>([])
-
-  const [filteredData, setFilteredData] = useState<Equipment[]>(equipments)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
-  
-  const [addSection, setAddSection] = useState<Section>()
-  const [isAddSectionDialogOpen, setIsAddSectionDialogOpen] = useState(false)
-  const [selectedSection, setSelectedSection] = useState<Section>()
-  const [isEditSectionDialogOpen, setIsEditSectionDialogOpen] = useState(false)
-
-  const [addMaintenance, setAddMaintenance] = useState<MaintenancePlan>()
-  const [isAddMaintenanceDialogOpen, setIsAddMaintenanceDialogOpen] = useState(false)
-
-  const [selectedMaintenance, setSelectedMaintenance] = useState<MaintenancePlan>()
-  const [isEditMaintenanceDialogOpen, setIsEditMaintenanceDialogOpen] = useState(false)
-
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>()
 
   const initialSection: Section = {
     vessel_no: '',
@@ -102,6 +83,26 @@ export default function MaintenanceWorkManagementPage() {
     modify_date: "",
     modify_user: ''
   }
+
+  const [userInfo, setUserInfo] = useState<any>(null)
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+
+  const [filteredData, setFilteredData] = useState<Equipment[]>(equipments)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  
+  const [addSection, setAddSection] = useState<Section>()
+  const [isAddSectionDialogOpen, setIsAddSectionDialogOpen] = useState(false)
+  const [selectedSection, setSelectedSection] = useState<Section>()
+  const [isEditSectionDialogOpen, setIsEditSectionDialogOpen] = useState(false)
+
+  const [addMaintenance, setAddMaintenance] = useState<MaintenancePlan>()
+  const [isAddMaintenanceDialogOpen, setIsAddMaintenanceDialogOpen] = useState(false)
+
+  const [selectedMaintenance, setSelectedMaintenance] = useState<MaintenancePlan>()
+  const [isEditMaintenanceDialogOpen, setIsEditMaintenanceDialogOpen] = useState(false)
+
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>()
   
   const fetchEquipments = (vesselNo: string) => {
     fetch(`/api/ship/maintenance?vesselNo=${vesselNo}`)
@@ -116,9 +117,9 @@ export default function MaintenanceWorkManagementPage() {
       setUserInfo(user);
 
       fetchEquipments(user.ship_no);
-
-      setAddSection(initialSection);
-      setAddMaintenance(initialMaintenancePlan);
+      
+      setAddSection((prev: any) => ({ ...prev, vessel_no: user.ship_no }));
+      setAddMaintenance((prev: any) => ({ ...prev, vessel_no: user.ship_no }));
     } catch (error) {
       // Redirect handled by requireAuth
     }
@@ -399,7 +400,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsAddSectionDialogOpen(true);
   }
 
-  const handleAddSectionSave = async () => {
+  const handleInsertSection = async () => {
     const insertedData = {
       ...addSection,
       regist_user: userInfo.account_no,
@@ -419,6 +420,8 @@ export default function MaintenanceWorkManagementPage() {
 
       setEquipments(addSections(addSection));
       setIsAddSectionDialogOpen(false);
+      setSelectedSection(initialSection);
+      setAddSection((prev: any) => ({ ...prev, vessel_no: userInfo.ship_no }));
     } else {
       alert(data.message);
     }
@@ -429,7 +432,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsEditSectionDialogOpen(true);
   }
 
-  const handleEditSectionSave = async () => {
+  const handleUpdateSection = async () => {
     const updatedData = {
       ...selectedSection,
       regist_user: userInfo.account_no,
@@ -449,6 +452,7 @@ export default function MaintenanceWorkManagementPage() {
 
       setEquipments(updateSections(selectedSection));
       setIsEditSectionDialogOpen(false);
+      setSelectedSection(initialSection);
     } else {
       alert(data.message);
     }
@@ -535,7 +539,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsAddMaintenanceDialogOpen(true);
   }
 
-  const handleAddMaintenanceSave = async () => {
+  const handleInsertMaintenance = async () => {
     const insertedData = {
       ...addMaintenance,
       regist_user: userInfo.account_no,
@@ -555,6 +559,8 @@ export default function MaintenanceWorkManagementPage() {
 
       setEquipments(addMaintenances(addMaintenance));
       setIsAddMaintenanceDialogOpen(false);
+      setAddMaintenance(initialMaintenancePlan);
+      setAddMaintenance((prev: any) => ({ ...prev, vessel_no: userInfo.ship_no }));
     } else {
       alert(data.message);
     }
@@ -567,8 +573,7 @@ export default function MaintenanceWorkManagementPage() {
     setIsEditMaintenanceDialogOpen(true);
   }
 
-
-  const handleEditMaintenanceSave = async () => {
+  const handleUpdateMaintenance = async () => {
     const updatedData = {
       ...selectedMaintenance,
       regist_user: userInfo.account_no,
@@ -588,6 +593,7 @@ export default function MaintenanceWorkManagementPage() {
 
       setEquipments(updateMaintenances(selectedMaintenance));
       setIsEditMaintenanceDialogOpen(false);
+      setSelectedMaintenance(initialMaintenancePlan);
     } else {
       alert(data.message);
     }
@@ -610,272 +616,22 @@ export default function MaintenanceWorkManagementPage() {
                   <Calendar className="w-4 h-4 mr-2" />
                   작업 캘린더
                 </Button>
-                {/* 섹션 추가 Dialog */}
-                <Dialog open={isAddSectionDialogOpen} onOpenChange={setIsAddSectionDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      className="bg-blue-600 hover:bg-blue-700" 
-                      onClick={handleAddSectionDialogOpen} 
-                      style={{cursor: 'pointer'}}
-                      disabled={userInfo.user_auth !== 'VADMIN'}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />새 섹션 추가
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>새 유지보수 섹션 추가</DialogTitle>
-                      <DialogDescription>새로운 유지보수 섹션을 추가하세요</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-2 gap-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="section_code">섹션코드</Label>
-                        <Input 
-                          id="section_code" 
-                          placeholder="섹션코드를 입력하세요" 
-                          onChange={(e) => setAddSection((prev: any) => ({ ...prev, section_code: e.target.value }))}
-                          disabled
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="section_name">섹션명</Label>
-                        <Input 
-                          id="section_name" 
-                          placeholder="섹션명을 입력하세요" 
-                          onChange={(e) => setAddSection((prev: any) => ({ ...prev, section_name: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="equip_no">장비</Label>
-                        <Select 
-                          onValueChange={(value) => equipmentChanged(value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="장비 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {equipments.map(eq => (
-                              <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="col-span-2 space-y-2">
-                        <Label htmlFor="description">섹션 설명</Label>
-                        <Textarea 
-                          id="description" 
-                          placeholder="섹션에 대한 상세 설명을 입력하세요" 
-                          onChange={(e) => setAddSection((prev: any) => ({ ...prev, description: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsAddSectionDialogOpen(false)} style={{cursor: 'pointer'}}>
-                        취소
-                      </Button>
-                      <Button 
-                        onClick={handleAddSectionSave}
-                        disabled={!addSection?.vessel_no || 
-                          !addSection?.equip_no || 
-                          !addSection?.section_code || 
-                          !addSection?.section_name}
-                        style={{cursor: 'pointer'}}
-                        >추가</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                {/* 정비 추가 Dialog */}
-                <Dialog open={isAddMaintenanceDialogOpen} onOpenChange={setIsAddMaintenanceDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      className="bg-blue-600 hover:bg-blue-700" 
-                      onClick={handleAddMaintenanceDialogOpen} 
-                      style={{cursor: 'pointer'}}
-                      disabled={userInfo.user_auth !== 'VADMIN'}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />새 작업 추가
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-w-[50vw]">
-                    <DialogHeader>
-                      <DialogTitle>새 유지보수 작업 추가</DialogTitle>
-                      <DialogDescription>새로운 유지보수 작업을 추가하세요</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-2 gap-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="plan_code">작업 코드</Label>
-                        <Input 
-                          id="plan_code" 
-                          placeholder="작업코드를 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, plan_code: e.target.value }))}
-                          disabled
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="plan_name">작업명</Label>
-                        <Input 
-                          id="plan_name" 
-                          placeholder="작업명을 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, plan_name: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="equip_no">장비</Label>
-                        <Select 
-                          onValueChange={(value) => equipmentChanged(value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="장비 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {equipments.map(eq => (
-                              <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="section_code">섹션</Label>
-                        <Select 
-                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, section_code: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="섹션 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {selectedEquipment?.children.map(section => (
-                              <SelectItem value={section.section_code}>{section.section_name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="interval">작업 주기</Label>
-                        <Input 
-                          id="interval" 
-                          type="number" 
-                          placeholder="작업주기를 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, interval: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="interval_term">주기 단위</Label>
-                        <Select
-                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, interval_term: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="단위 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="HOUR">HOUR</SelectItem>
-                            <SelectItem value="DAY">DAY</SelectItem>
-                            <SelectItem value="MONTH">MONTH</SelectItem>
-                            <SelectItem value="YEAR">YEAR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="workers">작업 인원수</Label>
-                        <Input 
-                          id="workers" 
-                          type="number" 
-                          placeholder="작업 인원수를 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, workers: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="work_hours">인원별 소요시간</Label>
-                        <Input 
-                          id="work_hours" 
-                          type="number" 
-                          placeholder="인원별 소요시간을 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, work_hours: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="location">작업 위치</Label>
-                        <Select
-                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, location: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="위치 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="D">DOCK</SelectItem>
-                            <SelectItem value="P">IN PORT</SelectItem>
-                            <SelectItem value="S">SAILING</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="manager">정비 담당자</Label>
-                        <Input 
-                          id="manager" 
-                          placeholder="정비 담당자를 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, manager: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastest_date">마지막 작업일자</Label>
-                        <Input 
-                          id="lastest_date" 
-                          type="date"
-                          className="w-36"
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="critical">정비 구분</Label>
-                        <Select 
-                          defaultValue="NORMAL"
-                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, critical: value }))}
-                          disabled
-                        >
-                          <SelectTrigger className="w-40">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="NORMAL">일상정비</SelectItem>
-                            <SelectItem value="CRITICAL">Critical</SelectItem>
-                            <SelectItem value="DOCK">Dock</SelectItem>
-                            <SelectItem value="CMS">CMS</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="col-span-2 flex items-center space-x-2">
-                        <Checkbox 
-                          id="self_maintenance" 
-                          onCheckedChange ={handleSelfMaintenanceChange}
-                          disabled
-                        />
-                        <Label htmlFor="self_maintenance">자체 정비</Label>
-                      </div>
-                      <div className="col-span-2 space-y-2">
-                        <Label htmlFor="instructions">정비 지시사항</Label>
-                        <Textarea 
-                          id="instructions" 
-                          placeholder="지시사항을 입력하세요" 
-                          onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, instructions: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsAddMaintenanceDialogOpen(false)} style={{cursor: 'pointer'}}>
-                        취소
-                      </Button>
-                      <Button 
-                        onClick={handleAddMaintenanceSave}
-                        disabled={!addMaintenance?.vessel_no || 
-                          !addMaintenance?.equip_no || 
-                          !addMaintenance?.section_code || 
-                          !addMaintenance?.plan_name ||
-                          !addMaintenance?.interval ||
-                          !addMaintenance?.interval_term ||
-                          !addMaintenance?.manager ||
-                          !addMaintenance?.lastest_date}
-                        style={{cursor: 'pointer'}}
-                      >추가</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700" 
+                  onClick={handleAddSectionDialogOpen} 
+                  style={{cursor: 'pointer'}}
+                  disabled={userInfo.user_auth !== 'VADMIN'}
+                >
+                  <Plus className="w-4 h-4 mr-2" />새 섹션 추가
+                </Button>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700" 
+                  onClick={handleAddMaintenanceDialogOpen} 
+                  style={{cursor: 'pointer'}}
+                  disabled={userInfo.user_auth !== 'VADMIN'}
+                >
+                  <Plus className="w-4 h-4 mr-2" />새 작업 추가
+                </Button>
               </div>
             </div>
           </div>
@@ -957,6 +713,70 @@ export default function MaintenanceWorkManagementPage() {
             </CardContent>
           </Card>
 
+          {/* 섹션 추가 Dialog */}
+          <Dialog open={isAddSectionDialogOpen} onOpenChange={setIsAddSectionDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>새 유지보수 섹션 추가</DialogTitle>
+                <DialogDescription>새로운 유지보수 섹션을 추가하세요</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="section_code">섹션코드</Label>
+                  <Input 
+                    id="section_code" 
+                    placeholder="섹션코드를 입력하세요" 
+                    onChange={(e) => setAddSection((prev: any) => ({ ...prev, section_code: e.target.value }))}
+                    disabled
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="section_name">섹션명</Label>
+                  <Input 
+                    id="section_name" 
+                    placeholder="섹션명을 입력하세요" 
+                    onChange={(e) => setAddSection((prev: any) => ({ ...prev, section_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equip_no">장비</Label>
+                  <Select 
+                    onValueChange={(value) => equipmentChanged(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="장비 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipments.map(eq => (
+                        <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="description">섹션 설명</Label>
+                  <Textarea 
+                    id="description" 
+                    placeholder="섹션에 대한 상세 설명을 입력하세요" 
+                    onChange={(e) => setAddSection((prev: any) => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddSectionDialogOpen(false)} style={{cursor: 'pointer'}}>
+                  취소
+                </Button>
+                <Button 
+                  onClick={handleInsertSection}
+                  disabled={!addSection?.vessel_no || 
+                    !addSection?.equip_no || 
+                    !addSection?.section_code || 
+                    !addSection?.section_name}
+                  style={{cursor: 'pointer'}}
+                  >추가</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* 섹션 수정 다이얼로그 */}
           <Dialog open={isEditSectionDialogOpen} onOpenChange={setIsEditSectionDialogOpen}>
             <DialogContent className="max-w-2xl">
@@ -1018,7 +838,7 @@ export default function MaintenanceWorkManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditSectionSave}
+                  onClick={handleUpdateSection}
                   disabled={!selectedSection?.vessel_no || 
                     !selectedSection?.equip_no || 
                     !selectedSection?.section_code || 
@@ -1029,6 +849,190 @@ export default function MaintenanceWorkManagementPage() {
             </DialogContent>
           </Dialog>
           
+          {/* 정비 추가 Dialog */}
+          <Dialog open={isAddMaintenanceDialogOpen} onOpenChange={setIsAddMaintenanceDialogOpen}>
+            <DialogContent className="max-w-4xl max-w-[50vw]">
+              <DialogHeader>
+                <DialogTitle>새 유지보수 작업 추가</DialogTitle>
+                <DialogDescription>새로운 유지보수 작업을 추가하세요</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="plan_code">작업 코드</Label>
+                  <Input 
+                    id="plan_code" 
+                    placeholder="작업코드를 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, plan_code: e.target.value }))}
+                    disabled
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="plan_name">작업명</Label>
+                  <Input 
+                    id="plan_name" 
+                    placeholder="작업명을 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, plan_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equip_no">장비</Label>
+                  <Select 
+                    onValueChange={(value) => equipmentChanged(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="장비 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipments.map(eq => (
+                        <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="section_code">섹션</Label>
+                  <Select 
+                    onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, section_code: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="섹션 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedEquipment?.children.map(section => (
+                        <SelectItem value={section.section_code}>{section.section_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="interval">작업 주기</Label>
+                  <Input 
+                    id="interval" 
+                    type="number" 
+                    placeholder="작업주기를 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, interval: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="interval_term">주기 단위</Label>
+                  <Select
+                    onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, interval_term: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="단위 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HOUR">HOUR</SelectItem>
+                      <SelectItem value="DAY">DAY</SelectItem>
+                      <SelectItem value="MONTH">MONTH</SelectItem>
+                      <SelectItem value="YEAR">YEAR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="workers">작업 인원수</Label>
+                  <Input 
+                    id="workers" 
+                    type="number" 
+                    placeholder="작업 인원수를 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, workers: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="work_hours">인원별 소요시간</Label>
+                  <Input 
+                    id="work_hours" 
+                    type="number" 
+                    placeholder="인원별 소요시간을 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, work_hours: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">작업 위치</Label>
+                  <Select
+                    onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, location: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="위치 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="D">DOCK</SelectItem>
+                      <SelectItem value="P">IN PORT</SelectItem>
+                      <SelectItem value="S">SAILING</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="manager">정비 담당자</Label>
+                  <Input 
+                    id="manager" 
+                    placeholder="정비 담당자를 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, manager: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastest_date">마지막 작업일자</Label>
+                  <Input 
+                    id="lastest_date" 
+                    type="date"
+                    className="w-36"
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="critical">정비 구분</Label>
+                  <Select 
+                    defaultValue="NORMAL"
+                    onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, critical: value }))}
+                    disabled
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NORMAL">일상정비</SelectItem>
+                      <SelectItem value="CRITICAL">Critical</SelectItem>
+                      <SelectItem value="DOCK">Dock</SelectItem>
+                      <SelectItem value="CMS">CMS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2 flex items-center space-x-2">
+                  <Checkbox 
+                    id="self_maintenance" 
+                    onCheckedChange ={handleSelfMaintenanceChange}
+                    disabled
+                  />
+                  <Label htmlFor="self_maintenance">자체 정비</Label>
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="instructions">정비 지시사항</Label>
+                  <Textarea 
+                    id="instructions" 
+                    placeholder="지시사항을 입력하세요" 
+                    onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, instructions: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddMaintenanceDialogOpen(false)} style={{cursor: 'pointer'}}>
+                  취소
+                </Button>
+                <Button 
+                  onClick={handleInsertMaintenance}
+                  disabled={!addMaintenance?.vessel_no || 
+                    !addMaintenance?.equip_no || 
+                    !addMaintenance?.section_code || 
+                    !addMaintenance?.plan_name ||
+                    !addMaintenance?.interval ||
+                    !addMaintenance?.interval_term ||
+                    !addMaintenance?.manager ||
+                    !addMaintenance?.lastest_date}
+                  style={{cursor: 'pointer'}}
+                >추가</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* 정비 수정 다이얼로그 */}
           <Dialog open={isEditMaintenanceDialogOpen} onOpenChange={setIsEditMaintenanceDialogOpen}>
             <DialogContent className="max-w-2xl">
@@ -1216,7 +1220,7 @@ export default function MaintenanceWorkManagementPage() {
                   취소
                 </Button>
                 <Button 
-                  onClick={handleEditMaintenanceSave}
+                  onClick={handleUpdateMaintenance}
                   disabled={!selectedMaintenance?.vessel_no || 
                     !selectedMaintenance?.equip_no || 
                     !selectedMaintenance?.section_code || 

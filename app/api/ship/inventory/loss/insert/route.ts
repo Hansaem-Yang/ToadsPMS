@@ -28,6 +28,7 @@ export async function POST(req: Request) {
              , loss_type
              , loss_unit
              , loss_qty
+             , loss_location
              , loss_reason
              , regist_date
              , regist_user
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
               , 'L0'
               , @lossUnit
               , @lossQty
+              , @lossLocation
               , @lossReason
               , getdate()
               , @registUser
@@ -53,6 +55,7 @@ export async function POST(req: Request) {
           { name: 'lossDate', value: item.loss_date }, 
           { name: 'lossUnit', value: item.loss_unit }, 
           { name: 'lossQty', value: item.loss_qty }, 
+          { name: 'lossLocation', value: item.loss_location }, 
           { name: 'lossReason', value: item.loss_reason }, 
           { name: 'registUser', value: item.regist_user }, 
           { name: 'modifyUser', value: item.modify_user }, 
@@ -81,6 +84,7 @@ export async function POST(req: Request) {
               , loss_type
               , loss_unit
               , loss_qty
+              , loss_location
               , loss_reason
               , regist_date
               , regist_user

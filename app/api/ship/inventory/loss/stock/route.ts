@@ -11,40 +11,54 @@ export async function GET(req: Request) {
     const items: Stock[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , a.machine_id
-            , a.machine_name
-            , a.material_code
-            , a.material_name
-            , a.material_unit
-            , a.receive_qty - (a.release_qty + a.loss_qty) as stock_qty
-         from (select a.vessel_no
-                    , a.vessel_name
-                    , b.machine_id
-                    , c.machine_name
-                    , b.material_code
-                    , b.material_name
-                    , b.material_unit
-                    , isnull((select sum(receive_qty)
-                                from [receive] 
-                               where vessel_no = b.vessel_no
-                                 and material_code = b.material_code), 0) as receive_qty
-                    , isnull((select sum(release_qty)
-                                from [release] 
-                               where vessel_no = b.vessel_no
-                                 and material_code = b.material_code), 0) as release_qty
-                    , isnull((select sum(loss_qty)
-                                from [loss] 
-                               where vessel_no = b.vessel_no
-                                 and material_code = b.material_code), 0) as loss_qty
-                 from vessel as a
-                 left outer join material as b
-                   on a.vessel_no = b.vessel_no
-                 left outer join machines as c
-                   on b.vessel_no = c.vessel_no
-                  and b.machine_id = c.machine_id
-                where a.vessel_no = @vesselNo
-                  and a.use_yn = 'Y') as a
-        where a.receive_qty > a.release_qty + a.loss_qty;`,
+            , b.machine_id
+            , c.machine_name
+            , b.material_code
+            , b.material_name
+            , b.material_unit
+            , isnull(d.location, '') as location
+            , d.stock_qty
+         from vessel as a
+         left outer join material as b
+           on a.vessel_no = b.vessel_no
+         left outer join machines as c
+           on b.vessel_no = c.vessel_no
+          and b.machine_id = c.machine_id
+         left outer join (select a1.vessel_no
+                               , a1.material_code
+                               , a1.location
+                               , sum(case when a1.type in ('S0', 'I0', 'AI') then a1.qty else 0 end) - sum(case when a1.type in ('L0', 'O0', 'AO') then a1.qty else 0 end) as stock_qty
+                            from (select vessel_no
+                                       , material_code
+                                       , receive_type as type
+                                       , isnull(receive_location, '') as location
+                                       , receive_qty as qty
+                                    from [receive]
+                                   where vessel_no = @vesselNo
+                                  union all
+                                  select vessel_no
+                                       , material_code
+                                       , release_type
+                                       , isnull(release_location, '')
+                                       , release_qty as receive_qty
+                                    from [release]
+                                   where vessel_no = @vesselNo
+                                  union all
+                                  select vessel_no
+                                       , material_code
+                                       , loss_type
+                                       , isnull(loss_location, '')
+                                       , loss_qty as receive_qty
+                                    from [loss]
+                                   where vessel_no = @vesselNo) as a1
+                           group by a1.vessel_no
+                                  , a1.material_code
+                                  , a1.location) as d
+           on b.vessel_no = d.vessel_no
+          and b.material_code = d.material_code
+        where a.vessel_no = @vesselNo
+          and a.use_yn = 'Y'
+          and d.stock_qty > 0;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

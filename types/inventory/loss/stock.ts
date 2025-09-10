@@ -6,5 +6,6 @@ export interface Stock {
     material_code: string;
     material_name: string;
     material_unit: string;
+    location: string;
     stock_qty: number;
 }

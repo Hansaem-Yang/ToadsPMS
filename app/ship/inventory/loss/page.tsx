@@ -88,7 +88,7 @@ export default function ShipInventoryLossPage() {
       loss_unit: item.material_unit,
       loss_qty: 0,
       stock_qty: item.stock_qty,
-      loss_location: "",
+      loss_location: item.location,
       loss_reason: reason,
       loss_remark: "",
       registrant: registrant,
@@ -240,6 +240,7 @@ export default function ShipInventoryLossPage() {
                           <th className="text-center py-3 px-2">현재재고</th>
                           <th className="text-center py-3 px-2">손망실 수량</th>
                           <th className="text-center py-3 px-2">단위</th>
+                          <th className="text-center py-3 px-2">창고</th>
                           <th className="text-center py-3 px-2">작업</th>
                         </tr>
                       </thead>
@@ -262,6 +263,7 @@ export default function ShipInventoryLossPage() {
                               />
                             </td>
                             <td className="py-3 px-2 text-center">{item.loss_unit}</td>
+                            <td className="py-3 px-2 text-center">{item.loss_location}</td>
                             <td className="py-3 px-2 text-center">
                               <Button
                                 onClick={() => handleRemovePart(item.material_code)}
@@ -326,6 +328,7 @@ export default function ShipInventoryLossPage() {
                     <th className="text-left py-2 px-2">부품코드</th>
                     <th className="text-center py-2 px-2">현재재고</th>
                     <th className="text-center py-2 px-2">단위</th>
+                    <th className="text-center py-3 px-2">창고</th>
                     <th className="text-center py-2 px-2">선택</th>
                   </tr>
                 </thead>
@@ -337,6 +340,7 @@ export default function ShipInventoryLossPage() {
                       <td className="py-2 px-2 text-gray-600">{item.material_code}</td>
                       <td className="py-2 px-2 text-center">{item.stock_qty}</td>
                       <td className="py-2 px-2 text-center">{item.material_unit}</td>
+                      <td className="py-2 px-2 text-center">{item.location}</td>
                       <td className="py-2 px-2 text-center">
                         <Button
                           onClick={() => handleAddPart(item)}

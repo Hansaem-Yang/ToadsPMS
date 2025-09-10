@@ -8,10 +8,11 @@ export interface Loss {
     material_name: string;
     loss_date: string;
     loss_unit: string;
-    loss_qty: string;
+    loss_qty: number;
     loss_location: string;
     loss_reason: string;
     loss_remark: string;
+    stock_qty: number;
     registrant: string;
     regist_date: string;
     regist_user: string;

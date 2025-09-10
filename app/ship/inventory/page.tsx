@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, TrendingUp, BarChart3, Package, Settings, FileText, Warehouse, History } from "lucide-react"
@@ -120,78 +121,9 @@ export default function ShipInventoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
-        <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">재고 관리</h2>
-            <nav className="space-y-2">
-              <button
-                onClick={() => router.push("/ship/dashboard")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50"
-              >
-                <BarChart3 className="w-4 h-4" />
-                메인으로 돌아가기
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors bg-blue-50 text-blue-700 border border-blue-200"
-              >
-                <Package className="w-4 h-4" />
-                재고관리 대시보드
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/status")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <BarChart3 className="w-4 h-4" />
-                재고현황
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/receiving")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <TrendingUp className="w-4 h-4" />
-                부품입고
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/transactions")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <History className="w-4 h-4" />
-                입출고 내역
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/initial-stock")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <FileText className="w-4 h-4" />
-                기초재고 등록
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/adjustment")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Settings className="w-4 h-4" />
-                재고 조정
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/loss")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                손망실 처리
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/warehouse")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Warehouse className="w-4 h-4" />
-                창고관리
-              </button>
-            </nav>
-          </div>
-        </div>
+        <Sidebar userType={userInfo.user_auth} />
 
         <main className="flex-1 p-6">
           <div className="space-y-6">

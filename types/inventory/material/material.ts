@@ -9,6 +9,8 @@ export interface Material {
     material_spec: string;
     material_type: string;
     material_unit: string;
+    warehouse_no: string;
+    warehouse_name: string;
     drawing_no: string;
     standard_qty: number;
     initial_stock: number;

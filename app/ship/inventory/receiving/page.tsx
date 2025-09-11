@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
+import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -96,7 +96,6 @@ const mockWarehouses = [
 ]
 
 export default function PartsReceivingPage() {
-  const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null)
   const [activeMenu, setActiveMenu] = useState("receiving")
   const [inventoryData, setInventoryData] = useState(mockShipInventoryData)
@@ -111,7 +110,7 @@ export default function PartsReceivingPage() {
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = vesselRequireAuth()
       setUserInfo(user)
     } catch (error) {
       // Redirect handled by requireAuth

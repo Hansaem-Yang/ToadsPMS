@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       )
       values (
               @vesselNo
-            , (select 'W' + format(isnull(right(max(warehouse_no), 3), 0) + 1, '000') 
+            , (select 'W' + format(getdate(), 'yyMM') + format(isnull(right(max(warehouse_no), 3), 0) + 1, '000') 
                  from [warehouse] 
                 where vessel_no = @vesselNo)
             , @warehouseName

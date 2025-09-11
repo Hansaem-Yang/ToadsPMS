@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Vessel } from '@/types/inventory/material/vessel'; // ✅ interface import
-import { Material } from '@/types/inventory/material/material'; // ✅ interface import
+import { Material } from '@/types/inventory/material/material';
+import { Machine } from '@/types/inventory/material/machine';
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const vesselNo = searchParams.get('vesselNo');
+
   try {
     // DB에서 데쉬보드 정보 확인
     const items: Material[] = await query(
@@ -22,16 +25,8 @@ export async function GET(req: Request) {
             , isnull(e.warehouse_name, '') as warehouse_name
             , b.standard_qty
             , isnull(d.receive_qty, 0) as initial_stock
-            , (select sum(case receive_type when 'S0' then 0 else 1 end) 
-                 from [receive] 
-                where vessel_no = b.vessel_no
-                  and material_code = b.material_code) as receive_count
-            , (select count(1)
-                 from [release] 
-                where vessel_no = b.vessel_no
-                  and material_code = b.material_code) as release_count
-         from vessel as a
-         left outer join material as b
+         from [vessel] as a
+         left outer join [material] as b
            on a.vessel_no = b.vessel_no
          left outer join [machine] as c
            on b.vessel_no = c.vessel_no
@@ -43,34 +38,40 @@ export async function GET(req: Request) {
          left outer join [warehouse] as e
            on b.vessel_no = e.vessel_no
           and b.warehouse_no = e.warehouse_no
-        where a.use_yn = 'Y'
-        order by a.vessel_no, c.sort_no, b.material_code;`);
+        where a.vessel_no = @vesselNo
+          and a.use_yn = 'Y'
+        order by a.vessel_no, c.sort_no, b.material_code;`,
+      [
+        { name: 'vesselNo', value: vesselNo }
+      ]
+    );
 
-    let vessels: Vessel[] = [];
-    let vessel: Vessel;
+    let machines: Machine[] = []
+    let machine: Machine
 
-    let vesselNo: string = '';
+    let machineId: string = '';
 
     items.map(item => {
-      if (vesselNo !== item.vessel_no) {
-        vessel = {
+      if (machineId !== item.machine_id) {
+        machine = {
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
-          children: [] = []
+          machine_id: item.machine_id,
+          machine_name: item.machine_name,
+          children: []
         }
 
-        vessels.push(vessel);
-        vesselNo = item.vessel_no;
+        machines.push(machine);
+        machineId = item.machine_id;
       }
       
-      if (item.machine_id)
-        vessel.children.push(item);
+      if (item.material_code) {
+        machine.children.push(item)
+      }
     });
 
-    console.log(vessels);
-
     // 성공 시 데쉬보드 정보 반환
-    return NextResponse.json(vessels);
+    return NextResponse.json(machines);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

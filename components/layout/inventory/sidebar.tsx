@@ -34,7 +34,7 @@ export function Sidebar({ userType }: SidebarProps) {
     { href: "/ship/inventory/status", label: "재고 현황", icon: BarChart3 },
     { href: "/ship/inventory/receiving", label: "부품 입고", icon: TrendingUp },
     { href: "/ship/inventory/transactions", label: "입출고 내역", icon: History },
-    { href: "/ship/inventory/initial-stock", label: "기초재고 등록", icon: Package },
+    { href: "/ship/inventory/material", label: "기초재고 등록", icon: Package },
     { href: "/ship/inventory/adjustment", label: "재고 조정", icon: Edit },
     { href: "/ship/inventory/loss", label: "손망실 처리", icon: AlertTriangle },
     { href: "/ship/inventory/warehouse", label: "창고 관리", icon: Warehouse },

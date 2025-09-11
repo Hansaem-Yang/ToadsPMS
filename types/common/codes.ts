@@ -4,4 +4,5 @@ export interface Codes {
     code: string;
     name: string;
     type: string;
+    location: string;
 }

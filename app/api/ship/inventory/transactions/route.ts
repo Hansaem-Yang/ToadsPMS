@@ -75,7 +75,7 @@ export async function POST(req: Request) {
         inner join [machine] as d
            on c.vessel_no = d.vessel_no
           and c.machine_id = d.machine_id
-        where a.vessel_no like case @vesselNo when 'all' then '' else @vesselNo end + '%'
+        where a.vessel_no = @vesselNo
           and c.machine_id like case @machineId when 'all' then '' else @machineId end + '%'
           and a.location like case @location when 'all' then '' else @location end + '%'
           and a.type like case @type when 'all' then '' else @type end + '%'
@@ -85,9 +85,9 @@ export async function POST(req: Request) {
                , a.remark
                , a.material_code`, 
       [
+        { name: 'vesselNo', value: item.vessel_no },
         { name: 'startDate', value: item.start_date },
         { name: 'endDate', value: item.end_date },
-        { name: 'vesselNo', value: item.vessel_no },
         { name: 'machineId', value: item.machine_id },
         { name: 'location', value: item.location },
         { name: 'type', value: item.type },

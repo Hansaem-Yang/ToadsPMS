@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         )
         values (
                 @vesselNo
-              , (select 'L' + format(isnull(right(max(loss_no), 3), 0) + 1, '000')
+              , (select 'L0' + format(getdate(), 'yyMM') + format(isnull(right(max(loss_no), 3), 0) + 1, '000')
                    from [loss]
                   where vessel_no = @vesselNo)
               , @materialCode

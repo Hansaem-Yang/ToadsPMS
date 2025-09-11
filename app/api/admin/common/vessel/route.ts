@@ -12,22 +12,24 @@ export async function GET(req: Request) {
             , a.code
             , a.name
             , a.type
-         from (select a.vessel_no
+         from (select 'machine' as type
+                    , a.vessel_no
                     , a.vessel_name
                     , b.machine_id as code
                     , b.machine_name as name
-                    , 'machine' as type
+                    , '' as location
                     , b.sort_no
                  from vessel as a
                  left outer join [machine] as b
                    on a.vessel_no = b.vessel_no
                 where a.use_yn = 'Y'
                union all
-               select a.vessel_no
+               select 'warehouse'
+                    , a.vessel_no
                     , a.vessel_name
-                    , 'warehouse'
                     , b.warehouse_no
                     , b.warehouse_name
+                    , b.warehouse_location
                     , ROW_NUMBER() OVER (PARTITION BY a.vessel_no ORDER BY b.warehouse_no)
                  from vessel as a
                  left outer join warehouse as b
@@ -69,7 +71,8 @@ export async function GET(req: Request) {
             vessel_no: item.vessel_no,
             vessel_name: item.vessel_name,
             warehouse_no: item.code,
-            warehouse_name: item.name
+            warehouse_name: item.name,
+            warehouse_location: item.location
           });
         }
       }

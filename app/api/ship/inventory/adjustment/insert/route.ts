@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         )
         values (
                 @vesselNo
-              , (select @vesselNo + '-' + @adjustmentType + '-' + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000') 
+              , (select @adjustmentType + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000') 
                    from [receive] 
                   where vessel_no = @vesselNo
                     and receive_type = @adjustmentType)
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
         )
         values (
                 @vesselNo
-              , (select @vesselNo + '-' + @adjustmentType + '-' + format(getdate(), 'yyMM') + format(isnull(right(max(release_no), 3), 0) + 1, '000') 
+              , (select @adjustmentType + format(getdate(), 'yyMM') + format(isnull(right(max(release_no), 3), 0) + 1, '000') 
                    from [release] 
                   where vessel_no = @vesselNo
                     and release_type = @adjustmentType)

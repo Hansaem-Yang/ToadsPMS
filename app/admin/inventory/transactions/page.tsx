@@ -11,143 +11,16 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import {
-  Package,
   Search,
-  BarChart3,
   AlertTriangle,
   History,
   TrendingUp,
   TrendingDown,
   Edit,
   Filter,
-  Pointer,
 } from "lucide-react"
 import { Vessel as VesselCode } from '@/types/common/vessel'; // ✅ interface import
 import { Transactions } from '@/types/inventory/transactions/transactions'; // ✅ interface import
-
-const mockEquipmentPartMapping = {
-  "ENG-001": ["PART-001", "PART-002", "PART-005"], // 주엔진: 피스톤 링, 실린더 라이너, 오일 필터
-  "ENG-002": ["PART-003", "PART-005"], // 보조엔진: 연료 필터, 오일 필터
-  "NAV-001": ["PART-004"], // GPS 시스템: GPS 안테나
-}
-
-const mockWeeklyTransactions = [
-  {
-    id: "TXN-001",
-    date: "2024-01-20",
-    type: "입고",
-    shipId: "SHIP-001",
-    shipName: "한국호",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    warehouse: "창고 A-1",
-    quantity: 20,
-    unit: "개",
-    supplier: "현대중공업",
-    reference: "PO-2024-001",
-    reason: "정기 보충",
-    registrant: "김철수",
-  },
-  {
-    id: "TXN-002",
-    date: "2024-01-21",
-    type: "출고",
-    shipId: "SHIP-001",
-    shipName: "한국호",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    warehouse: "창고 A-1",
-    quantity: -5,
-    unit: "개",
-    supplier: "",
-    reference: "WO-2024-001",
-    reason: "정비 작업",
-    registrant: "이영희",
-  },
-  {
-    id: "TXN-003",
-    date: "2024-01-22",
-    type: "재고조정",
-    shipId: "SHIP-002",
-    shipName: "부산호",
-    equipmentName: "보조엔진",
-    partName: "연료 필터",
-    partCode: "FF-002",
-    warehouse: "창고 B-1",
-    quantity: -1,
-    unit: "개",
-    supplier: "",
-    reference: "ADJ-2024-001",
-    reason: "실사 차이",
-    registrant: "박민수",
-  },
-  {
-    id: "TXN-004",
-    date: "2024-01-23",
-    type: "손망실",
-    shipId: "SHIP-002",
-    shipName: "부산호",
-    equipmentName: "GPS 시스템",
-    partName: "GPS 안테나",
-    partCode: "GPS-ANT-001",
-    warehouse: "창고 C-1",
-    quantity: -1,
-    unit: "개",
-    supplier: "",
-    reference: "LOSS-2024-001",
-    reason: "파손",
-    registrant: "최수진",
-  },
-  {
-    id: "TXN-005",
-    date: "2024-01-24",
-    type: "입고",
-    shipId: "SHIP-003",
-    shipName: "인천호",
-    equipmentName: "보조엔진",
-    partName: "오일 필터",
-    partCode: "OF-001",
-    warehouse: "창고 A-2",
-    quantity: 8,
-    unit: "개",
-    supplier: "삼성중공업",
-    reference: "PO-2024-003",
-    reason: "정기 보충",
-    registrant: "김철수",
-  },
-]
-
-const shipList = [
-  { id: "SHIP-001", name: "한국호" },
-  { id: "SHIP-002", name: "부산호" },
-  { id: "SHIP-003", name: "인천호" },
-  { id: "SHIP-004", name: "울산호" },
-  { id: "SHIP-005", name: "광주호" },
-]
-
-const mockEquipmentList = [
-  { id: "ENG-001", name: "주엔진" },
-  { id: "ENG-002", name: "보조엔진" },
-  { id: "NAV-001", name: "GPS 시스템" },
-]
-
-const mockPartsList = [
-  { id: "PART-001", name: "피스톤 링", code: "PR-001" },
-  { id: "PART-002", name: "실린더 라이너", code: "CL-001" },
-  { id: "PART-003", name: "연료 필터", code: "FF-002" },
-  { id: "PART-004", name: "GPS 안테나", code: "GPS-ANT-001" },
-  { id: "PART-005", name: "오일 필터", code: "OF-001" },
-]
-
-const mockWarehouseList = [
-  { id: "WH-001", name: "창고 A-1" },
-  { id: "WH-002", name: "창고 A-2" },
-  { id: "WH-003", name: "창고 B-1" },
-  { id: "WH-004", name: "창고 B-2" },
-  { id: "WH-005", name: "창고 C-1" },
-]
 
 const getTodayDate = () => {
   const today = new Date()
@@ -327,7 +200,7 @@ export default function InventoryTransactionsPage() {
     setSelectedVesselCode(vesselCodes.find(vessel => vessel.vessel_no === vesselNo))
   }
 
-  const getUniqueTypes = () => [...new Set(filteredData.map((txn) => txn.type))]
+  const getUniqueTypes = () => [...new Set(transactionsData.map((txn) => txn.type))]
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -71,7 +71,8 @@ export async function GET(req: Request) {
           and d.location = e.warehouse_no
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
-          and d.stock_qty > 0;`,
+          and d.stock_qty > 0
+        order by a.vessel_no, c.sort_no, b.material_code;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -101,8 +102,6 @@ export async function GET(req: Request) {
         machine.stocks.push(item)
       }
     });
-
-    console.log(machines);
 
     // 성공 시 데쉬보드 정보 반환
     return NextResponse.json(machines);

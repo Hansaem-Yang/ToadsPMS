@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { Vessel as VesselCode } from '@/types/common/vessel'; // ✅ interface import
 import { Machine as MachinesCode } from '@/types/common/machine'; // ✅ interface import
+import { Warehouse } from '@/types/common/warehouse'; // ✅ interface import
 import { MaterialType } from '@/types/common/material_type'; // ✅ interface import
 import { MaterialUnit } from '@/types/common/material_unit'; // ✅ interface import
 import { Vessel } from '@/types/inventory/material/vessel'; // ✅ interface import
@@ -55,6 +56,8 @@ export default function PartsManagementPage() {
     regist_user: "",
     modify_date: "",
     modify_user: "",
+    warehouse_no: "",
+    warehouse_name: ""
   };
 
   const [userInfo, setUserInfo] = useState<any>(null)
@@ -79,6 +82,7 @@ export default function PartsManagementPage() {
   const [isExcelUploadOpen, setIsExcelUploadOpen] = useState(false)
   
   const [availableMachine, setAvailableMachine] = useState<MachinesCode[]>([])
+  const [availableWarehouse, setAvailableWarehouse] = useState<Warehouse[]>([])
   const [availableInsertedMachine, setAvailableInsertedMachine] = useState<MachinesCode[]>([])
   
   const fetchVesselCodes = () => {
@@ -126,16 +130,24 @@ export default function PartsManagementPage() {
   useEffect(() => {
     let filtered = vessels
 
-    const foundVessel = vesselCodes.find(vessel => vessel.vessel_no === selectedVessel);
-    let machines: MachinesCode[] = [];
-    if (selectedVessel && foundVessel) 
-      machines = foundVessel.machines;
-    
-    setAvailableMachine(machines);
-
     if (selectedVessel === 'all' && selectedMachine === 'all') {
       setFilteredData(filtered)
       return;
+    }
+
+    if (selectedVessel) {
+      const foundVessel = vesselCodes.find(vessel => vessel.vessel_no === selectedVessel);
+      let machines: MachinesCode[] = [];
+      if (foundVessel) 
+        machines = foundVessel.machines;
+      
+      setAvailableMachine(machines);
+
+      let warehouses: Warehouse[] = [];
+      if (foundVessel) 
+        warehouses = foundVessel.warehouses;
+      
+      setAvailableWarehouse(warehouses);
     }
 
     if (selectedVessel || selectedMachine) {
@@ -164,12 +176,20 @@ export default function PartsManagementPage() {
   }, [vessels, selectedVessel, selectedMachine])
 
   useEffect(() => {
-    const foundVessel = vesselCodes.find(vessel => vessel.vessel_no === insertedVessel);
-    let machines: MachinesCode[] = [];
-    if (selectedVessel && foundVessel) 
-      machines = foundVessel.machines;
-    
-    setAvailableInsertedMachine(machines);
+    if (insertedVessel) {
+      const foundVessel = vesselCodes.find(vessel => vessel.vessel_no === insertedVessel);
+      let machines: MachinesCode[] = [];
+      if (insertedVessel && foundVessel) 
+        machines = foundVessel.machines;
+      
+      setAvailableInsertedMachine(machines);
+
+      let warehouses: Warehouse[] = [];
+      if (insertedVessel && foundVessel) 
+        warehouses = foundVessel.warehouses;
+      
+      setAvailableWarehouse(warehouses);
+  }
   }, [insertedVessel])
 
   if (!userInfo) return null
@@ -185,12 +205,7 @@ export default function PartsManagementPage() {
     });
   }
 
-  const handleInsertMaterial =  async () => {
-    if (!insertedVessel || insertedVessel === "all" || !insertedMachine || insertedMachine === "all") {
-      alert("선박과 장비를 선택해주세요.")
-      return
-    }
-    
+  const handleInsertMaterial =  async () => {    
     const insertedData = {
       ...addMaterial,
       regist_user: userInfo.account_no,
@@ -203,15 +218,19 @@ export default function PartsManagementPage() {
       body: JSON.stringify(insertedData),
     });
 
-    const data = await res.json();
+    const result = await res.json();
 
-    if (data.success) {
+    if (result.success) {
       alert("저장이 완료되었습니다.");
 
-      setVessels(addMaterials(addMaterial));
+      setVessels(addMaterials({
+        ...addMaterial,
+        material_code: result.data.material_code
+      }));
+
       setIsAddDialogOpen(false);
     } else {
-      alert(data.message);
+      alert(result.message);
     }
   }
 
@@ -226,6 +245,8 @@ export default function PartsManagementPage() {
               material_code: item.material_code,
               material_name: item.material_name,
               material_unit: item.material_unit,
+              warehouse_no: item.warehouse_no,
+              warehouse_name: item.warehouse_name,
               standard_qty: item.standard_qty,
               initial_stock: item.initial_stock
             };
@@ -334,6 +355,48 @@ export default function PartsManagementPage() {
       setIsExcelUploadOpen(false)
     }
   }
+
+  const machineChanged = (mode: string, value: string) => {
+    const foundMachine = availableInsertedMachine.find(machine => machine.machine_id === value)
+    
+    if (foundMachine) {
+      alert(mode);
+      if (mode === 'add') {
+        setAddMaterial({ ...addMaterial, machine_id: foundMachine.machine_id, machine_name: foundMachine.machine_name })
+      } else {
+        setEditMaterial({ ...editMaterial, machine_id: foundMachine.machine_id, machine_name: foundMachine.machine_name })
+      }
+    }
+    else {
+      alert("?");
+      if (mode === 'add') {
+        setAddMaterial({ ...addMaterial, machine_id: value })
+      } else {
+        setEditMaterial({ ...editMaterial, machine_id: value })
+      }
+    }
+    
+    setInsertedMachine(value)
+  }
+
+  const warehouseChanged = (mode: string, value: string) => {
+    const foundWarehouse = availableWarehouse.find(warehouse => warehouse.warehouse_no === value)
+    
+    if (foundWarehouse) {
+      if (mode === 'add') {
+        setAddMaterial({ ...addMaterial, warehouse_no: foundWarehouse.warehouse_no, warehouse_name: foundWarehouse.warehouse_name })
+      } else {
+        setEditMaterial({ ...editMaterial, warehouse_no: foundWarehouse.warehouse_no, warehouse_name: foundWarehouse.warehouse_name })
+      }
+    }
+    else {
+      if (mode === 'add') {
+        setAddMaterial({ ...addMaterial, warehouse_no: value })
+      } else {
+        setEditMaterial({ ...editMaterial, warehouse_no: value })
+      }
+    }
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Header userType={userInfo.user_auth} />
@@ -398,73 +461,62 @@ export default function PartsManagementPage() {
                         <DialogDescription>새로운 부품 정보를 입력하여 시스템에 등록합니다.</DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 py-4 space-y-4">
+                        <div>
+                          <Label htmlFor="vessel">선박</Label>
+                          <Select 
+                            defaultValue={insertedVessel} 
+                            onValueChange={(value) => {
+                              setAddMaterial((prev: any) => ({ ...prev, vessel_no: value }))
+                              setInsertedVessel(value)
+                            }}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="선박을 선택하세요" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vesselCodes.map((vessel) => (
+                                <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>
+                                  {vessel.vessel_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="machine_id">장비</Label>
+                          <Select 
+                            defaultValue={insertedMachine}
+                            onValueChange={(value) => { machineChanged('add', value) }}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="장비를 선택하세요" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableInsertedMachine?.map((machine) => (
+                                <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                                  {machine.machine_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="material_group">부품구분</Label>
+                          <Input
+                            id="material_group"
+                            onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, material_group: e.target.value }))}
+                            placeholder="부품구분을 입력하세요"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="material_name">부품명 *</Label>
+                          <Input
+                            id="material_name"
+                            onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, material_name: e.target.value }))}
+                            placeholder="부품명을 입력하세요"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="vessel">선박</Label>
-                            <Select 
-                              defaultValue={insertedVessel} 
-                              onValueChange={(value) => {
-                                setAddMaterial((prev: any) => ({ ...prev, vessel_no: value }))
-                                setInsertedVessel(value)
-                              }}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="선박을 선택하세요" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {vesselCodes.map((vessel) => (
-                                  <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>
-                                    {vessel.vessel_name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="machine_id">장비</Label>
-                            <Select 
-                              defaultValue={insertedMachine}
-                              onValueChange={(value) => {
-                                setAddMaterial((prev: any) => ({ ...prev, machine_id: value }))
-                                setInsertedMachine(value)
-                              }}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="장비를 선택하세요" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableInsertedMachine?.map((machine) => (
-                                  <SelectItem key={machine.machine_id} value={machine.machine_id}>
-                                    {machine.machine_name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="material_group">부품구분</Label>
-                            <Input
-                              id="material_group"
-                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, material_group: e.target.value }))}
-                              placeholder="부품구분을 입력하세요"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="material_name">부품명</Label>
-                            <Input
-                              id="material_name"
-                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, material_name: e.target.value }))}
-                              placeholder="부품명을 입력하세요"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="drawing_no">DWG No</Label>
-                            <Input
-                              id="drawing_no"
-                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, drawing_no: e.target.value }))}
-                              placeholder="DWG No를 입력하세요"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="material_type">부품유형</Label>
+                            <Label htmlFor="material_type">부품유형 *</Label>
                             <Select 
                               onValueChange={(value) => setAddMaterial((prev: any) => ({ ...prev, material_type: value }))}>
                               <SelectTrigger>
@@ -480,7 +532,47 @@ export default function PartsManagementPage() {
                             </Select>
                           </div>
                           <div>
-                            <Label htmlFor="material_unit">단위</Label>
+                            <Label htmlFor="warehouse_no">창고 *</Label>
+                            <Select
+                              defaultValue={addMaterial.warehouse_no}
+                              onValueChange={(value) => warehouseChanged('add', value) }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="창고를 선택하세요" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableWarehouse.map((warehouse) => (
+                                  <SelectItem key={warehouse.warehouse_no} value={warehouse.warehouse_no}>
+                                    {warehouse.warehouse_name} ({warehouse.warehouse_location})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="initial_stock">기초재고 *</Label>
+                            <Input
+                              id="initial_stock"
+                              type="number"
+                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, initial_stock: e.target.value }))}
+                              placeholder="기초 재고를 입력하세요"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="standard_qty">최소재고 *</Label>
+                            <Input
+                              id="standard_qty"
+                              type="number"
+                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, standard_qty: e.target.value }))}
+                              placeholder="최소 보유재고를 입력하세요"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="material_unit">단위 *</Label>
                             <Select 
                               onValueChange={(value) => setAddMaterial((prev: any) => ({ ...prev, material_unit: value }))}>
                               <SelectTrigger>
@@ -496,39 +588,31 @@ export default function PartsManagementPage() {
                             </Select>
                           </div>
                           <div>
-                            <Label htmlFor="standard_qty">최소 보유재고</Label>
+                            <Label htmlFor="drawing_no">도면번호</Label>
                             <Input
-                              id="standard_qty"
-                              type="number"
-                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, standard_qty: e.target.value }))}
-                              placeholder="최소 보유재고를 입력하세요"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="initial_stock">기초 재고</Label>
-                            <Input
-                              id="initial_stock"
-                              type="number"
-                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, initial_stock: e.target.value }))}
-                              placeholder="기초 재고를 입력하세요"
+                              id="drawing_no"
+                              onChange={(e) => setAddMaterial((prev: any) => ({ ...prev, drawing_no: e.target.value }))}
+                              placeholder="DWG No를 입력하세요"
                             />
                           </div>
                         </div>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} style={{cursor: 'pointer'}}>
-                            취소
-                          </Button>
-                          <Button 
-                            onClick={handleInsertMaterial}
-                            disabled={!addMaterial?.vessel_no || 
-                              !addMaterial?.machine_id || 
-                              !addMaterial?.material_name || 
-                              !addMaterial?.material_type || 
-                              !addMaterial?.material_unit ||
-                              !addMaterial?.standard_qty}
-                            style={{cursor: 'pointer'}}
-                          >추가</Button>
-                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} style={{cursor: 'pointer'}}>
+                          취소
+                        </Button>
+                        <Button 
+                          onClick={handleInsertMaterial}
+                          disabled={!addMaterial?.vessel_no || 
+                            !addMaterial?.machine_id || 
+                            !addMaterial?.material_name || 
+                            !addMaterial?.material_type || 
+                            !addMaterial?.warehouse_no ||
+                            !addMaterial?.material_unit ||
+                            !addMaterial?.initial_stock ||
+                            !addMaterial?.standard_qty}
+                          style={{cursor: 'pointer'}}
+                        >추가</Button>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -591,6 +675,7 @@ export default function PartsManagementPage() {
                           <th className="text-left py-3">부품구분</th>
                           <th className="text-left py-3">부품명</th>
                           <th className="text-left py-3">부품코드</th>
+                          <th className="text-left py-3">창고</th>
                           <th className="text-center py-3">단위</th>
                           <th className="text-center py-3">최소재고</th>
                           <th className="text-center py-3">기초재고</th>
@@ -599,27 +684,32 @@ export default function PartsManagementPage() {
                       </thead>
                       {vessel.children.length > 0 ? (
                         <tbody>
-                          {vessel.children.map((part) => (
-                            <tr key={part.material_code} className="border-b hover:bg-gray-50">
-                              <td className="py-3">{part.machine_name}</td>
-                              <td className="py-3 font-medium">{part.material_group}</td>
-                              <td className="py-3 font-medium">{part.material_name}</td>
-                              <td className="py-3 text-gray-600">{part.material_code}</td>
-                              <td className="py-3 text-center">{part.material_unit}</td>
-                              <td className="py-3 text-center font-medium">{part.standard_qty}</td>
-                              <td className="py-3 text-center font-medium">{part.initial_stock}</td>
+                          {vessel.children.map((material) => (
+                            <tr key={material.material_code} className="border-b hover:bg-gray-50">
+                              <td className="py-3">{material.machine_name}</td>
+                              <td className="py-3 font-medium">{material.material_group}</td>
+                              <td className="py-3 font-medium">{material.material_name}</td>
+                              <td className="py-3 text-gray-600">{material.material_code}</td>
+                              <td className="py-3 px-2">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                  {material.warehouse_name}
+                                </span>
+                              </td>
+                              <td className="py-3 text-center">{material.material_unit}</td>
+                              <td className="py-3 text-center font-medium">{material.standard_qty}</td>
+                              <td className="py-3 text-center font-medium">{material.initial_stock}</td>
                               <td className="py-3">
                                 <div className="flex gap-2 justify-center">
-                                  <Button size="sm" variant="outline" onClick={() => handleEditMaterial(part)} style={{cursor: 'pointer'}}>
+                                  <Button size="sm" variant="outline" onClick={() => handleEditMaterial(material)} style={{cursor: 'pointer'}}>
                                     <Edit className="w-3 h-3" />
                                   </Button>
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleDeleteMaterial(part.vessel_no, part.material_code)}
+                                    onClick={() => handleDeleteMaterial(material.vessel_no, material.material_code)}
                                     className="text-red-600 hover:text-red-700"
                                     style={{cursor: 'pointer'}}
-                                    disabled={part.release_count > 0 || part.receive_count > 0}
+                                    disabled={material.release_count > 0 || material.receive_count > 0}
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
@@ -651,85 +741,73 @@ export default function PartsManagementPage() {
               <DialogDescription>선택한 부품의 정보를 수정합니다.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 py-4 space-y-4">
-                <div>
-                  <Label htmlFor="edit_vessel">선박</Label>
-                  <Select 
-                    defaultValue={editMaterial?.vessel_no} 
-                    onValueChange={(value) => {
-                      setEditMaterial((prev: any) => ({ ...prev, vessel_no: value }))
-                      setInsertedVessel(value)
-                    }}
-                    disabled>
-                    <SelectTrigger>
-                      <SelectValue placeholder="선박을 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vesselCodes.map((vessel) => (
-                        <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>
-                          {vessel.vessel_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="edit_machine_id">장비</Label>
-                  <Select 
-                    defaultValue={editMaterial?.machine_id}
-                    onValueChange={(value) => {
-                      setEditMaterial((prev: any) => ({ ...prev, machine_id: value }))
-                      setInsertedMachine(value)
-                    }}
-                    disabled>
-                    <SelectTrigger>
-                      <SelectValue placeholder="장비를 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableInsertedMachine?.map((machine) => (
-                        <SelectItem key={machine.machine_id} value={machine.machine_id}>
-                          {machine.machine_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="edit_material_code">부품코드</Label>
-                  <Input
-                    id="edit_material_code"
-                    defaultValue={editMaterial?.material_code}
-                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_code: e.target.value }))}
-                    disabled
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit_material_group">부품구분</Label>
-                  <Input
-                    id="edit_material_group"
-                    defaultValue={editMaterial?.material_group}
-                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_group: e.target.value }))}
-                    placeholder="부품구분을 입력하세요"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit_material_name">부품명</Label>
-                  <Input
-                    id="edit_material_name"
-                    defaultValue={editMaterial?.material_name}
-                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_name: e.target.value }))}
-                    placeholder="부품명을 입력하세요"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit_drawing_no">DWG No</Label>
-                  <Input
-                    id="edit_drawing_no"
-                    defaultValue={editMaterial?.drawing_no}
-                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, drawing_no: e.target.value }))}
-                    placeholder="DWG No를 입력하세요"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="edit_vessel">선박</Label>
+                <Select 
+                  defaultValue={editMaterial?.vessel_no} 
+                  onValueChange={(value) => {
+                    setEditMaterial((prev: any) => ({ ...prev, vessel_no: value }))
+                    setInsertedVessel(value)
+                  }}
+                  disabled>
+                  <SelectTrigger>
+                    <SelectValue placeholder="선박을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vesselCodes.map((vessel) => (
+                      <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>
+                        {vessel.vessel_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit_machine_id">장비</Label>
+                <Select 
+                  defaultValue={editMaterial?.machine_id}
+                  onValueChange={(value) => { machineChanged('edit', value) }}
+                  disabled>
+                  <SelectTrigger>
+                    <SelectValue placeholder="장비를 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableInsertedMachine?.map((machine) => (
+                      <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                        {machine.machine_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit_material_code">부품코드</Label>
+                <Input
+                  id="edit_material_code"
+                  defaultValue={editMaterial?.material_code}
+                  onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_code: e.target.value }))}
+                  disabled
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_material_group">부품구분</Label>
+                <Input
+                  id="edit_material_group"
+                  defaultValue={editMaterial?.material_group}
+                  onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_group: e.target.value }))}
+                  placeholder="부품구분을 입력하세요"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_material_name">부품명</Label>
+                <Input
+                  id="edit_material_name"
+                  defaultValue={editMaterial?.material_name}
+                  onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_name: e.target.value }))}
+                  placeholder="부품명을 입력하세요"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit_material_type">부품유형</Label>
                   <Select 
@@ -748,6 +826,48 @@ export default function PartsManagementPage() {
                   </Select>
                 </div>
                 <div>
+                  <Label htmlFor="edit_warehouse_no">창고 *</Label>
+                  <Select
+                    defaultValue={editMaterial.warehouse_no}
+                    onValueChange={(value) => warehouseChanged('edit', value) }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="창고를 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableWarehouse.map((warehouse) => (
+                        <SelectItem key={warehouse.warehouse_no} value={warehouse.warehouse_no}>
+                          {warehouse.warehouse_name} ({warehouse.warehouse_location})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_initial_stock">기초 재고</Label>
+                  <Input
+                    id="edit_initial_stock"
+                    type="number"
+                    defaultValue={editMaterial.initial_stock}
+                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, initial_stock: e.target.value }))}
+                    placeholder="기초 재고를 입력하세요"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_standard_qty">최소재고</Label>
+                  <Input
+                    id="edit_standard_qty"
+                    type="number"
+                    defaultValue={editMaterial.standard_qty}
+                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, standard_qty: e.target.value }))}
+                    placeholder="최소 보유재고를 입력하세요"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <Label htmlFor="edit_material_unit">단위</Label>
                   <Select 
                     defaultValue={editMaterial?.material_unit}
@@ -765,41 +885,32 @@ export default function PartsManagementPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="edit_standard_qty">최소 보유재고</Label>
+                  <Label htmlFor="edit_drawing_no">도면번호</Label>
                   <Input
-                    id="edit_standard_qty"
-                    type="number"
-                    defaultValue={editMaterial.standard_qty}
-                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, standard_qty: e.target.value }))}
-                    placeholder="최소 보유재고를 입력하세요"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit_initial_stock">기초 재고</Label>
-                  <Input
-                    id="edit_initial_stock"
-                    type="number"
-                    defaultValue={editMaterial.initial_stock}
-                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, initial_stock: e.target.value }))}
-                    placeholder="기초 재고를 입력하세요"
+                    id="edit_drawing_no"
+                    defaultValue={editMaterial?.drawing_no}
+                    onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, drawing_no: e.target.value }))}
+                    placeholder="DWG No를 입력하세요"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} style={{cursor: 'pointer'}}>
-                  취소
-                </Button>
-                <Button 
-                  onClick={handleUpdateMaterial}
-                  disabled={!editMaterial?.vessel_no || 
-                    !editMaterial?.machine_id || 
-                    !editMaterial?.material_type ||
-                    !editMaterial?.material_name || 
-                    !editMaterial?.material_unit ||
-                    !editMaterial?.standard_qty}
-                  style={{cursor: 'pointer'}}
-                >수정</Button>
-              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} style={{cursor: 'pointer'}}>
+                취소
+              </Button>
+              <Button 
+                onClick={handleUpdateMaterial}
+                disabled={!editMaterial?.vessel_no || 
+                  !editMaterial?.machine_id || 
+                  !editMaterial?.material_name || 
+                  !editMaterial?.material_type || 
+                  !editMaterial?.warehouse_no ||
+                  !editMaterial?.material_unit ||
+                  !editMaterial?.initial_stock ||
+                  !editMaterial?.standard_qty}
+                style={{cursor: 'pointer'}}
+              >수정</Button>
             </div>
           </DialogContent>
         </Dialog>

@@ -122,13 +122,12 @@ export async function POST(req: Request) {
       result = await request.query(queryString);
       count += result.rowsAffected[0];
         
-      if (count === 0) {
-        transantion.rollback();
-        return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
-      }
-
       transantion.commit();
 
+      if (count === 0) {
+        return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
+      }
+      
       // 저장된 자재 정보 조회
       const sendData: Material[] = await query(
         `select vessel_no
@@ -157,6 +156,37 @@ export async function POST(req: Request) {
           { name: 'registUser', value: item.regist_user },
         ]
       );
+      
+      // 선박에서 저장된 자재 정보 전송
+      if (sendData[0]) {
+        fetch(`${remoteSiteUrl}/api/data/inventory/warehouse/set`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sendData[0]),
+        })
+        .then(res => {
+          if (res.ok) {
+            // 자재 정보의 마지막 전송일자 수정
+            execute(
+              `update [material]
+                  set last_send_date = getdate()
+                where vessel_no = @vesselNo
+                  and warehouse_no = @materialCode;`,
+              [
+                { name: 'vesselNo', value: sendData[0].vessel_no },
+                { name: 'materialCode', value: sendData[0].material_code },
+              ]
+            );
+          }
+          
+          return res.json();
+        })
+        .catch(err => {
+          console.error('Error triggering cron job:', err);
+        });
+      }
 
       // 성공 정보 반환
       return NextResponse.json({ success: true, data: sendData[0] });

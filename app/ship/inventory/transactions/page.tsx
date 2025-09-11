@@ -1,275 +1,171 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
+import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import {
-  AlertTriangle,
-  Package,
   Search,
+  AlertTriangle,
+  History,
   TrendingUp,
   TrendingDown,
-  BarChart3,
-  Warehouse,
-  History,
   Edit,
   Filter,
 } from "lucide-react"
+import { Machine } from '@/types/common/machine'; // ✅ interface import
+import { Warehouse } from '@/types/common/warehouse'; // ✅ interface import
+import { Transactions } from '@/types/inventory/transactions/transactions'; // ✅ interface import
 
-const mockEquipmentPartMapping = {
-  "ENG-001": ["PART-001", "PART-002", "PART-005"], // 주엔진: 피스톤 링, 실린더 라이너, 오일 필터
-  "ENG-002": ["PART-003", "PART-005"], // 보조엔진: 연료 필터, 오일 필터
-  "NAV-001": ["PART-004"], // GPS 시스템: GPS 안테나
+const getTodayDate = () => {
+  const today = new Date()
+  return today.toISOString().split("T")[0]
 }
 
-// Mock data for transaction history
-const mockTransactionData = [
-  {
-    id: "TXN-001",
-    date: "2024-01-15",
-    type: "입고",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    warehouse: "창고 A-1",
-    quantity: 10,
-    unit: "개",
-    reason: "정기 보충",
-    registrant: "김철수",
-  },
-  {
-    id: "TXN-002",
-    date: "2024-01-14",
-    type: "출고",
-    equipmentName: "주엔진",
-    partName: "피스톤 링",
-    partCode: "PR-001",
-    warehouse: "창고 A-1",
-    quantity: 5,
-    unit: "개",
-    reason: "정비 작업",
-    registrant: "이영희",
-  },
-  {
-    id: "TXN-003",
-    date: "2024-01-13",
-    type: "재고조정",
-    equipmentName: "보조엔진",
-    partName: "연료 필터",
-    partCode: "FF-001",
-    warehouse: "창고 B-1",
-    quantity: -1,
-    unit: "개",
-    reason: "실사 차이",
-    registrant: "박민수",
-  },
-  {
-    id: "TXN-004",
-    date: "2024-01-12",
-    type: "손망실",
-    equipmentName: "GPS 시스템",
-    partName: "GPS 안테나",
-    partCode: "GPS-ANT-001",
-    warehouse: "창고 C-1",
-    quantity: -1,
-    unit: "개",
-    reason: "파손",
-    registrant: "최수진",
-  },
-  {
-    id: "TXN-005",
-    date: "2024-01-11",
-    type: "입고",
-    equipmentName: "보조엔진",
-    partName: "오일 필터",
-    partCode: "OF-001",
-    warehouse: "창고 A-2",
-    quantity: 8,
-    unit: "개",
-    reason: "정기 보충",
-    registrant: "김철수",
-  },
-]
+const getWeekAgoDate = () => {
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  return weekAgo.toISOString().split("T")[0]
+}
 
-const mockEquipmentList = [
-  { id: "ENG-001", name: "주엔진" },
-  { id: "ENG-002", name: "보조엔진" },
-  { id: "NAV-001", name: "GPS 시스템" },
-]
-
-const mockPartsList = [
-  { id: "PART-001", name: "피스톤 링", code: "PR-001" },
-  { id: "PART-002", name: "실린더 라이너", code: "CL-001" },
-  { id: "PART-003", name: "연료 필터", code: "FF-001" },
-  { id: "PART-004", name: "GPS 안테나", code: "GPS-ANT-001" },
-  { id: "PART-005", name: "오일 필터", code: "OF-001" },
-]
-
-const mockWarehouseList = [
-  { id: "WH-001", name: "창고 A-1" },
-  { id: "WH-002", name: "창고 A-2" },
-  { id: "WH-003", name: "창고 B-1" },
-  { id: "WH-004", name: "창고 B-2" },
-  { id: "WH-005", name: "창고 C-1" },
-]
-
-export default function ShipInventoryTransactionsPage() {
-  const router = useRouter()
+export default function InventoryTransactionsPage() {
+  const initialTransaction : Transactions = {
+    vessel_no: "",
+    vessel_name: "",
+    date: "",
+    type: "",
+    no: "",
+    material_code: "",
+    material_name: "",
+    machine_id: "",
+    machine_name: "",
+    location: "",
+    unit: "",
+    qty: 0,
+    reason: "",
+    regist_user: "",
+    registrant: "",
+    start_date: "",
+    end_date: "",
+  }
   const [userInfo, setUserInfo] = useState<any>(null)
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [selectedTransactionType, setSelectedTransactionType] = useState("all")
-  const [selectedEquipment, setSelectedEquipment] = useState("all")
-  const [selectedPart, setSelectedPart] = useState("all")
-  const [selectedWarehouse, setSelectedWarehouse] = useState("all")
-  const [transactions, setTransactions] = useState(mockTransactionData)
-  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([])
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([])
+
+  const [transactionsData, setTransactionsData] = useState<Transactions[]>([]);
+  const [filteredData, setFilteredData] = useState<Transactions[]>(transactionsData)
+
+  const [searchData, setSearchData] = useState<Transactions>(initialTransaction);
   const [hasSearched, setHasSearched] = useState(false)
 
   const [typeFilter, setTypeFilter] = useState("all")
-  const [equipmentFilter, setEquipmentFilter] = useState("")
-  const [partFilter, setPartFilter] = useState("")
+  const [machineFilter, setMachineFilter] = useState("")
+  const [materialFilter, setMaterialFilter] = useState("")
   const [warehouseFilter, setWarehouseFilter] = useState("")
 
-  const [availableParts, setAvailableParts] = useState(mockPartsList)
+  const fetchMachines = (vesselNo: string) => {
+    fetch(`/api/admin/common/machine?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  }
+
+  const fetchWarehouses = (vesselNo: string) => {
+    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setWarehouses(data))
+      .catch(err => console.error(err));
+  }
 
   useEffect(() => {
     try {
-      const user = requireAuth("ship")
+      const user = vesselRequireAuth()
       setUserInfo(user)
-      // Set default date range (last 7 days)
-      const today = new Date()
-      const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-      setEndDate(today.toISOString().split("T")[0])
-      setStartDate(lastWeek.toISOString().split("T")[0])
+
+      setSearchData((prev: any) => ({ ...prev, start_date: getWeekAgoDate() }))
+      setSearchData((prev: any) => ({ ...prev, end_date: getTodayDate() }))
+      setSearchData((prev: any) => ({ ...prev, vessel_no: user.ship_no }))
+
+      fetchMachines(user.ship_no);
+      fetchWarehouses(user.ship_no);
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
 
   useEffect(() => {
-    if (selectedEquipment && selectedEquipment !== "all") {
-      const equipmentPartIds =
-        mockEquipmentPartMapping[selectedEquipment as keyof typeof mockEquipmentPartMapping] || []
-      const filteredParts = mockPartsList.filter((part) => equipmentPartIds.includes(part.id))
-      setAvailableParts(filteredParts)
-      // Reset part selection if current selection is not available for selected equipment
-      if (selectedPart && selectedPart !== "all" && !equipmentPartIds.includes(selectedPart)) {
-        setSelectedPart("all")
-      }
-    } else {
-      setAvailableParts(mockPartsList)
-    }
-  }, [selectedEquipment, selectedPart])
+    let filtered = transactionsData
 
-  if (!userInfo) return null
-
-  const handleSearch = () => {
-    let filtered = transactions
-
-    // Filter by date range
-    if (startDate && endDate) {
-      filtered = filtered.filter((txn) => {
-        const txnDate = new Date(txn.date)
-        const start = new Date(startDate)
-        const end = new Date(endDate)
-        end.setHours(23, 59, 59, 999) // Include end date
-        return txnDate >= start && txnDate <= end
-      })
-    }
-
-    // Filter by transaction type
-    if (selectedTransactionType && selectedTransactionType !== "all") {
-      filtered = filtered.filter((txn) => txn.type === selectedTransactionType)
-    }
-
-    // Filter by equipment
-    if (selectedEquipment && selectedEquipment !== "all") {
-      const equipment = mockEquipmentList.find((eq) => eq.id === selectedEquipment)
-      if (equipment) {
-        filtered = filtered.filter((txn) => txn.equipmentName === equipment.name)
-      }
-    }
-
-    // Filter by part
-    if (selectedPart && selectedPart !== "all") {
-      const part = mockPartsList.find((p) => p.id === selectedPart)
-      if (part) {
-        filtered = filtered.filter((txn) => txn.partName === part.name)
-      }
-    }
-
-    // Filter by warehouse
-    if (selectedWarehouse && selectedWarehouse !== "all") {
-      const warehouse = mockWarehouseList.find((w) => w.id === selectedWarehouse)
-      if (warehouse) {
-        filtered = filtered.filter((txn) => txn.warehouse === warehouse.name)
-      }
-    }
-
-    setFilteredTransactions(filtered)
-    setHasSearched(true)
-  }
-
-  const applyTableFilters = (transactions: any[]) => {
-    let filtered = transactions
-
-    if (typeFilter && typeFilter !== "all") {
+    if (typeFilter !== "all") {
       filtered = filtered.filter((txn) => txn.type === typeFilter)
     }
 
-    if (equipmentFilter) {
-      filtered = filtered.filter((txn) => txn.equipmentName.toLowerCase().includes(equipmentFilter.toLowerCase()))
+    if (machineFilter) {
+      filtered = filtered.filter((txn) => txn.machine_name.toLowerCase().includes(machineFilter.toLowerCase()))
     }
 
-    if (partFilter) {
+    if (materialFilter) {
       filtered = filtered.filter(
         (txn) =>
-          txn.partName.toLowerCase().includes(partFilter.toLowerCase()) ||
-          txn.partCode.toLowerCase().includes(partFilter.toLowerCase()),
+          txn.material_name.toLowerCase().includes(materialFilter.toLowerCase()) ||
+          txn.material_code.toLowerCase().includes(materialFilter.toLowerCase()),
       )
     }
 
     if (warehouseFilter) {
-      filtered = filtered.filter((txn) => txn.warehouse.toLowerCase().includes(warehouseFilter.toLowerCase()))
+      filtered = filtered.filter((txn) => txn.location.toLowerCase().includes(warehouseFilter.toLowerCase()))
     }
 
-    return filtered
-  }
+    setFilteredData(filtered);
 
-  const displayedTransactions = applyTableFilters(filteredTransactions)
+  }, [transactionsData, typeFilter, machineFilter, materialFilter, warehouseFilter])
+
+  if (!userInfo) return null
+
+  const handleSearch = async () => {
+    const res = await fetch(`/api/ship/inventory/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(searchData),
+    });
+
+    const data = await res.json();
+    setTransactionsData(data);
+
+    setHasSearched(true)
+  }
 
   const getTransactionTypeBadge = (type: string) => {
     switch (type) {
-      case "입고":
+      case "I0":
         return (
           <Badge className="bg-green-100 text-green-800">
             <TrendingUp className="w-3 h-3 mr-1" />
             입고
           </Badge>
         )
-      case "출고":
+      case "O0":
         return (
           <Badge className="bg-blue-100 text-blue-800">
             <TrendingDown className="w-3 h-3 mr-1" />
             출고
           </Badge>
         )
-      case "재고조정":
+      case "AI":
+      case "AO":
         return (
           <Badge className="bg-orange-100 text-orange-800">
             <Edit className="w-3 h-3 mr-1" />
             재고조정
           </Badge>
         )
-      case "손망실":
+      case "L0":
         return (
           <Badge variant="destructive">
             <AlertTriangle className="w-3 h-3 mr-1" />
@@ -281,8 +177,23 @@ export default function ShipInventoryTransactionsPage() {
     }
   }
 
-  const getQuantityDisplay = (quantity: number, type: string) => {
-    const isNegative = quantity < 0
+  const getTransactionType = (type: string) => {
+    switch (type) {
+      case "I0":
+        return '정상입고'
+      case "O0":
+        return '정상출고'
+      case "AI":
+        return '재고조정 - 입고'
+      case "AO":
+        return '재고조정 - 출고'
+      case "L0":
+        return '손망실'
+    }
+  }
+
+  const getQuantityDisplay = (type: string, quantity: number) => {
+    const isNegative = type === 'AO' || type === 'O0' || type === 'L0'
     const displayQuantity = Math.abs(quantity)
 
     return (
@@ -292,296 +203,232 @@ export default function ShipInventoryTransactionsPage() {
       </span>
     )
   }
-
-  const getUniqueTypes = () => [...new Set(filteredTransactions.map((txn) => txn.type))]
-  const getUniqueEquipments = () => [...new Set(filteredTransactions.map((txn) => txn.equipmentName))]
-  const getUniqueWarehouses = () => [...new Set(filteredTransactions.map((txn) => txn.warehouse))]
+  const getUniqueTypes = () => [...new Set(transactionsData.map((txn) => txn.type))]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userType={userInfo.user_auth} />
       <div className="flex">
-        {/* ... existing sidebar code ... */}
-        <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">재고 관리</h2>
-            <nav className="space-y-2">
-              <button
-                onClick={() => router.push("/ship/dashboard")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-50"
-              >
-                <BarChart3 className="w-4 h-4" />
-                메인으로 돌아가기
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Package className="w-4 h-4" />
-                재고관리 대시보드
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/status")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <BarChart3 className="w-4 h-4" />
-                재고현황
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/receiving")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <TrendingUp className="w-4 h-4" />
-                부품입고
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/transactions")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors bg-blue-50 text-blue-700 border border-blue-200"
-              >
-                <History className="w-4 h-4" />
-                입출고 내역
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/initial-stock")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Package className="w-4 h-4" />
-                기초재고 등록
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/adjustment")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Edit className="w-4 h-4" />
-                재고 조정
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/loss")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                손망실 처리
-              </button>
-              <button
-                onClick={() => router.push("/ship/inventory/warehouse")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-              >
-                <Warehouse className="w-4 h-4" />
-                창고관리
-              </button>
-            </nav>
-          </div>
-        </div>
+        <Sidebar userType={userInfo.user_auth} />
 
-        <main className="flex-1 p-6">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">입출고 내역</h1>
-                <p className="text-gray-600">부품의 입고, 출고, 재고조정, 손망실 내역을 조회합니다</p>
-              </div>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="w-5 h-5" />
-                  조회 조건
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>시작일자 *</Label>
-                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>종료일자 *</Label>
-                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>구분 (선택사항)</Label>
-                    <Select value={selectedTransactionType} onValueChange={setSelectedTransactionType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        <SelectItem value="입고">입고</SelectItem>
-                        <SelectItem value="출고">출고</SelectItem>
-                        <SelectItem value="재고조정">재고조정</SelectItem>
-                        <SelectItem value="손망실">손망실</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>장비 (선택사항)</Label>
-                    <Select value={selectedEquipment} onValueChange={setSelectedEquipment}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        {mockEquipmentList.map((equipment) => (
-                          <SelectItem key={equipment.id} value={equipment.id}>
-                            {equipment.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>부품 (선택사항)</Label>
-                    <Select value={selectedPart} onValueChange={setSelectedPart}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        {availableParts.map((part) => (
-                          <SelectItem key={part.id} value={part.id}>
-                            {part.name} ({part.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>창고 (선택사항)</Label>
-                    <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        {mockWarehouseList.map((warehouse) => (
-                          <SelectItem key={warehouse.id} value={warehouse.id}>
-                            {warehouse.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button onClick={handleSearch} className="w-full">
-                      <Search className="w-4 h-4 mr-2" />
-                      조회
-                    </Button>
-                  </div>
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">입출고 내역</h2>
+                  <p className="text-gray-600">부품의 입고, 출고, 재고조정, 손망실 내역을 조회합니다</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {hasSearched && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <History className="w-5 h-5" />
-                    입출고 내역 ({displayedTransactions.length}건)
+                    <Search className="w-5 h-5" />
+                    조회 조건
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {filteredTransactions.length > 0 && (
-                    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Filter className="w-4 h-4" />
-                        <span className="text-sm font-medium">테이블 필터</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">구분</Label>
-                          <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="h-8">
-                              <SelectValue placeholder="전체" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">전체</SelectItem>
-                              {getUniqueTypes().map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">장비</Label>
-                          <Input
-                            placeholder="장비명 검색"
-                            value={equipmentFilter}
-                            onChange={(e) => setEquipmentFilter(e.target.value)}
-                            className="h-8"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">부품</Label>
-                          <Input
-                            placeholder="부품명/코드 검색"
-                            value={partFilter}
-                            onChange={(e) => setPartFilter(e.target.value)}
-                            className="h-8"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">창고</Label>
-                          <Input
-                            placeholder="창고명 검색"
-                            value={warehouseFilter}
-                            onChange={(e) => setWarehouseFilter(e.target.value)}
-                            className="h-8"
+                  <div className="grid grid-cols-1 space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="flex flex-row gap-4">
+                        <div className="space-y-2">
+                          <Label>시작일자 *</Label>
+                          <Input 
+                            type="date" 
+                            defaultValue={searchData.start_date} 
+                            onChange={(e) => setSearchData((prev: any) => ({ ...prev, start_date: e.target.value }))}
                           />
                         </div>
                       </div>
+                      <div className="flex flex-row gap-4">
+                        <div className="space-y-2">
+                          <Label>종료일자 *</Label>
+                          <Input 
+                            type="date" 
+                            defaultValue={searchData.end_date} 
+                            onChange={(e) => setSearchData((prev: any) => ({ ...prev, end_date: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>구분</Label>
+                        <Select 
+                          defaultValue={searchData.type} 
+                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, type: value }))}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="전체" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">전체</SelectItem>
+                            <SelectItem value="I">입고</SelectItem>
+                            <SelectItem value="O">출고</SelectItem>
+                            <SelectItem value="A">재고조정</SelectItem>
+                            <SelectItem value="L">손망실</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>장비</Label>
+                        <Select 
+                          defaultValue={searchData.machine_id} 
+                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, machine_id: value }))}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="전체" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">전체</SelectItem>
+                            {machines.map((machine) => (
+                              <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                                {machine.machine_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>창고</Label>
+                        <Select 
+                          defaultValue={searchData.location} 
+                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, location: value }))}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="전체" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">전체</SelectItem>
+                            {warehouses.map((warehouse) => (
+                              <SelectItem key={warehouse.warehouse_no} value={warehouse.warehouse_no}>
+                                {warehouse.warehouse_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  )}
-
-                  {displayedTransactions.length > 0 ? (
-                    <div className="overflow-auto">
-                      <table className="w-full text-sm">
-                        <thead className="border-b">
-                          <tr>
-                            <th className="text-left py-3 px-2">일자</th>
-                            <th className="text-left py-3 px-2">구분</th>
-                            <th className="text-left py-3 px-2">장비</th>
-                            <th className="text-left py-3 px-2">부품명</th>
-                            <th className="text-left py-3 px-2">부품코드</th>
-                            <th className="text-left py-3 px-2">창고</th>
-                            <th className="text-center py-3 px-2">수량</th>
-                            <th className="text-left py-3 px-2">사유</th>
-                            <th className="text-left py-3 px-2">등록자</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {displayedTransactions.map((transaction) => (
-                            <tr key={transaction.id} className="border-b hover:bg-gray-50">
-                              <td className="py-3 px-2">{transaction.date}</td>
-                              <td className="py-3 px-2">{getTransactionTypeBadge(transaction.type)}</td>
-                              <td className="py-3 px-2">{transaction.equipmentName}</td>
-                              <td className="py-3 px-2 font-medium">{transaction.partName}</td>
-                              <td className="py-3 px-2 text-gray-600">{transaction.partCode}</td>
-                              <td className="py-3 px-2">{transaction.warehouse}</td>
-                              <td className="py-3 px-2 text-center font-medium">
-                                {getQuantityDisplay(transaction.quantity, transaction.type)} {transaction.unit}
-                              </td>
-                              <td className="py-3 px-2">{transaction.reason}</td>
-                              <td className="py-3 px-2">{transaction.registrant}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="flex items-end">
+                      <Button onClick={handleSearch} className="w-full" style={{cursor: 'pointer'}}>
+                        <Search className="w-4 h-4 mr-2" />
+                        조회
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      {filteredTransactions.length === 0
-                        ? "조회 조건에 맞는 내역이 없습니다."
-                        : "필터 조건에 맞는 내역이 없습니다."}
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
-            )}
+
+              {hasSearched && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <History className="w-5 h-5" />
+                      입출고 내역 ({filteredData.length}건)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {transactionsData.length > 0 && (
+                      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Filter className="w-4 h-4" />
+                          <span className="text-sm font-medium">테이블 필터</span>
+                        </div>
+                        <div className="flex flex-row gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">구분</Label>
+                            <Select value={typeFilter} onValueChange={setTypeFilter}>
+                              <SelectTrigger className="h-8 w-38">
+                                <SelectValue placeholder="전체" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">전체</SelectItem>
+                                {getUniqueTypes().map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {getTransactionType(type)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">장비</Label>
+                            <Input
+                              placeholder="장비명 검색"
+                              value={machineFilter}
+                              onChange={(e) => setMachineFilter(e.target.value)}
+                              className="h-8"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">부품</Label>
+                            <Input
+                              placeholder="부품명/코드 검색"
+                              value={materialFilter}
+                              onChange={(e) => setMaterialFilter(e.target.value)}
+                              className="h-8"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">창고</Label>
+                            <Input
+                              placeholder="창고명 검색"
+                              value={warehouseFilter}
+                              onChange={(e) => setWarehouseFilter(e.target.value)}
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {transactionsData.length > 0 ? (
+                      <div className="overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="border-b">
+                            <tr>
+                              <th className="text-left py-3 px-2">장비</th>
+                              <th className="text-left py-3 px-2">일자</th>
+                              <th className="text-left py-3 px-2">구분</th>
+                              <th className="text-left py-3 px-2">부품명</th>
+                              <th className="text-left py-3 px-2">부품코드</th>
+                              <th className="text-left py-3 px-2">창고</th>
+                              <th className="text-center py-3 px-2">수량</th>
+                              <th className="text-left py-3 px-2">사유</th>
+                              <th className="text-left py-3 px-2">등록자</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredData.map((transaction) => (
+                              <tr key={transaction.no} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-2">{transaction.machine_name}</td>
+                                <td className="py-3 px-2">{transaction.date}</td>
+                                <td className="py-3 px-2">{getTransactionTypeBadge(transaction.type)}</td>
+                                <td className="py-3 px-2 font-medium">{transaction.material_name}</td>
+                                <td className="py-3 px-2 text-gray-600">{transaction.material_code}</td>
+                                <td className="py-3 px-2">{transaction.location}</td>
+                                <td className="py-3 px-2 text-center font-medium">
+                                  {getQuantityDisplay(transaction.type, transaction.qty)} {transaction.unit}
+                                </td>
+                                <td className="py-3 px-2">{transaction.reason}</td>
+                                <td className="py-3 px-2">{transaction.registrant}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        {filteredData.length === 0
+                          ? "조회 조건에 맞는 내역이 없습니다."
+                          : "필터 조건에 맞는 내역이 없습니다."}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   )

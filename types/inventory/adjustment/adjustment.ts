@@ -1,18 +1,18 @@
-export interface Loss {
+export interface Adjustment {
     vessel_no: string;
     vessel_name: string;
-    loss_no: string;
     machine_id: string;
     machine_name: string;
     material_code: string;
     material_name: string;
-    loss_date: string;
-    loss_unit: string;
-    loss_qty: number;
-    loss_location: string;
-    loss_location_name: string;
-    loss_reason: string;
-    loss_remark: string;
+    adjustment_date: string;
+    adjustment_type: string;
+    adjustment_qty: number;
+    adjustment_unit: string;
+    adjustment_location: string;
+    adjustment_location_name: string;
+    adjustment_reason: string;
+    adjustment_remark: string;
     stock_qty: number;
     registrant: string;
     regist_date: string;

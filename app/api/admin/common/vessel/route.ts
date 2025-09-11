@@ -19,7 +19,7 @@ export async function GET(req: Request) {
                     , 'machine' as type
                     , b.sort_no
                  from vessel as a
-                 left outer join machines as b
+                 left outer join [machine] as b
                    on a.vessel_no = b.vessel_no
                 where a.use_yn = 'Y'
                union all

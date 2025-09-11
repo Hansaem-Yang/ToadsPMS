@@ -28,7 +28,7 @@ import {
   Download,
 } from "lucide-react"
 import { Vessel as VesselCode } from '@/types/common/vessel'; // ✅ interface import
-import { Machines as MachinesCode } from '@/types/common/machines'; // ✅ interface import
+import { Machine as MachinesCode } from '@/types/common/machine'; // ✅ interface import
 import { MaterialType } from '@/types/common/material_type'; // ✅ interface import
 import { MaterialUnit } from '@/types/common/material_unit'; // ✅ interface import
 import { Vessel } from '@/types/inventory/material/vessel'; // ✅ interface import

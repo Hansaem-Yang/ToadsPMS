@@ -30,7 +30,7 @@ import { Loss } from '@/types/inventory/loss/loss'; // ✅ interface import
 export default function ShipInventoryLossPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [stocks, setStocks] = useState<Stock[]>([])
-  const [filteredStockData, setFilteredStockData] = useState<Stock[]>(stocks)
+  const [filteredData, setFilteredData] = useState<Stock[]>(stocks)
   const [lossDate, setLossDate] = useState(new Date().toISOString().split("T")[0])
   const [registrant, setRegistrant] = useState("")
   const [reason, setReason] = useState("")
@@ -70,7 +70,7 @@ export default function ShipInventoryLossPage() {
       )
     }
 
-    setFilteredStockData(filtered)
+    setFilteredData(filtered)
   }, [stocks, searchTerm])
 
   if (!userInfo) return null
@@ -89,6 +89,7 @@ export default function ShipInventoryLossPage() {
       loss_qty: 0,
       stock_qty: item.stock_qty,
       loss_location: item.location,
+      loss_location_name: item.location_name,
       loss_reason: reason,
       loss_remark: "",
       registrant: registrant,
@@ -263,7 +264,7 @@ export default function ShipInventoryLossPage() {
                               />
                             </td>
                             <td className="py-3 px-2 text-center">{item.loss_unit}</td>
-                            <td className="py-3 px-2 text-center">{item.loss_location}</td>
+                            <td className="py-3 px-2 text-center">{item.loss_location_name}</td>
                             <td className="py-3 px-2 text-center">
                               <Button
                                 onClick={() => handleRemovePart(item.material_code)}
@@ -333,14 +334,14 @@ export default function ShipInventoryLossPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStockData.map((item) => (
+                  {filteredData.map((item) => (
                     <tr key={`${item.machine_id}-${item.material_code}`} className="border-b hover:bg-gray-50">
                       <td className="py-2 px-2">{item.machine_name}</td>
                       <td className="py-2 px-2 font-medium">{item.material_name}</td>
                       <td className="py-2 px-2 text-gray-600">{item.material_code}</td>
                       <td className="py-2 px-2 text-center">{item.stock_qty}</td>
                       <td className="py-2 px-2 text-center">{item.material_unit}</td>
-                      <td className="py-2 px-2 text-center">{item.location}</td>
+                      <td className="py-2 px-2 text-center">{item.location_name}</td>
                       <td className="py-2 px-2 text-center">
                         <Button
                           onClick={() => handleAddPart(item)}
@@ -354,7 +355,7 @@ export default function ShipInventoryLossPage() {
                   ))}
                 </tbody>
               </table>
-              {filteredStockData.length === 0 && (
+              {filteredData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">검색 결과가 없습니다.</div>
               )}
             </div>

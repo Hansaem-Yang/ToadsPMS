@@ -26,7 +26,7 @@ export async function GET(req: Request) {
         inner join [material] as c
            on a.vessel_no = c.vessel_no
           and a.material_code = c.material_code
-        inner join [machines] as d
+        inner join [machine] as d
            on c.vessel_no = d.vessel_no
           and c.machine_id = d.machine_id
         order by a.vessel_no, a.loss_date`);

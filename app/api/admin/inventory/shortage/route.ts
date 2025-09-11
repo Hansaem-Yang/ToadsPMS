@@ -30,7 +30,7 @@ export async function GET(req: Request) {
                  from [vessel] as a
                  left outer join [material] as b
                    on a.vessel_no = b.vessel_no
-                 left outer join [machines] as c
+                 left outer join [machine] as c
                    on b.vessel_no = c.vessel_no
                   and b.machine_id = c.machine_id
                  left outer join [receive] as d

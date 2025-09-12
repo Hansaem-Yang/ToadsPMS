@@ -974,7 +974,7 @@ export default function MaintenanceWorkManagementPage() {
                   <Input 
                     id="lastest_date" 
                     type="date"
-                    className="w-36"
+                    className='sm:w-40 md:w-36'
                     onChange={(e) => setAddMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
                   />
                 </div>
@@ -1172,7 +1172,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Input 
                       id="lastest_date" 
                       type="date"
-                       className="w-36"
+                      className='sm:w-40 md:w-36'
                       defaultValue={selectedMaintenance.lastest_date}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
                     />

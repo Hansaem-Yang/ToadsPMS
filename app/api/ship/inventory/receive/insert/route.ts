@@ -1,62 +1,73 @@
 import { NextResponse } from 'next/server';
 import { getSql, getPool, query, execute } from '@/db'; // 이전에 만든 query 함수
-import { Loss } from '@/types/inventory/loss/loss';
+import { ReceiveData } from '@/types/inventory/receive/receive_data';
+import { Receive } from '@/types/inventory/receive/receive';
 
 export async function POST(req: Request) {
   try {
     const remoteSiteUrl = process.env.REMOTE_SITE_URL;
     const body = await req.json();
-    const items : Loss[] = body;
+    const receiveData : ReceiveData = body;
 
     const sql = await getSql();
     const pool = await getPool();
     const transantion = pool.transaction();
     await transantion.begin();
+
+    console.log(receiveData)
     try {
       let count = 0;
-      for (const item of items) {
+      for (const item of receiveData.materials) {
         // DB에서 사용자 정보 확인
 
         let query = `
-        insert into [loss] (
+        insert into [receive] (
                vessel_no
-             , loss_no
+             , receive_no
              , material_code
-             , loss_date
-             , loss_type
-             , loss_unit
-             , loss_qty
-             , loss_location
-             , loss_reason
+             , receive_date
+             , delivery_location
+             , receive_type
+             , receive_unit
+             , receive_qty
+             , receive_location
+             , receive_remark
              , regist_date
              , regist_user
+
         )
         values (
-                @vesselNo
-              , (select 'L0' + format(getdate(), 'yyMM') + format(isnull(right(max(loss_no), 3), 0) + 1, '000')
-                   from [loss]
-                  where vessel_no = @vesselNo)
-              , @materialCode
-              , @lossDate
-              , 'L0'
-              , @lossUnit
-              , @lossQty
-              , @lossLocation
-              , @lossReason
-              , getdate()
-              , @registUser
+               @vesselNo
+             , (select 'I0' + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000')
+                  from [receive]
+                 where vessel_no = @vesselNo
+                   and receive_type = 'I0')
+             , @materialCode
+             , @receiveDate
+             , @deliveryLocation
+             , 'I0'
+             , (select material_unit
+                  from material
+                 where vessel_no = @vesselNo
+                   and material_code = @materialCode)
+             , @receiveQty
+             , @receiveLocation
+             , @receiveRemark
+             , getdate()
+             , @registUser
         );`;
 
         let params = [
-          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'vesselNo', value: receiveData.vessel_no }, 
           { name: 'materialCode', value: item.material_code }, 
-          { name: 'lossDate', value: item.loss_date }, 
-          { name: 'lossUnit', value: item.loss_unit }, 
-          { name: 'lossQty', value: item.loss_qty }, 
-          { name: 'lossLocation', value: item.loss_location }, 
-          { name: 'lossReason', value: item.loss_reason }, 
-          { name: 'registUser', value: item.regist_user }, 
-          { name: 'modifyUser', value: item.modify_user }, 
+          { name: 'receiveDate', value: receiveData.receive_date }, 
+          { name: 'deliveryLocation', value: receiveData.delivery_location }, 
+          { name: 'receiveType', value: item.receive_type }, 
+          { name: 'receiveQty', value: item.receive_qty }, 
+          { name: 'receiveLocation', value: item.receive_location }, 
+          { name: 'receiveRemark', value: item.receive_remark }, 
+          { name: 'registUser', value: receiveData.regist_user }, 
+          { name: 'modifyUser', value: receiveData.modify_user }, 
         ];
 
         const request = new sql.Request(transantion);
@@ -74,25 +85,26 @@ export async function POST(req: Request) {
       transantion.commit();
 
       // 저장된 정비 정보 조회
-      const sendData: Loss[] = await query(
+      const sendData: Receive[] = await query(
         `select vessel_no
-              , loss_no
+              , receive_no
               , material_code
-              , loss_date
-              , loss_type
-              , loss_unit
-              , loss_qty
-              , loss_location
-              , loss_reason
+              , receive_date
+              , delivery_location
+              , receive_type
+              , receive_unit
+              , receive_qty
+              , receive_location
+              , receive_remark
               , regist_date
               , regist_user
-           from [loss]
+           from [receive]
           where vessel_no = @vesselNo
             and regist_user = @registUser
             and regist_date >= convert(varchar(10), getdate(), 121);`,
         [
-          { name: 'vesselNo', value: items[0].vessel_no },
-          { name: 'registUser', value: items[0].regist_user },
+          { name: 'vesselNo', value: receiveData.vessel_no },
+          { name: 'registUser', value: receiveData.regist_user },
         ]
       );
       
@@ -101,7 +113,7 @@ export async function POST(req: Request) {
         const transantion1 = pool.transaction();
         await transantion1.begin();
 
-        fetch(`${remoteSiteUrl}/api/data/inventory/loss/sets`, {
+        fetch(`${remoteSiteUrl}/api/data/inventory/receive/sets`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -115,15 +127,15 @@ export async function POST(req: Request) {
               
               for (const item of sendData) {
                 const queryString = 
-                  `update [loss]
+                  `update [receive]
                       set last_send_date = getdate()
                     where vessel_no = @vesselNo
-                      and loss_no = @lossNo;`
+                      and receive_no = @receiveNo;`
 
                 const request = new sql.Request(transantion);
                 const params = [
                   { name: 'vesselNo', value: item.vessel_no },
-                  { name: 'lossNo', value: item.loss_no },
+                  { name: 'receiveNo', value: item.receive_no },
                 ];
 
                 params?.forEach(p => request.input(p.name, p.value));

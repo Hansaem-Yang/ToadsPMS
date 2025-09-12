@@ -69,8 +69,6 @@ export async function GET(req: Request) {
         vessel.children.push(item);
     });
 
-    console.log(vessels);
-
     // 성공 시 데쉬보드 정보 반환
     return NextResponse.json(vessels);
   } catch (err) {

@@ -376,7 +376,7 @@ export default function InventoryAdjustmentPage() {
                         <Label>조정 일자</Label>
                         <Input
                           type="date"
-                          className="w-36"
+                          className='sm:w-40 md:w-36'
                           defaultValue={addAdjustment.adjustment_date}
                           onChange={(e) => setAddAdjustment({ ...addAdjustment, adjustment_date: e.target.value })}
                         />

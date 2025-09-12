@@ -112,6 +112,11 @@ export default function InitialStockPage() {
   useEffect(() => {
     let filtered = machines
 
+    if (!selectedMachine) {
+      setSelectedMachine(machines[0]?.machine_id)
+      return;
+    }
+
     if (selectedMachine) {
       const selectedMachineData = filtered.find((machine) => machine.machine_id === selectedMachine)
       const filteredMaterials =

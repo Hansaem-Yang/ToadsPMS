@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Vessel } from '@/types/inventory/status/vessel'; // ✅ interface import
+import { Machine } from '@/types/inventory/status/machine'; // ✅ interface import
 import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface import
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const vesselNo = searchParams.get('vesselNo');
+
   try {
     // DB에서 데쉬보드 정보 확인
     const items: Inventory[] = await query(
@@ -14,11 +17,9 @@ export async function GET(req: Request) {
             , b.material_code
             , b.material_name
             , b.material_unit
+            , b.warehouse_no
+            , g.warehouse_name
             , isnull(b.standard_qty, 0) as standard_qty
-            , convert(varchar(10), getdate(), 121) as [period]
-            , sum(case when d.receive_date = convert(varchar(10), getdate(), 121) then isnull(d.receive_qty, 0) else 0 end) as receive_qty
-            , sum(case when e.release_date = convert(varchar(10), getdate(), 121) then isnull(e.release_qty, 0) else 0 end) as release_qty
-            , sum(case when f.loss_date = convert(varchar(10), getdate(), 121) then isnull(f.loss_qty, 0) else 0 end) as loss_qty
             , sum(isnull(d.receive_qty, 0)) - sum(isnull(e.release_qty, 0)) - sum(isnull(f.loss_qty, 0)) as stock_qty
          from [vessel] as a
          left outer join [material] as b
@@ -35,7 +36,11 @@ export async function GET(req: Request) {
          left outer join [loss] as f
            on b.vessel_no = f.vessel_no
           and b.material_code = f.material_code
-        where a.use_yn = 'Y'
+         left outer join [warehouse] as g
+           on b.vessel_no = g.vessel_no
+          and b.warehouse_no = g.warehouse_no
+        where a.vessel_no = @vesselNo
+          and a.use_yn = 'Y'
         group by a.vessel_no
                , a.vessel_name
                , b.machine_id
@@ -44,33 +49,40 @@ export async function GET(req: Request) {
                , b.material_name
                , b.material_unit
                , b.standard_qty
+               , b.warehouse_no
+               , g.warehouse_name
         order by a.vessel_no
                , b.machine_id
-               , b.material_code`);
+               , b.material_code`,
+    [
+      { name: 'vesselNo', value: vesselNo }
+    ]);
 
-    let vessels: Vessel[] = [];
-    let vessel: Vessel;
+    let machines: Machine[] = [];
+    let machine: Machine;
 
-    let vesselNo: string = '';
+    let machineId: string = '';
 
     items.map(item => {
-      if (vesselNo !== item.vessel_no) {
-        vessel = {
+      if (machineId !== item.machine_id) {
+        machine = {
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
+          machine_id: item.machine_id,
+          machine_name: item.machine_name,
           children: [] = []
         }
 
-        vessels.push(vessel);
-        vesselNo = item.vessel_no;
+        machines.push(machine);
+        machineId = item.machine_id;
       }
       
       if (item.material_code)
-        vessel.children.push(item);
+        machine.children.push(item);
     });
 
     // 성공 시 데쉬보드 정보 반환
-    return NextResponse.json(vessels);
+    return NextResponse.json(machines);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

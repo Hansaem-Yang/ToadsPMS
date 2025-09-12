@@ -6,6 +6,8 @@ export interface Inventory {
     material_code: string;
     material_name: string;
     material_unit: string;
+    warehouse_no: string;
+    warehouse_name: string;
     standard_qty: number;
     period: string;
     receive_qty: number;

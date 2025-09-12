@@ -233,6 +233,7 @@ export default function InventoryTransactionsPage() {
                           <Label>시작일자 *</Label>
                           <Input 
                             type="date" 
+                            className='sm:w-40 md:w-36'
                             defaultValue={searchData.start_date} 
                             onChange={(e) => setSearchData((prev: any) => ({ ...prev, start_date: e.target.value }))}
                           />
@@ -243,6 +244,7 @@ export default function InventoryTransactionsPage() {
                           <Label>종료일자 *</Label>
                           <Input 
                             type="date" 
+                            className='sm:w-40 md:w-36'
                             defaultValue={searchData.end_date} 
                             onChange={(e) => setSearchData((prev: any) => ({ ...prev, end_date: e.target.value }))}
                           />

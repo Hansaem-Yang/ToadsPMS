@@ -80,7 +80,7 @@ export async function POST(req: Request) {
           and a.location like case @location when 'all' then '' else @location end + '%'
           and a.type like case @type when 'all' then '' else @type end + '%'
         order by a.vessel_no
-               , a.date
+               , a.date desc
                , a.type
                , a.remark
                , a.material_code`, 
@@ -92,8 +92,6 @@ export async function POST(req: Request) {
         { name: 'location', value: item.location },
         { name: 'type', value: item.type },
       ]);
-
-      console.log(item)
 
     // 성공 시 데쉬보드 정보 반환
     return NextResponse.json(items);

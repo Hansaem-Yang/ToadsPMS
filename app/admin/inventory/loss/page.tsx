@@ -101,13 +101,19 @@ export default function AdminInventoryLossPage() {
                     <Input
                       id="startDate"
                       type="date"
+                      className='sm:w-40 md:w-36'
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                     />
                   </div>
                   <div>
                     <Label htmlFor="endDate">종료일</Label>
-                    <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    <Input 
+                      id="endDate" 
+                      type="date" 
+                      className='sm:w-40 md:w-36'
+                      value={endDate} 
+                      onChange={(e) => setEndDate(e.target.value)} />
                   </div>
                   <div>
                     <Label htmlFor="ship">선박</Label>

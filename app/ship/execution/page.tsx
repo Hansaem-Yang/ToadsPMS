@@ -606,7 +606,7 @@ export default function MaintenanceExecutionPage() {
                                 type="date"
                                 placeholder="시간"
                                 defaultValue={task.next_due_date}
-                                className="text-sm"
+                                className='text-sm sm:w-40 md:w-36'
                                 disabled
                               />
                             </div>
@@ -689,7 +689,7 @@ export default function MaintenanceExecutionPage() {
                         type="date"
                         placeholder="시간"
                         defaultValue={selectedWork.next_due_date}
-                        className="text-sm"
+                        className='text-sm sm:w-40 md:w-36'
                         disabled
                       />
                     </div>
@@ -759,7 +759,7 @@ export default function MaintenanceExecutionPage() {
                         type="date"
                         placeholder="예정일"
                         value={selectedExtension.due_date}
-                        className="text-sm"
+                        className='text-sm sm:w-40 md:w-36'
                         disabled
                       />
                     </div>
@@ -769,7 +769,7 @@ export default function MaintenanceExecutionPage() {
                         type="date"
                         placeholder="신청일자"
                         defaultValue={selectedExtension.extension_date}
-                        className="text-sm"
+                        className='text-sm sm:w-40 md:w-36'
                         onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_date: e.target.value }))}
                       />
                     </div>

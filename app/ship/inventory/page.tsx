@@ -1,13 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { vesselRequireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, TrendingUp, BarChart3, Package, Settings, FileText, Warehouse, History } from "lucide-react"
+import { AlertTriangle, TrendingUp, BarChart3, Package } from "lucide-react"
+import { Machine } from '@/types/inventory/status/machine'; // ✅ interface import
 
 // Mock data for ship inventory
 const mockShipInventoryData = {
@@ -86,38 +87,47 @@ const mockShipInventoryData = {
 export default function ShipInventoryPage() {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null)
-  const [inventoryData, setInventoryData] = useState(mockShipInventoryData)
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [shortageMachine, setShortageMachine] = useState<Machine[]>(machines)
+
+  const fetchStatus = (vesselNo: string) => {
+    fetch(`/api/ship/inventory?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  }
 
   useEffect(() => {
     try {
       const user = vesselRequireAuth()
       setUserInfo(user)
+
+      fetchStatus(user.ship_no)
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
 
+  useEffect(() => {
+    let filtered = machines
+
+    if (filtered) {
+      const shortageMachine = machines.map((machine) => ({
+        ...machine,
+        children: machine.children,
+      }))
+      .filter((machine) => machine.children.length > 0)
+
+      setShortageMachine(shortageMachine)
+    }
+  }, [machines])
+
   if (!userInfo) return null
 
-  const shortageCount = inventoryData.equipment.reduce(
-    (total, equip) => total + equip.parts.filter((part) => part.status === "부족").length,
+  const shortageCount = machines.reduce(
+    (total, machine) => total + machine.children.length,
     0,
   )
-
-  const getShortagePartsByEquipment = () => {
-    return inventoryData.equipment
-      .map((equipment) => ({
-        ...equipment,
-        shortageParts: equipment.parts.filter((part) => part.status === "부족"),
-      }))
-      .filter((equipment) => equipment.shortageParts.length > 0)
-  }
-
-  const handleShortageClick = () => {
-    router.push("/ship/inventory/shortage")
-  }
-
-  const shortageEquipment = getShortagePartsByEquipment()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,7 +140,7 @@ export default function ShipInventoryPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">재고 관리 대시보드</h1>
-                <p className="text-gray-600">{inventoryData.shipName}의 부품 재고를 관리합니다</p>
+                <p className="text-gray-600">{userInfo.ship_name}의 부품 재고를 관리합니다</p>
               </div>
             </div>
 
@@ -152,24 +162,24 @@ export default function ShipInventoryPage() {
 
                   <div className="space-y-3">
                     <h4 className="font-medium text-gray-900">장비별 부족 부품</h4>
-                    {shortageEquipment.length > 0 ? (
+                    {shortageMachine.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {shortageEquipment.map((equipment) => (
-                          <Card key={equipment.equipmentId} className="border border-red-200">
+                        {shortageMachine.map((machine) => (
+                          <Card key={machine.machine_id} className="border border-red-200">
                             <CardContent className="p-4">
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <h5 className="font-medium text-gray-900">{equipment.equipmentName}</h5>
+                                  <h5 className="font-medium text-gray-900">{machine.machine_name}</h5>
                                   <Badge variant="destructive" className="text-xs">
-                                    {equipment.shortageParts.length}개 부족
+                                    {machine.children.length}개 부족
                                   </Badge>
                                 </div>
                                 <div className="space-y-1">
-                                  {equipment.shortageParts.map((part) => (
-                                    <div key={part.partId} className="flex justify-between items-center text-sm">
-                                      <span className="text-gray-700">{part.partName}</span>
+                                  {machine.children.map((material) => (
+                                    <div key={material.material_code} className="flex justify-between items-center text-sm">
+                                      <span className="text-gray-700">{material.material_name}</span>
                                       <span className="text-red-600 font-medium">
-                                        {part.currentStock}/{part.minStock} {part.unit}
+                                        {material.stock_qty}/{material.standard_qty} {material.material_unit}
                                       </span>
                                     </div>
                                   ))}

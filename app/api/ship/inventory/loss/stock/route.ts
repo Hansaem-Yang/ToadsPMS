@@ -17,6 +17,7 @@ export async function GET(req: Request) {
             , b.material_name
             , b.material_unit
             , isnull(d.location, '') as location
+            , isnull(e.warehouse_name, '') as location_name
             , d.stock_qty
          from vessel as a
          left outer join material as b
@@ -56,6 +57,9 @@ export async function GET(req: Request) {
                                   , a1.location) as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
+		     left outer join warehouse as e
+		       on d.vessel_no = e.vessel_no
+		      and d.location = e.warehouse_no
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
           and d.stock_qty > 0;`,

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
                          , @category as category
                          , @manufacturer as manufacturer
                          , @model as model
-                         , @machine as machine
+                         , @machine as machine_id
                          , @registUser as regist_user
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
                         , a.category = lower(b.category)
                         , a.manufacturer = b.manufacturer
                         , a.model = b.model
-                        , a.machine = b.machine
+                        , a.machine_id = b.machine_id
                         , a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
                          , category
                          , manufacturer
                          , model
-                         , machine
+                         , machine_id
                          , regist_date
                          , regist_user
                    )
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
                          , lower(b.category)
                          , b.manufacturer
                          , b.model
-                         , b.machine
+                         , b.machine_id
                          , getdate()
                          , b.regist_user
                    );`
@@ -195,7 +195,7 @@ export async function POST(req: Request) {
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
                and  a.equip_no = b.equip_no
-               and  a.section_name = b.section_name)
+               and  a.section_code = b.section_code)
               when matched then
                    update 
                       set a.plan_name = b.plan_name

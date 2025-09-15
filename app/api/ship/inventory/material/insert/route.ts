@@ -173,7 +173,7 @@ export async function POST(req: Request) {
               `update [material]
                   set last_send_date = getdate()
                 where vessel_no = @vesselNo
-                  and warehouse_no = @materialCode;`,
+                  and material_code = @materialCode;`,
               [
                 { name: 'vesselNo', value: sendData[0].vessel_no },
                 { name: 'materialCode', value: sendData[0].material_code },

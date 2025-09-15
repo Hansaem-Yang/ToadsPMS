@@ -18,6 +18,7 @@ import {
   Plus,
   Edit,
 } from "lucide-react"
+import * as XLSX from 'xlsx';
 import { MaterialType } from '@/types/common/material_type'; // ✅ interface import
 import { MaterialUnit } from '@/types/common/material_unit'; // ✅ interface import
 import { Warehouse } from '@/types/common/warehouse'; // ✅ interface import
@@ -50,6 +51,9 @@ export default function InitialStockPage() {
     modify_user: ""
   }
 
+  interface ExcelData {
+    [key: string]: any;
+  }
   const [userInfo, setUserInfo] = useState<any>(null)
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([])
   const [materialUnits, setMaterialUnits] = useState<MaterialUnit[]>([])
@@ -66,6 +70,7 @@ export default function InitialStockPage() {
 
   const [editMaterial, setEditMaterial] = useState<Material>(initialMaterial)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [excelData, setExcelData] = useState<ExcelData[]>([]);
 
   const fetchMaterialTypes = () => {
     fetch(`/api/admin/common/material_type`)
@@ -249,17 +254,65 @@ export default function InitialStockPage() {
     }
   }
 
-  const handleExcelDownload = () => {
-    alert("엑셀 템플릿이 다운로드됩니다.")
-  }
+  const sendDataToServer = async (excelData: ExcelData[]) => {
+    try {
+      const vesselNo = userInfo.ship_no;
+      const sendData = {
+        'vesselNo': vesselNo,
+        'registUser': userInfo.account_no,
+        'modifyUser': userInfo.account_no,
+        'excelData': excelData
+      }
 
-  const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      alert(`${file.name} 파일이 업로드되었습니다. 일괄 등록을 진행합니다.`)
-      setIsUploadDialogOpen(false)
+      const res = await fetch(`/api/ship/inventory/material/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sendData),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert('데이터가 성공적으로 전송되었습니다.');
+        setIsUploadDialogOpen(false);
+
+        fetchMaterials(vesselNo)
+      } else {
+        alert('데이터 전송 실패');
+      }
+    } catch (error) {
+      alert(`네트워크 에러: ${error}`);
     }
-  }
+  };
+  
+  const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        const jsonData: ExcelData[] = XLSX.utils.sheet_to_json(worksheet);
+        
+        setExcelData(jsonData);
+        
+        // 서버로 데이터 전송
+        sendDataToServer(jsonData);
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+        
+    if (event.target) {
+        event.target.value = '';
+    }
+  };
 
   const warehouseChanged = (mode: string, value: string) => {
     const foundWarehouse = warehouses.find(warehouse => warehouse.warehouse_no === value)
@@ -294,9 +347,11 @@ export default function InitialStockPage() {
                 <p className="text-gray-600">{userInfo.ship_name}의 장비별 부품 기초재고를 등록합니다</p>
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleExcelDownload} variant="outline">
+                <Button variant="outline">
                   <Download className="w-4 h-4 mr-2" />
-                  템플릿 다운로드
+                  <a href="/template/PMS Material Upload Template.xlsx">
+                    템플릿 다운로드
+                  </a>
                 </Button>
                 <Button onClick={() => setIsUploadDialogOpen(true)} variant="outline">
                   <Upload className="w-4 h-4 mr-2" />
@@ -691,7 +746,7 @@ export default function InitialStockPage() {
                   <div className="text-sm text-gray-600">
                     <p>• 먼저 템플릿을 다운로드하여 양식에 맞게 작성해주세요.</p>
                     <p>• 엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.</p>
-                    <p>• 기존 부품과 중복되는 부품코드는 업데이트됩니다.</p>
+                    <p>• 기존 부품 정보와 중복되는 내용은 업데이트됩니다.</p>
                   </div>
                   <div>
                     <Label>파일 선택</Label>

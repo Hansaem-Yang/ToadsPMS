@@ -13,11 +13,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Ship, Plus, Search, Edit, Settings, Wrench, Sheet } from "lucide-react"
+import { Ship, Plus, Search, Edit, Settings, Wrench, Upload, Download } from "lucide-react"
 import * as XLSX from 'xlsx';
 import { Vessel } from '@/types/vessel/vessel'; // ✅ interface import
 
@@ -35,7 +35,7 @@ export default function ShipManagementPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedVessel, setSelectedVessel] = useState<any>(null);
   const [excelData, setExcelData] = useState<ExcelData[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
 
   const fetchVessels = () => {
     fetch('/api/admin/ships/all')
@@ -124,13 +124,41 @@ export default function ShipManagementPage() {
     }
   }
 
-  const handleExcelUpload = (item: any) => {
+  const handleExcelUploadButton = (item: any) => {
     setSelectedVessel(item);
-    
-    fileInputRef.current?.click();
+
+    setIsUploadDialogOpen(true);
   }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const sendDataToServer = async (excelData: ExcelData[]) => {
+    try {
+      const vesselNo = selectedVessel.vessel_no;
+      const sendData = {
+        'vesselNo': vesselNo,
+        'registUser': userInfo.account_no,
+        'modifyUser': userInfo.account_no,
+        'excelData': excelData
+      }
+
+      const res = await fetch(`/api/admin/ships/${vesselNo}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sendData),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert('데이터가 성공적으로 전송되었습니다.');
+      } else {
+        alert('데이터 전송 실패');
+      }
+    } catch (error) {
+      alert(`네트워크 에러: ${error}`);
+    }
+  };
+
+  const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (file) {
@@ -156,32 +184,6 @@ export default function ShipManagementPage() {
         
     if (event.target) {
         event.target.value = '';
-    }
-  };
-
-  const sendDataToServer = async (excelData: ExcelData[]) => {
-    try {
-      const vesselNo = selectedVessel.vessel_no;
-      const sendData = {
-        'vesselNo': vesselNo,
-        'excelData': excelData
-      }
-
-      const res = await fetch(`/api/admin/ships/${vesselNo}/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sendData),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        alert('데이터가 성공적으로 전송되었습니다.');
-      } else {
-        alert('데이터 전송 실패');
-      }
-    } catch (error) {
-      alert(`네트워크 에러: ${error}`);
     }
   };
 
@@ -241,15 +243,22 @@ export default function ShipManagementPage() {
                 <h1 className="text-2xl font-bold text-gray-900">선박 관리</h1>
                 <p className="text-gray-600">전체 선박의 정보와 상태를 관리하세요</p>
               </div>
+              <div className="flex gap-2">
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  <a href="/template/PMS Maintenance Upload Template.xlsx">
+                    템플릿 다운로드
+                  </a>
+                </Button>
+                <Button 
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700" 
+                  style={{cursor: 'pointer'}}
+                >
+                  <Plus className="w-4 h-4 mr-2" />새 선박 등록
+                </Button>
+              </div>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700" 
-                    style={{cursor: 'pointer'}}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />새 선박 등록
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>새 선박 등록</DialogTitle>
@@ -373,21 +382,14 @@ export default function ShipManagementPage() {
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        accept=".xlsx, .xls"
-                        style={{ display: 'none' }} // input 요소를 숨김
-                      />
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => handleExcelUpload(item)} 
+                        onClick={() => handleExcelUploadButton(item)} 
                         style={{cursor: 'pointer'}} 
                         title="엑셀 파일 업로드"
                       >
-                        <Sheet className="w-4 h-4" />
+                        <Upload className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -523,6 +525,30 @@ export default function ShipManagementPage() {
                     !selectedVessel?.use_yn}
                 >저장</Button>
               </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>엑셀 파일 업로드</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600">
+                  <p>• 먼저 템플릿을 다운로드하여 양식에 맞게 작성해주세요.</p>
+                  <p>• 엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.</p>
+                  <p>• 기존 정비 정보와 중복되는 내용은 업데이트됩니다.</p>
+                </div>
+                <div>
+                  <Label>파일 선택</Label>
+                  <Input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} className="cursor-pointer" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                  취소
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </main>

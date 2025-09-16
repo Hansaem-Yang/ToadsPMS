@@ -230,7 +230,7 @@ export default function MaintenanceWorkManagementPage() {
                     />
                   </div>
                 </div>
-                <Select defaultValue={shipFilter} onValueChange={setShipFilter}>
+                <Select value={shipFilter} onValueChange={setShipFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -250,7 +250,7 @@ export default function MaintenanceWorkManagementPage() {
             <CardContent>
               <div className="space-y-4">
                 {filteredData.map(vessel => (
-                  <div className="space-y-2">
+                  <div key={vessel.vessel_no} className="space-y-2">
                     <div className="flex items-center gap-2 text-xl font-bold text-gray-600">
                       <Ship className="w-5 h-5" />{vessel.vessel_name}
                     </div>

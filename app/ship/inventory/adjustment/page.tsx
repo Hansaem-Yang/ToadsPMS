@@ -330,25 +330,25 @@ export default function InventoryAdjustmentPage() {
                   <div className="space-y-4">
                     <div>
                       <Label>장비</Label>
-                      <Input defaultValue={selectedMaterial.machine_name} disabled className="bg-gray-50" />
+                      <Input value={selectedMaterial.machine_name} disabled className="bg-gray-50" />
                     </div>
                     <div>
                       <Label>부품명</Label>
-                      <Input defaultValue={selectedMaterial.material_name} disabled className="bg-gray-50" />
+                      <Input value={selectedMaterial.material_name} disabled className="bg-gray-50" />
                     </div>
                     <div>
                       <Label>부품코드</Label>
-                      <Input defaultValue={selectedMaterial.material_code} disabled className="bg-gray-50" />
+                      <Input value={selectedMaterial.material_code} disabled className="bg-gray-50" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>재고 수량</Label>
-                        <Input defaultValue={selectedMaterial.actual_qty} disabled className="bg-gray-50" />
+                        <Input value={selectedMaterial.actual_qty} disabled className="bg-gray-50" />
                       </div>
                       <div>
                         <Label>재고 조정 유형 *</Label>
                         <Select 
-                          defaultValue={addAdjustment.adjustment_type} 
+                          value={addAdjustment.adjustment_type} 
                           onValueChange={(value) => setAddAdjustment({ ...addAdjustment, adjustment_type: value })}
                         >
                           <SelectTrigger className="w-36">
@@ -366,7 +366,7 @@ export default function InventoryAdjustmentPage() {
                         <Label>재고 조정 *</Label>
                         <Input
                           type="number"
-                          defaultValue={addAdjustment.adjustment_qty}
+                          value={addAdjustment.adjustment_qty}
                           min={0}
                           max={selectedMaterial.actual_qty}
                           onChange={(e) => setAddAdjustment({ ...addAdjustment, adjustment_qty: Number.parseInt(e.target.value) })}
@@ -377,7 +377,7 @@ export default function InventoryAdjustmentPage() {
                         <Input
                           type="date"
                           className='sm:w-40 md:w-36'
-                          defaultValue={addAdjustment.adjustment_date}
+                          value={addAdjustment.adjustment_date}
                           onChange={(e) => setAddAdjustment({ ...addAdjustment, adjustment_date: e.target.value })}
                         />
                       </div>
@@ -385,7 +385,7 @@ export default function InventoryAdjustmentPage() {
                     <div>
                       <Label>조정 사유 *</Label>
                       <Textarea
-                        defaultValue={addAdjustment.adjustment_reason}
+                        value={addAdjustment.adjustment_reason}
                         onChange={(e) => setAddAdjustment({ ...addAdjustment, adjustment_reason: e.target.value })}
                         placeholder="재고 조정 사유를 입력해주세요 (필수)"
                         rows={3}

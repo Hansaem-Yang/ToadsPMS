@@ -1,8 +1,11 @@
+import { UsedParts } from '@/types/vessel/used_parts';
+
 export interface Maintenance {
     vessel_no: string;
     vessel_name: string;
     equip_no: string;
     equip_name: string;
+    machine_id: string;
     section_code: string;
     section_name: string;
     plan_code: string;
@@ -28,6 +31,8 @@ export interface Maintenance {
     extension_days_until: number;
     work_details: string;
     delay_reason: string;
+    used_parts: UsedParts[];
+    used_partnames: string;
     regist_date: string;
     regist_user: string;
     modify_date: string;

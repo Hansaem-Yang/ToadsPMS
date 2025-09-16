@@ -781,7 +781,7 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="space-y-2">
                         <Label htmlFor="critical">정비 구분</Label>
                         <Select 
-                          defaultValue="NORMAL"
+                          value="NORMAL"
                           onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, critical: value }))}
                         >
                           <SelectTrigger className="w-40">
@@ -924,7 +924,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="section_code">섹션코드</Label>
                     <Input 
                       id="section_code" 
-                      defaultValue={selectedSection.section_code}
+                      value={selectedSection.section_code}
                       placeholder="섹션코드를 입력하세요" 
                       onChange={(e) => setSelectedSection((prev: any) => ({ ...prev, section_code: e.target.value }))}
                       disabled
@@ -934,7 +934,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="section_name">섹션명</Label>
                     <Input 
                       id="section_name" 
-                      defaultValue={selectedSection.section_name}
+                      value={selectedSection.section_name}
                       placeholder="섹션명을 입력하세요" 
                       onChange={(e) => setSelectedSection((prev: any) => ({ ...prev, section_name: e.target.value }))}
                     />
@@ -942,7 +942,7 @@ export default function MaintenanceWorkManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="equip_no">장비</Label>
                     <Select 
-                      defaultValue={selectedSection.equip_no} 
+                      value={selectedSection.equip_no} 
                       onValueChange={(value) => setSelectedSection((prev: any) => ({ ...prev, equip_no: value }))}
                       disabled
                     >
@@ -960,7 +960,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="description">섹션 설명</Label>
                     <Textarea 
                       id="description" 
-                      defaultValue={selectedSection.description} 
+                      value={selectedSection.description} 
                       placeholder="섹션에 대한 상세 설명을 입력하세요" 
                       onChange={(e) => setSelectedSection((prev: any) => ({ ...prev, description: e.target.value }))}
                     />
@@ -996,7 +996,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="plan_code">작업 코드</Label>
                     <Input 
                       id="plan_code"
-                      defaultValue={selectedMaintenance.plan_code}
+                      value={selectedMaintenance.plan_code}
                       placeholder="작업코드를 입력하세요" 
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, plan_code: e.target.value }))}
                       disabled
@@ -1006,7 +1006,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="plan_name">작업명</Label>
                     <Input 
                       id="plan_name" 
-                      defaultValue={selectedMaintenance.plan_name}
+                      value={selectedMaintenance.plan_name}
                       placeholder="작업명을 입력하세요" 
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, plan_name: e.target.value }))}
                     />
@@ -1014,7 +1014,7 @@ export default function MaintenanceWorkManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="equip_no">장비</Label>
                     <Select 
-                      defaultValue={selectedMaintenance.equip_no}
+                      value={selectedMaintenance.equip_no}
                       onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, equip_no: value }))}
                       disabled
                     >
@@ -1031,7 +1031,7 @@ export default function MaintenanceWorkManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="section_code">섹션</Label>
                     <Select 
-                      defaultValue={selectedMaintenance.section_code}
+                      value={selectedMaintenance.section_code}
                       onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, section_code: value }))}
                       disabled
                     >
@@ -1051,14 +1051,14 @@ export default function MaintenanceWorkManagementPage() {
                       id="interval" 
                       type="number" 
                       placeholder="작업주기를 입력하세요" 
-                      defaultValue={selectedMaintenance.interval}
+                      value={selectedMaintenance.interval}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, interval: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="interval_term">주기 단위</Label>
                     <Select
-                      defaultValue={selectedMaintenance.interval_term}
+                      value={selectedMaintenance.interval_term}
                       onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, interval_term: value }))}
                     >
                       <SelectTrigger>
@@ -1078,7 +1078,7 @@ export default function MaintenanceWorkManagementPage() {
                       id="workers" 
                       type="number" 
                       placeholder="작업 인원수를 입력하세요" 
-                      defaultValue={selectedMaintenance.workers}
+                      value={selectedMaintenance.workers}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, workers: e.target.value }))}
                     />
                   </div>
@@ -1088,14 +1088,14 @@ export default function MaintenanceWorkManagementPage() {
                       id="work_hours" 
                       type="number" 
                       placeholder="인원별 소요시간을 입력하세요" 
-                      defaultValue={selectedMaintenance.work_hours}
+                      value={selectedMaintenance.work_hours}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, work_hours: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="location">작업 위치</Label>
                     <Select
-                      defaultValue={selectedMaintenance.location}
+                      value={selectedMaintenance.location}
                       onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, location: value }))}
                     >
                       <SelectTrigger>
@@ -1113,7 +1113,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Input 
                       id="manager" 
                       placeholder="정비 담당자를 입력하세요" 
-                      defaultValue={selectedMaintenance.manager}
+                      value={selectedMaintenance.manager}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, manager: e.target.value }))}
                     />
                   </div>
@@ -1123,14 +1123,14 @@ export default function MaintenanceWorkManagementPage() {
                       id="lastest_date" 
                       type="date"
                       className='sm:w-40 md:w-36'
-                      defaultValue={selectedMaintenance.lastest_date}
+                      value={selectedMaintenance.lastest_date}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, lastest_date: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="critical">정비 구분</Label>
                     <Select 
-                      defaultValue={selectedMaintenance.critical}
+                      value={selectedMaintenance.critical}
                       onValueChange={(value) => setSelectedMaintenance((prev: any) => ({ ...prev, critical: value }))}
                       disabled
                     >
@@ -1158,7 +1158,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Textarea 
                       id="instructions" 
                       placeholder="지시사항을 입력하세요" 
-                      defaultValue={selectedMaintenance.instructions}
+                      value={selectedMaintenance.instructions}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, instructions: e.target.value }))}
                     />
                   </div>

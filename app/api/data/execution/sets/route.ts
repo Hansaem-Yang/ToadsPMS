@@ -97,12 +97,11 @@ export async function POST(req: Request) {
         result = await request.query(query);
       }
 
+      transantion.commit();
+
       if (count === 0) {
-        transantion.rollback();
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
       }
-
-      transantion.commit();
 
       // 성공 정보 반환
       return NextResponse.json({ success: true });

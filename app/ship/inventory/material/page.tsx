@@ -471,7 +471,7 @@ export default function InitialStockPage() {
                 <div className="space-y-4">
                   <div>
                     <Label>장비</Label>
-                    <Input defaultValue={selectedMachineData?.machine_name || ""} disabled className="bg-gray-50" />
+                    <Input value={selectedMachineData?.machine_name || ""} disabled className="bg-gray-50" />
                   </div>
                   <div>
                     <Label htmlFor="material_group">부품구분</Label>
@@ -484,7 +484,7 @@ export default function InitialStockPage() {
                   <div>
                     <Label>부품명 *</Label>
                     <Input
-                      defaultValue={addMaterial.material_name}
+                      value={addMaterial.material_name}
                       onChange={(e) => setAddMaterial({ ...addMaterial, material_name: e.target.value })}
                       placeholder="부품명을 입력하세요"
                     />
@@ -509,7 +509,7 @@ export default function InitialStockPage() {
                     <div>
                       <Label>창고 *</Label>
                       <Select
-                        defaultValue={addMaterial.warehouse_no}
+                        value={addMaterial.warehouse_no}
                         onValueChange={(value) => warehouseChanged('add', value)}
                       >
                         <SelectTrigger>
@@ -530,7 +530,7 @@ export default function InitialStockPage() {
                       <Label>기초재고 *</Label>
                       <Input
                         type="number"
-                        defaultValue={addMaterial.initial_stock}
+                        value={addMaterial.initial_stock}
                         onChange={(e) => setAddMaterial({ ...addMaterial, initial_stock: Number.parseInt(e.target.value) })}
                         placeholder="0"
                       />
@@ -539,7 +539,7 @@ export default function InitialStockPage() {
                       <Label>최소재고 *</Label>
                       <Input
                         type="number"
-                        defaultValue={addMaterial.standard_qty}
+                        value={addMaterial.standard_qty}
                         onChange={(e) => setAddMaterial({ ...addMaterial, standard_qty: Number.parseInt(e.target.value) })}
                         placeholder="0"
                       />
@@ -600,13 +600,13 @@ export default function InitialStockPage() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="edit_machine_id">장비</Label>
-                    <Input defaultValue={selectedMachineData?.machine_name || ""} disabled className="bg-gray-50" />
+                    <Input value={selectedMachineData?.machine_name || ""} disabled className="bg-gray-50" />
                   </div>
                   <div>
                     <Label htmlFor="edit_material_code">부품코드</Label>
                     <Input
                       id="edit_material_code"
-                      defaultValue={editMaterial?.material_code}
+                      value={editMaterial?.material_code}
                       onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_code: e.target.value }))}
                       disabled
                     />
@@ -615,7 +615,7 @@ export default function InitialStockPage() {
                     <Label htmlFor="edit_material_group">부품구분</Label>
                     <Input
                       id="edit_material_group"
-                      defaultValue={editMaterial?.material_group}
+                      value={editMaterial?.material_group}
                       onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_group: e.target.value }))}
                       placeholder="부품구분을 입력하세요"
                     />
@@ -624,7 +624,7 @@ export default function InitialStockPage() {
                     <Label htmlFor="edit_material_name">부품명</Label>
                     <Input
                       id="edit_material_name"
-                      defaultValue={editMaterial?.material_name}
+                      value={editMaterial?.material_name}
                       onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_name: e.target.value }))}
                       placeholder="부품명을 입력하세요"
                     />
@@ -633,7 +633,7 @@ export default function InitialStockPage() {
                     <div>
                       <Label htmlFor="edit_material_type">부품유형</Label>
                       <Select 
-                        defaultValue={editMaterial?.material_type}
+                        value={editMaterial?.material_type}
                         onValueChange={(value) => setEditMaterial((prev: any) => ({ ...prev, material_type: value }))}>
                         <SelectTrigger>
                           <SelectValue placeholder="부품유형을 선택하세요" />
@@ -650,7 +650,7 @@ export default function InitialStockPage() {
                     <div>
                       <Label htmlFor="edit_warehouse_no">창고 *</Label>
                       <Select
-                        defaultValue={editMaterial.warehouse_no}
+                        value={editMaterial.warehouse_no}
                         onValueChange={(value) => warehouseChanged('edit', value)}
                       >
                         <SelectTrigger>
@@ -672,7 +672,7 @@ export default function InitialStockPage() {
                       <Input
                         id="edit_initial_stock"
                         type="number"
-                        defaultValue={editMaterial.initial_stock}
+                        value={editMaterial.initial_stock}
                         onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, initial_stock: e.target.value }))}
                         placeholder="기초 재고를 입력하세요"
                       />
@@ -682,7 +682,7 @@ export default function InitialStockPage() {
                       <Input
                         id="edit_standard_qty"
                         type="number"
-                        defaultValue={editMaterial.standard_qty}
+                        value={editMaterial.standard_qty}
                         onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, standard_qty: e.target.value }))}
                         placeholder="최소 보유재고를 입력하세요"
                       />
@@ -692,7 +692,7 @@ export default function InitialStockPage() {
                     <div>
                       <Label htmlFor="edit_material_unit">단위</Label>
                       <Select 
-                        defaultValue={editMaterial?.material_unit}
+                        value={editMaterial?.material_unit}
                         onValueChange={(value) => setEditMaterial((prev: any) => ({ ...prev, material_unit: value }))}>
                         <SelectTrigger>
                           <SelectValue placeholder="단위을 선택하세요" />
@@ -710,7 +710,7 @@ export default function InitialStockPage() {
                       <Label htmlFor="edit_drawing_no">도면번호</Label>
                       <Input
                         id="edit_drawing_no"
-                        defaultValue={editMaterial?.drawing_no}
+                        value={editMaterial?.drawing_no}
                         onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, drawing_no: e.target.value }))}
                         placeholder="DWG No를 입력하세요"
                       />

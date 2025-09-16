@@ -319,7 +319,7 @@ export default function ShipWarehouseManagementPage() {
                     <Input
                       id="warehouseName"
                       placeholder="예: 주엔진 부품창고"
-                      defaultValue={addWarehouse.warehouse_name}
+                      value={addWarehouse.warehouse_name}
                       onChange={(e) => setAddWarehouse({ ...addWarehouse, warehouse_name: e.target.value })}
                     />
                   </div>
@@ -328,7 +328,7 @@ export default function ShipWarehouseManagementPage() {
                     <Input
                       id="location"
                       placeholder="예: 선수 1층"
-                      defaultValue={addWarehouse.warehouse_location}
+                      value={addWarehouse.warehouse_location}
                       onChange={(e) => setAddWarehouse({ ...addWarehouse, warehouse_location: e.target.value })}
                     />
                   </div>
@@ -360,7 +360,7 @@ export default function ShipWarehouseManagementPage() {
                     <Label htmlFor="editWarehouseCode">창고코드 *</Label>
                     <Input
                       id="editWarehouseCode"
-                      defaultValue={selectedWarehouse.warehouse_no}
+                      value={selectedWarehouse.warehouse_no}
                       onChange={(e) => setSelectedWarehouse({ ...selectedWarehouse, warehouse_no: e.target.value })}
                     />
                   </div>
@@ -368,7 +368,7 @@ export default function ShipWarehouseManagementPage() {
                     <Label htmlFor="editWarehouseName">창고명 *</Label>
                     <Input
                       id="editWarehouseName"
-                      defaultValue={selectedWarehouse.warehouse_name}
+                      value={selectedWarehouse.warehouse_name}
                       onChange={(e) => setSelectedWarehouse({ ...selectedWarehouse, warehouse_name: e.target.value })}
                     />
                   </div>
@@ -376,7 +376,7 @@ export default function ShipWarehouseManagementPage() {
                     <Label htmlFor="editLocation">창고위치 *</Label>
                     <Input
                       id="editLocation"
-                      defaultValue={selectedWarehouse.warehouse_location}
+                      value={selectedWarehouse.warehouse_location}
                       onChange={(e) => setSelectedWarehouse({ ...selectedWarehouse, warehouse_location: e.target.value })}
                     />
                   </div>

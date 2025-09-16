@@ -192,11 +192,11 @@ export default function ShipInventoryLossPage() {
                 <div className="flex flex-row gap-4">
                   <div>
                     <Label htmlFor="lossDate">손망실 등록 일자</Label>
-                    <Input id="lossDate" type="date" defaultValue={lossDate} onChange={(e) => setLossDate(e.target.value)} />
+                    <Input id="lossDate" type="date" value={lossDate} onChange={(e) => setLossDate(e.target.value)} />
                   </div>
                   <div>
                     <Label htmlFor="registrant">등록자</Label>
-                    <Input id="registrant" defaultValue={registrant} onChange={(e) => setRegistrant(e.target.value)} disabled/>
+                    <Input id="registrant" value={registrant} onChange={(e) => setRegistrant(e.target.value)} disabled/>
                   </div>
                 </div>
                 <div>
@@ -204,7 +204,7 @@ export default function ShipInventoryLossPage() {
                   <Textarea
                     id="reason"
                     placeholder="손망실 사유를 입력해주세요... (필수)"
-                    defaultValue={reason}
+                    value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}
                     className={!reason.trim() && lossItems.length > 0 ? "border-red-300 focus:border-red-500" : ""}
@@ -257,7 +257,7 @@ export default function ShipInventoryLossPage() {
                                 type="number"
                                 min="1"
                                 max={item.stock_qty}
-                                defaultValue={item.loss_qty}
+                                value={item.loss_qty}
                                 onChange={(e) => handleQuantityChange(item.material_code, e.target.value)}
                                 className="w-20 text-center"
                                 placeholder="0"
@@ -335,7 +335,7 @@ export default function ShipInventoryLossPage() {
                 </thead>
                 <tbody>
                   {filteredData.map((item) => (
-                    <tr key={`${item.machine_id}-${item.material_code}`} className="border-b hover:bg-gray-50">
+                    <tr key={`${item.machine_id}-${item.material_code}-${item.location}`} className="border-b hover:bg-gray-50">
                       <td className="py-2 px-2">{item.machine_name}</td>
                       <td className="py-2 px-2 font-medium">{item.material_name}</td>
                       <td className="py-2 px-2 text-gray-600">{item.material_code}</td>

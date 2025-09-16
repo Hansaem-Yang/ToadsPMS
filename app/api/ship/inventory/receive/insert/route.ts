@@ -34,7 +34,6 @@ export async function POST(req: Request) {
              , receive_remark
              , regist_date
              , regist_user
-
         )
         values (
                @vesselNo

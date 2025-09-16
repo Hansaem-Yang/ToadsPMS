@@ -470,14 +470,14 @@ export default function ShipManagementPage() {
                     <Label htmlFor="editVesselNo">선박번호</Label>
                     <Input 
                       id="editVesselNo" 
-                      defaultValue={selectedVessel.vessel_no} 
+                      value={selectedVessel.vessel_no} 
                       disabled />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="editVesselName">선박명</Label>
                     <Input 
                       id="editVesselName" 
-                      defaultValue={selectedVessel.vessel_name} 
+                      value={selectedVessel.vessel_name} 
                       onChange={(e) => setSelectedVessel((prev: any) => ({ ...prev, vessel_name: e.target.value }))}
                     />
                   </div>
@@ -485,7 +485,7 @@ export default function ShipManagementPage() {
                     <Label htmlFor="editVesselShortName">선박명(약어)</Label>
                     <Input 
                       id="editVesselShortName" 
-                      defaultValue={selectedVessel.vessel_short_name} 
+                      value={selectedVessel.vessel_short_name} 
                       onChange={(e) => setSelectedVessel((prev: any) => ({ ...prev, vessel_short_name: e.target.value }))}
                     />
                   </div>
@@ -493,14 +493,14 @@ export default function ShipManagementPage() {
                     <Label htmlFor="editImoNo">IMO No</Label>
                     <Input 
                       id="editImoNo" 
-                      defaultValue={selectedVessel.imo_no} 
+                      value={selectedVessel.imo_no} 
                       onChange={(e) => setSelectedVessel((prev: any) => ({ ...prev, imo_no: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="editShipType">사용여부</Label>
                     <Select 
-                      defaultValue={selectedVessel.use_yn}
+                      value={selectedVessel.use_yn}
                       onValueChange={(value) => setSelectedVessel((prev: any) => ({ ...prev, use_yn: value }))}
                     >
                       <SelectTrigger>

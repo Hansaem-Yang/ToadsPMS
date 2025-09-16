@@ -384,7 +384,7 @@ export default function MaintenanceWorkManagementPage() {
                     />
                   </div>
                 </div>
-                <Select defaultValue={shipFilter} onValueChange={setShipFilter}>
+                <Select value={shipFilter} onValueChange={setShipFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -495,7 +495,7 @@ export default function MaintenanceWorkManagementPage() {
                       <Textarea 
                         id="approval_reason" 
                         placeholder="승인 및 반려 사유를 입력하세요" 
-                        defaultValue={selectedExtension.approval_reason}
+                        value={selectedExtension.approval_reason}
                         onChange={(e) => setSelectedExtension((prev: any) => ({ ...prev, approval_reason: e.target.value }))}
                       />
                     </div>

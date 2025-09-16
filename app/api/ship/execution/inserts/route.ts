@@ -95,14 +95,13 @@ export async function POST(req: Request) {
            and equip_no = @equipNo;`;
         
         result = await request.query(query);
+
+      transantion.commit();
       }
 
       if (count === 0) {
-        transantion.rollback();
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
       }
-
-      transantion.commit();
 
       // 저장된 정비 정보 조회
       const sendData: MaintenanceWork[] = await query(

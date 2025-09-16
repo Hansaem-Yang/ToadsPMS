@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         { name: 'modifyUser', value: item.modify_user }, 
       ];
 
-      const request = new sql.Request(transantion);
+      let request = new sql.Request(transantion);
 
       params?.forEach(p => request.input(p.name, p.value));
       let result = await request.query(queryString);
@@ -77,6 +77,7 @@ export async function POST(req: Request) {
       using (select a1.vessel_no
                   , a1.material_code
                   , a1.material_unit as receive_unit
+                  , a1.warehouse_no as receive_location
                   , @initialStock as receive_qty
                   , 'S0' as receive_type
                   , @registUser as regist_user
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
             update
                set a.receive_unit = b.receive_unit
                  , a.receive_qty = b.receive_qty
+                 , a.receive_location = b.receive_location
                  , a.modify_date = getdate()
                  , a.modify_user = b.modify_user
        when not matched then
@@ -105,6 +107,7 @@ export async function POST(req: Request) {
                   , receive_unit
                   , receive_type
                   , receive_qty
+                  , receive_location
                   , regist_date
                   , regist_user)
             values (b.vessel_no
@@ -116,9 +119,20 @@ export async function POST(req: Request) {
                   , b.receive_unit
                   , b.receive_type
                   , b.receive_qty
+                  , b.receive_location
                   , getdate()
                   , b.regist_user);`;
+      params = [
+        { name: 'vesselNo', value: item.vessel_no }, 
+        { name: 'machineId', value: item.machine_id }, 
+        { name: 'initialStock', value: item.initial_stock }, 
+        { name: 'registUser', value: item.regist_user }, 
+        { name: 'modifyUser', value: item.modify_user }, 
+      ];
       
+      request = new sql.Request(transantion);
+
+      params?.forEach(p => request.input(p.name, p.value));
       result = await request.query(queryString);
       count += result.rowsAffected[0];
         

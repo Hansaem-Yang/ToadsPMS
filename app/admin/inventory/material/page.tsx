@@ -464,7 +464,7 @@ export default function PartsManagementPage() {
                         <div>
                           <Label htmlFor="vessel">선박</Label>
                           <Select 
-                            defaultValue={insertedVessel} 
+                            value={insertedVessel} 
                             onValueChange={(value) => {
                               setAddMaterial((prev: any) => ({ ...prev, vessel_no: value }))
                               setInsertedVessel(value)
@@ -484,7 +484,7 @@ export default function PartsManagementPage() {
                         <div>
                           <Label htmlFor="machine_id">장비</Label>
                           <Select 
-                            defaultValue={insertedMachine}
+                            value={insertedMachine}
                             onValueChange={(value) => { machineChanged('add', value) }}>
                             <SelectTrigger>
                               <SelectValue placeholder="장비를 선택하세요" />
@@ -534,7 +534,7 @@ export default function PartsManagementPage() {
                           <div>
                             <Label htmlFor="warehouse_no">창고 *</Label>
                             <Select
-                              defaultValue={addMaterial.warehouse_no}
+                              value={addMaterial.warehouse_no}
                               onValueChange={(value) => warehouseChanged('add', value) }
                             >
                               <SelectTrigger>
@@ -744,7 +744,7 @@ export default function PartsManagementPage() {
               <div>
                 <Label htmlFor="edit_vessel">선박</Label>
                 <Select 
-                  defaultValue={editMaterial?.vessel_no} 
+                  value={editMaterial?.vessel_no} 
                   onValueChange={(value) => {
                     setEditMaterial((prev: any) => ({ ...prev, vessel_no: value }))
                     setInsertedVessel(value)
@@ -765,7 +765,7 @@ export default function PartsManagementPage() {
               <div>
                 <Label htmlFor="edit_machine_id">장비</Label>
                 <Select 
-                  defaultValue={editMaterial?.machine_id}
+                  value={editMaterial?.machine_id}
                   onValueChange={(value) => { machineChanged('edit', value) }}
                   disabled>
                   <SelectTrigger>
@@ -784,7 +784,7 @@ export default function PartsManagementPage() {
                 <Label htmlFor="edit_material_code">부품코드</Label>
                 <Input
                   id="edit_material_code"
-                  defaultValue={editMaterial?.material_code}
+                  value={editMaterial?.material_code}
                   onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_code: e.target.value }))}
                   disabled
                 />
@@ -793,7 +793,7 @@ export default function PartsManagementPage() {
                 <Label htmlFor="edit_material_group">부품구분</Label>
                 <Input
                   id="edit_material_group"
-                  defaultValue={editMaterial?.material_group}
+                  value={editMaterial?.material_group}
                   onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_group: e.target.value }))}
                   placeholder="부품구분을 입력하세요"
                 />
@@ -802,7 +802,7 @@ export default function PartsManagementPage() {
                 <Label htmlFor="edit_material_name">부품명</Label>
                 <Input
                   id="edit_material_name"
-                  defaultValue={editMaterial?.material_name}
+                  value={editMaterial?.material_name}
                   onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, material_name: e.target.value }))}
                   placeholder="부품명을 입력하세요"
                 />
@@ -811,7 +811,7 @@ export default function PartsManagementPage() {
                 <div>
                   <Label htmlFor="edit_material_type">부품유형</Label>
                   <Select 
-                    defaultValue={editMaterial?.material_type}
+                    value={editMaterial?.material_type}
                     onValueChange={(value) => setEditMaterial((prev: any) => ({ ...prev, material_type: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="부품유형을 선택하세요" />
@@ -828,7 +828,7 @@ export default function PartsManagementPage() {
                 <div>
                   <Label htmlFor="edit_warehouse_no">창고 *</Label>
                   <Select
-                    defaultValue={editMaterial.warehouse_no}
+                    value={editMaterial.warehouse_no}
                     onValueChange={(value) => warehouseChanged('edit', value) }
                   >
                     <SelectTrigger>
@@ -850,7 +850,7 @@ export default function PartsManagementPage() {
                   <Input
                     id="edit_initial_stock"
                     type="number"
-                    defaultValue={editMaterial.initial_stock}
+                    value={editMaterial.initial_stock}
                     onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, initial_stock: e.target.value }))}
                     placeholder="기초 재고를 입력하세요"
                   />
@@ -860,7 +860,7 @@ export default function PartsManagementPage() {
                   <Input
                     id="edit_standard_qty"
                     type="number"
-                    defaultValue={editMaterial.standard_qty}
+                    value={editMaterial.standard_qty}
                     onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, standard_qty: e.target.value }))}
                     placeholder="최소 보유재고를 입력하세요"
                   />
@@ -870,7 +870,7 @@ export default function PartsManagementPage() {
                 <div>
                   <Label htmlFor="edit_material_unit">단위</Label>
                   <Select 
-                    defaultValue={editMaterial?.material_unit}
+                    value={editMaterial?.material_unit}
                     onValueChange={(value) => setEditMaterial((prev: any) => ({ ...prev, material_unit: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="단위을 선택하세요" />
@@ -888,7 +888,7 @@ export default function PartsManagementPage() {
                   <Label htmlFor="edit_drawing_no">도면번호</Label>
                   <Input
                     id="edit_drawing_no"
-                    defaultValue={editMaterial?.drawing_no}
+                    value={editMaterial?.drawing_no}
                     onChange={(e) => setEditMaterial((prev: any) => ({ ...prev, drawing_no: e.target.value }))}
                     placeholder="DWG No를 입력하세요"
                   />

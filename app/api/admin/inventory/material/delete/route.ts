@@ -39,13 +39,12 @@ export async function POST(req: Request) {
       
       result = await request.query(queryString);
       count += result.rowsAffected[0];
+      
+      transantion.commit();
         
       if (count === 0) {
-        transantion.rollback();
         return NextResponse.json({ success: false, message: 'Data was not deleted.' }, { status: 401 });
       }
-
-      transantion.commit();
 
       // 성공 정보 반환
       return NextResponse.json({ success: true });

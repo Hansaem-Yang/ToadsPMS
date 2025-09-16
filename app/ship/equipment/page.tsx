@@ -424,7 +424,7 @@ export default function ShipEquipmentPage() {
                     <Label htmlFor="equip_no">장비번호</Label>
                     <Input 
                       id="equip_no" 
-                      defaultValue={selectedEquipment.equip_no} 
+                      value={selectedEquipment.equip_no} 
                       onChange={(e) => setSelectedEquipment((prev: any) => ({ ...prev, equip_no: e.target.value }))}
                       disabled
                     />
@@ -433,14 +433,14 @@ export default function ShipEquipmentPage() {
                     <Label htmlFor="equip_name">장비명</Label>
                     <Input 
                       id="equip_name" 
-                      defaultValue={selectedEquipment.equip_name} 
+                      value={selectedEquipment.equip_name} 
                       onChange={(e) => setSelectedEquipment((prev: any) => ({ ...prev, equip_name: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="category">카테고리</Label>
                     <Select
-                      defaultValue={selectedEquipment.category} 
+                      value={selectedEquipment.category} 
                       onValueChange={(value) => setSelectedEquipment((prev: any) => ({ ...prev, category: value }))}
                     >
                       <SelectTrigger>
@@ -457,7 +457,7 @@ export default function ShipEquipmentPage() {
                     <Label htmlFor="manufacturer">제조사</Label>
                     <Input 
                       id="manufacturer" 
-                      defaultValue={selectedEquipment.manufacturer} 
+                      value={selectedEquipment.manufacturer} 
                       onChange={(e) => setSelectedEquipment((prev: any) => ({ ...prev, manufacturer: e.target.value }))}
                     />
                   </div>
@@ -465,7 +465,7 @@ export default function ShipEquipmentPage() {
                     <Label htmlFor="model">모델명</Label>
                     <Input 
                       id="model" 
-                      defaultValue={selectedEquipment.model} 
+                      value={selectedEquipment.model} 
                       onChange={(e) => setSelectedEquipment((prev: any) => ({ ...prev, model: e.target.value }))}
                     />
                   </div>
@@ -473,7 +473,7 @@ export default function ShipEquipmentPage() {
                     <Label htmlFor="description">설명</Label>
                     <Textarea 
                       id="description" 
-                      defaultValue={selectedEquipment.description} 
+                      value={selectedEquipment.description} 
                       onChange={(e) => setSelectedEquipment((prev: any) => ({ ...prev, description: e.target.value }))}
                     />
                   </div>

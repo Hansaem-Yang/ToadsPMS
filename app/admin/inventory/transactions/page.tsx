@@ -234,7 +234,7 @@ export default function InventoryTransactionsPage() {
                           <Input 
                             type="date" 
                             className='sm:w-40 md:w-36'
-                            defaultValue={searchData.start_date} 
+                            value={searchData.start_date} 
                             onChange={(e) => setSearchData((prev: any) => ({ ...prev, start_date: e.target.value }))}
                           />
                         </div>
@@ -245,7 +245,7 @@ export default function InventoryTransactionsPage() {
                           <Input 
                             type="date" 
                             className='sm:w-40 md:w-36'
-                            defaultValue={searchData.end_date} 
+                            value={searchData.end_date} 
                             onChange={(e) => setSearchData((prev: any) => ({ ...prev, end_date: e.target.value }))}
                           />
                         </div>
@@ -253,7 +253,7 @@ export default function InventoryTransactionsPage() {
                       <div className="space-y-2">
                         <Label>구분</Label>
                         <Select 
-                          defaultValue={searchData.type} 
+                          value={searchData.type} 
                           onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, type: value }))}
                         >
                           <SelectTrigger className="w-48">
@@ -271,7 +271,7 @@ export default function InventoryTransactionsPage() {
                       <div className="space-y-2">
                         <Label>선박</Label>
                         <Select 
-                          defaultValue={searchData.vessel_no} 
+                          value={searchData.vessel_no} 
                           onValueChange={(value) => vesselChanged(value)}
                         >
                           <SelectTrigger className="w-48">
@@ -290,7 +290,7 @@ export default function InventoryTransactionsPage() {
                       <div className="space-y-2">
                         <Label>장비</Label>
                         <Select 
-                          defaultValue={searchData.machine_id} 
+                          value={searchData.machine_id} 
                           onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, machine_id: value }))}
                         >
                           <SelectTrigger className="w-48">
@@ -309,7 +309,7 @@ export default function InventoryTransactionsPage() {
                       <div className="space-y-2">
                         <Label>창고</Label>
                         <Select 
-                          defaultValue={searchData.location} 
+                          value={searchData.location} 
                           onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, location: value }))}
                         >
                           <SelectTrigger className="w-48">

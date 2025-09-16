@@ -12,9 +12,12 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Search, Settings, Wrench, Calendar, AlertTriangle, CheckCircle, Plus, PlusCircle } from "lucide-react"
+import { Machine } from '@/types/common/machine'; // ✅ interface import
+import { Inventory } from '@/types/vessel/inventory'; // ✅ interface import
+import { UsedParts } from '@/types/vessel/used_parts'; // ✅ interface import
 import { Equipment } from '@/types/dashboard/equipment';
 import { Maintenance } from '@/types/dashboard/maintenance';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
@@ -27,6 +30,7 @@ export default function MaintenanceExecutionPage() {
     vessel_name: "",
     equip_no: "",
     equip_name: "",
+    machine_id: "",
     section_code: "",
     section_name: "",
     plan_code: "",
@@ -52,10 +56,12 @@ export default function MaintenanceExecutionPage() {
     extension_days_until: 0,
     work_details: "",
     delay_reason: "",
+    used_parts: [],
+    used_partnames: "",
     regist_date: "",
     regist_user: '',
     modify_date: "",
-    modify_user: ''
+    modify_user: '',
   };
 
   
@@ -76,15 +82,20 @@ export default function MaintenanceExecutionPage() {
     approval_status: "",
     approval_date: "",
     approver: "",
+    approval_reason: "",
     regist_date: "",
     regist_user: "",
     modify_date: "",
     modify_user: "",
-    approval_reason: ""
   };
 
   const [userInfo, setUserInfo] = useState<any>(null)
   const [params, setParams] = useState<any>(null)
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [inventorys, setInventorys] = useState<Inventory[]>([])
+  const [filteredInventorys, setFilteredInventorys] = useState(inventorys)
+  const [selectedUsedWork, setSelectedUsedWork] = useState<any>(null)
+
   const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
@@ -92,24 +103,45 @@ export default function MaintenanceExecutionPage() {
   const [selectedWork, setSelectedWork] = useState<any>(null)
   const [isExecutionDialogOpen, setIsExecutionDialogOpen] = useState(false)
   const [executionResult, setExecutionResult] = useState<Maintenance>(initialMaintenanceItem)
+  const [usedItems, setUsedItems] = useState<UsedParts[]>([])
 
   const [selectedWorks, setSelectedWorks] = useState<string[]>([])
   const [isBulkExecutionDialogOpen, setIsBulkExecutionDialogOpen] = useState(false)
   const [bulkExecutionData, setBulkExecutionData] = useState({
     name: "",
-    tasks: [] as any[],
+    tasks: [] as Maintenance[],
   })
+
+  
+  const [isInventoryDialogOpen, setIsInventoryDialogOpen] = useState(false)
 
   const [selectedExtension, setSelectedExtension] = useState<any>(null)
   const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false)
   const [extensionResult, setExtensionResult] = useState<MaintenanceExtension>(initialMaintenanceExtension)
   const nowDate = new Date();
   const today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
+
+  const fetchMachines = (vesselNo: string) => {
+    fetch(`/api/admin/common/machine?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  }
   
   const fetchEquipmentTasks = (vesselNo: string) => {
     fetch(`/api/ship/execution/all?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setEquipmentWorks(data))
+      .catch(err => console.error(err));
+  }
+  
+  const fetchInventorys = (vesselNo: string, machineId: string) => {
+    fetch(`/api/ship/execution/inventory?vesselNo=${vesselNo}&machineId=${machineId}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+        setInventorys(data)
+      })
       .catch(err => console.error(err));
   }
 
@@ -118,6 +150,7 @@ export default function MaintenanceExecutionPage() {
       const user = vesselRequireAuth()
       setUserInfo(user)
 
+      fetchMachines(user.ship_no)
       fetchEquipmentTasks(user.ship_no)
       
       if (equipName) {
@@ -162,6 +195,19 @@ export default function MaintenanceExecutionPage() {
 
     setFilteredEquipment(filtered)
   }, [equipmentWorks, searchTerm, categoryFilter])
+
+  useEffect(() => {
+    const filtered = selectedUsedWork
+    if (filtered){
+      fetchInventorys(filtered.vessel_no, filtered.machine_id)
+    }
+  }, [selectedUsedWork])
+
+  useEffect(() => {
+    const filtered = inventorys;
+
+    setFilteredInventorys(filtered)
+  }, [inventorys])
 
   if (!userInfo) return null
 
@@ -234,6 +280,7 @@ export default function MaintenanceExecutionPage() {
       alert('작업 실행 등록 중 오류가 발생하였습니다.');
       return;
     }
+
     // 선택된 작업들의 상태를 완료로 업데이트
     setEquipmentWorks((prev) =>
       prev.map((eq) => ({
@@ -272,6 +319,12 @@ export default function MaintenanceExecutionPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(insertedData),
     });
+    
+    if (!res.ok)
+    {
+      alert('연장 신청 중 오류가 발생하였습니다.');
+      return;
+    }
     
     // 선택된 작업들의 상태를 완료로 업데이트
     setEquipmentWorks((prev) =>
@@ -331,9 +384,7 @@ export default function MaintenanceExecutionPage() {
           ...task,
           equipmentName: eq.equip_name,
           actualHours: task.work_hours.toString(),
-          partsUsed: "",
-          notes: "",
-          issues: "",
+          used_parts: [],
           regist_user: userInfo.account_no,
           modify_user: userInfo.account_no,
         })),
@@ -352,6 +403,12 @@ export default function MaintenanceExecutionPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bulkExecutionData.tasks),
     });
+    
+    if (!res.ok)
+    {
+      alert('작업 실행 등록 중 오류가 발생하였습니다.');
+      return;
+    }
 
     // 선택된 작업들의 상태를 완료로 업데이트
     setEquipmentWorks((prev) =>
@@ -378,6 +435,57 @@ export default function MaintenanceExecutionPage() {
       ...prev,
       tasks: prev.tasks.map((task) => (task.equip_no === equip_no && task.section_code === section_code && task.plan_code === plan_code ? { ...task, [field]: value } : task)),
     }))
+  }
+
+  const updateTaskUsedParts = (equip_no: string, section_code: string, plan_code: string, field: string, usedParts: any[]) => {
+    setBulkExecutionData((prev) => ({
+      ...prev,
+      tasks: prev.tasks.map((task) => (task.equip_no === equip_no && task.section_code === section_code && task.plan_code === plan_code ? { ...task, [field]: usedParts } : task)),
+    }))
+  }
+
+  const handleInventoryOpen = (item: any) => {
+    setSelectedUsedWork(item)
+    setIsInventoryDialogOpen(true)
+  }
+
+  const handleChangedMachine = (item: any, value: string) => {
+    setSelectedUsedWork((prev: any) => ({ ...prev, machine_id: value }))
+  }
+
+  const handleAddUsedParts = () => {
+    let usedParts: UsedParts[] = [];
+    let usedPartnames = "";
+
+    let filtered = filteredInventorys;
+    filtered = filtered.filter(item => (item.use_qty > 0));
+    filtered.map((item) => {
+      const usedItem = {
+        vessel_no: item.vessel_no,
+        work_order: "",
+        part_seq: "",
+        warehouse_no: item.warehouse_no,
+        warehouse_name: item.warehouse_name,
+        material_code: item.material_code,
+        material_name: item.material_name,
+        use_unit: item.material_unit,
+        use_qty: item.use_qty,
+        regist_date: "",
+        regist_user: "",
+        modify_date: "",
+        modify_user: ""
+      }
+
+      usedPartnames += usedPartnames ? ", " + item.material_name: item.material_name;
+      usedParts.push(usedItem)
+    })
+    
+    setUsedItems(usedParts);
+    setSelectedWork((prev: any) => ({...prev, used_partnanes: usedPartnames}))
+    setExecutionResult((prev) => ({...prev, used_parts: usedParts}))
+
+    //updateTaskUsedParts(selectedUsedWork.equip_no, selectedUsedWork.section_code, selectedUsedWork.plan_code, "used_parts", usedParts);
+    setIsInventoryDialogOpen(false)
   }
 
   return (
@@ -595,7 +703,7 @@ export default function MaintenanceExecutionPage() {
                               <Input
                                 type="number"
                                 placeholder="시간"
-                                defaultValue={task.work_hours}
+                                value={task.work_hours}
                                 onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_hours", e.target.value)}
                                 className="text-sm"
                               />
@@ -605,7 +713,7 @@ export default function MaintenanceExecutionPage() {
                               <Input
                                 type="date"
                                 placeholder="시간"
-                                defaultValue={task.next_due_date}
+                                value={task.next_due_date}
                                 className='text-sm sm:w-40 md:w-36'
                                 disabled
                               />
@@ -615,7 +723,7 @@ export default function MaintenanceExecutionPage() {
                             <Label className="text-xs">사용 부품</Label>
                             <Input
                               placeholder="부품명"
-                              defaultValue={task.used_parts}
+                              value={task.used_parts}
                               onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
                               className="text-sm"
                             />
@@ -624,7 +732,7 @@ export default function MaintenanceExecutionPage() {
                             <Label className="text-xs">작업 내용</Label>
                             <Textarea
                               placeholder="이 작업에 대한 내용..."
-                              defaultValue={task.work_details}
+                              value={task.work_details}
                               onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_details", e.target.value)}
                               rows={2}
                               className="text-sm"
@@ -635,7 +743,7 @@ export default function MaintenanceExecutionPage() {
                               <Label className="text-xs">지연 사유</Label>
                               <Textarea
                                 placeholder="이 작업에 대한 지연 사유..."
-                                defaultValue={task.delay_reason}
+                                value={task.delay_reason}
                                 onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "delay_reason", e.target.value)}
                                 rows={2}
                                 className="text-sm"
@@ -678,7 +786,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="number"
                         placeholder="시간"
-                        defaultValue={selectedWork.work_hours}
+                        value={selectedWork.work_hours}
                         onChange={(e) => updateTaskData(selectedWork.equip_no, selectedWork.section_code, selectedWork.plan_code, "work_hours", e.target.value)}
                         className="text-sm"
                       />
@@ -688,7 +796,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="시간"
-                        defaultValue={selectedWork.next_due_date}
+                        value={selectedWork.next_due_date}
                         className='text-sm sm:w-40 md:w-36'
                         disabled
                       />
@@ -696,19 +804,25 @@ export default function MaintenanceExecutionPage() {
                   </div>
                   <div>
                     <Label htmlFor="parts-used">사용 부품</Label>
-                    <Input
-                      id="parts-used"
-                      placeholder="부품명"
-                      defaultValue={selectedWork.used_parts}
-                      onChange={(e) => setExecutionResult((prev) => ({ ...prev, used_parts: e.target.value }))}
-                    />
+                    <div className="flex flex-row gap-4">
+                      <Input
+                        id="parts-used"
+                        placeholder="부품명"
+                        value={selectedWork.used_partnanes}
+                        disabled
+                      />
+                      <Button
+                        id="parts-select"
+                        onClick={() => handleInventoryOpen(selectedWork)}>...</Button>
+                    </div>
+
                   </div>
                   <div>
                     <Label htmlFor="notes">작업 내용</Label>
                     <Textarea
                       id="notes"
                       placeholder="이 작업에 대한 내용을 입력하세요..."
-                      defaultValue={selectedWork.work_details}
+                      value={selectedWork.work_details}
                       onChange={(e) => setExecutionResult((prev) => ({ ...prev, work_details: e.target.value }))}
                       rows={3}
                     />
@@ -718,7 +832,7 @@ export default function MaintenanceExecutionPage() {
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
                         placeholder="이 작업에 대한 지연 사유..."
-                        defaultValue={selectedWork.delay_reason}
+                        value={selectedWork.delay_reason}
                         onChange={(e) => setExecutionResult((prev) => ({ ...prev, delay_reason: e.target.value }))}
                         rows={2}
                         className="text-sm"
@@ -743,6 +857,113 @@ export default function MaintenanceExecutionPage() {
             </Dialog>
           )}
           
+          {/* 사용 부품 다이얼로그 */}
+          {selectedUsedWork && (
+            <Dialog open={isInventoryDialogOpen} onOpenChange={setIsInventoryDialogOpen}>
+              <DialogContent className="sm:max-w-[820px] max-h-[620px]">
+                <DialogHeader>
+                  <DialogTitle>사용 부품 선택</DialogTitle>
+                  <DialogDescription>사용할 부품을 검색하여 선택해주세요.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Label>장비</Label>
+                    <Select 
+                      value={selectedUsedWork.machine_id} 
+                      onValueChange={(value) => handleChangedMachine(selectedUsedWork, value)}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {machines.map((machine) => (
+                          <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                            {machine.machine_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="max-h-96 overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-white border-b">
+                        <tr>
+                          <th className="text-center py-2 px-2">선택</th>
+                          <th className="text-left py-2 px-2">부품명</th>
+                          <th className="text-left py-2 px-2">부품코드</th>
+                          <th className="text-center py-2 px-2">단위</th>
+                          <th className="text-center py-3 px-2">창고</th>
+                          <th className="text-center py-2 px-2">현재재고</th>
+                          <th className="text-center py-2 px-2">사용수량</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredInventorys.map((item) => (
+                          <tr key={`${item.machine_id}-${item.material_code}`} className="border-b hover:bg-gray-50">
+                            <td className="text-center py-2 px-2">
+                              <Checkbox
+                                key={`chk_${item.machine_id}-${item.material_code}`}
+                                checked={item.use_qty > 0}
+                                onCheckedChange={(value) => {
+                                  if (!value) {
+                                    setInventorys(prev => 
+                                      prev.map(invItem => 
+                                        (invItem.machine_id === item.machine_id && invItem.material_code === item.material_code)
+                                          ? { ...invItem, use_qty: 0 }
+                                          : invItem 
+                                      )
+                                    );
+                                  }
+                                }}
+                              ></Checkbox>
+                            </td>
+                            <td className="py-2 px-2 font-medium">{item.material_name}</td>
+                            <td className="py-2 px-2 text-gray-600">{item.material_code}</td>
+                            <td className="py-2 px-2 text-center">{item.material_unit}</td>
+                            <td className="py-2 px-2 text-center">{item.warehouse_name}</td>
+                            <td className="py-2 px-2 text-center">{item.stock_qty}</td>
+                            <td className="py-2 px-2 text-center">
+                              <input
+                                key={`${item.machine_id}-${item.material_code}`}
+                                value={item.use_qty}
+                                className="w-10 text-center"
+                                onChange={(e) => {
+                                  const newQty = Number.parseInt(e.target.value);
+
+                                  setInventorys(prevInventorys => 
+                                    prevInventorys.map(invItem => 
+                                      (invItem.machine_id === item.machine_id && invItem.material_code === item.material_code)
+                                        ? { ...invItem, use_qty: newQty }
+                                        : invItem 
+                                    )
+                                  );
+                                }}
+                              ></input>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {filteredInventorys.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">검색 결과가 없습니다.</div>
+                    )}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsExtensionDialogOpen(false)}>
+                    취소
+                  </Button>
+                  <Button 
+                    onClick={handleAddUsedParts} 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    style={{cursor: 'pointer'}}
+                  >
+                    등록 완료
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
 
           {/* 연장 신청 다이얼로그 */}
           {selectedExtension && (
@@ -768,7 +989,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="신청일자"
-                        defaultValue={selectedExtension.extension_date}
+                        value={selectedExtension.extension_date}
                         className='text-sm sm:w-40 md:w-36'
                         onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_date: e.target.value }))}
                       />
@@ -778,7 +999,7 @@ export default function MaintenanceExecutionPage() {
                     <Label className="text-xs">연장 사유</Label>
                     <Textarea
                       placeholder="이 작업에 대한 일정 연장 사유..."
-                      defaultValue={selectedExtension.extension_reason}
+                      value={selectedExtension.extension_reason}
                       onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_reason: e.target.value }))}
                       rows={2}
                       className="text-sm"

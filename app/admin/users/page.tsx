@@ -477,7 +477,7 @@ export default function ShipManagementPage() {
                     <Label htmlFor="account_no">계정번호</Label>
                     <Input 
                       id="account_no" 
-                      defaultValue={selectedUser.account_no}
+                      value={selectedUser.account_no}
                       placeholder="계정번호를 입력하세요"
                       onChange={(e) => setSelectedUser((prev: any) => ({ ...prev, account_no: e.target.value }))}
                       disabled
@@ -487,7 +487,7 @@ export default function ShipManagementPage() {
                     <Label htmlFor="email">사용자 ID</Label>
                     <Input 
                       id="email" 
-                      defaultValue={selectedUser.email}
+                      value={selectedUser.email}
                       placeholder="사용자 ID를 입력하세요"
                       onChange={(e) => setSelectedUser((prev: any) => ({ ...prev, email: e.target.value }))}
                       disabled
@@ -497,7 +497,7 @@ export default function ShipManagementPage() {
                     <Label htmlFor="user_name">사용자명</Label>
                     <Input 
                       id="user_name" 
-                      defaultValue={selectedUser.user_name}
+                      value={selectedUser.user_name}
                       placeholder="사용자명를 입력하세요" 
                       onChange={(e) => setSelectedUser((prev: any) => ({ ...prev, user_name: e.target.value }))}
                     />
@@ -506,7 +506,7 @@ export default function ShipManagementPage() {
                     <Label htmlFor="user_ename">사용자 영문명</Label>
                     <Input 
                       id="user_ename" 
-                      defaultValue={selectedUser.user_ename}
+                      value={selectedUser.user_ename}
                       placeholder="사용자 영문명을 입력하세요"
                       onChange={(e) => setSelectedUser((prev: any) => ({ ...prev, user_ename: e.target.value }))}
                       />
@@ -515,7 +515,7 @@ export default function ShipManagementPage() {
                     <Label htmlFor="password">비밀번호</Label>
                     <Input 
                       id="password" 
-                      defaultValue={selectedUser.password}
+                      value={selectedUser.password}
                       placeholder="비밀번호를 입력하세요"
                       type="password"
                       onChange={(e) => setSelectedUser((prev: any) => ({ ...prev, password: e.target.value }))}
@@ -529,7 +529,7 @@ export default function ShipManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="position">직책</Label>
                     <Select
-                      defaultValue={selectedUser.position}
+                      value={selectedUser.position}
                       onValueChange={(value) => setSelectedUser((prev: any) => ({ ...prev, position: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="직책 선택" />
@@ -544,7 +544,7 @@ export default function ShipManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="ship_no">선박</Label>
                     <Select
-                      defaultValue={selectedUser.ship_no}
+                      value={selectedUser.ship_no}
                       onValueChange={(value) => setSelectedUser((prev: any) => ({ ...prev, ship_no: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="선박 선택" />
@@ -560,7 +560,7 @@ export default function ShipManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="user_auth">사용자 권한</Label>
                     <Select
-                      defaultValue={selectedUser.user_auth}
+                      value={selectedUser.user_auth}
                       onValueChange={(value) => setSelectedUser((prev: any) => ({ ...prev, user_auth: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="사용자 권한 선택" />
@@ -576,7 +576,7 @@ export default function ShipManagementPage() {
                   <div className="space-y-2">
                     <Label htmlFor="use_yn">사용여부</Label>
                     <Select
-                      defaultValue={selectedUser.use_yn}
+                      value={selectedUser.use_yn}
                       onValueChange={(value) => setSelectedUser((prev: any) => ({ ...prev, use_yn: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="사용여부 선택" />

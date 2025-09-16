@@ -397,18 +397,18 @@ export default function MaintenanceWorkManagementPage() {
                     />
                   </div>
                 </div>
-                <Select defaultValue={shipFilter} onValueChange={setShipFilter}>
+                <Select value={shipFilter} onValueChange={setShipFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">전체 선박</SelectItem>
                     {vessels.map((vessel) => (
-                      <SelectItem value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
+                      <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>

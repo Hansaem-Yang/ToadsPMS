@@ -173,7 +173,7 @@ export async function POST(req: Request) {
       
       // 선박에서 저장된 자재 정보 전송
       if (sendData[0]) {
-        fetch(`${remoteSiteUrl}/api/data/inventory/warehouse/set`, {
+        fetch(`${remoteSiteUrl}/api/data/inventory/material/set`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

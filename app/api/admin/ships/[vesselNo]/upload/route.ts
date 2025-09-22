@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       let sectionName: string = '';
 
       for (const rows of excelData) {
-        if (vesselNo !== rows.Vessel) {
+        if (vesselNo !== rows.CallSign) {
           continue;
         }
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
           sectionCode = '';
           sectionName = '';
 
-          let query = 
+          let queryString = 
             `merge [equipment] as a
              using (select @vesselNo as vessel_no
                          , @equipName as equip_name
@@ -79,27 +79,27 @@ export async function POST(req: Request) {
           let params = [
             { name: 'vesselNo', value: vesselNo },
             { name: 'equipName', value: rows.Equipment },
-            { name: 'category', value: rows.Category },
-            { name: 'manufacturer', value: rows.Maker },
-            { name: 'model', value: rows.Model },
-            { name: 'machine', value: rows.Machine },
+            { name: 'category', value: rows.Category ? rows.Category : '' },
+            { name: 'manufacturer', value: rows.Maker ? rows.Maker : '' },
+            { name: 'model', value: rows.Type ? rows.Type : '' },
+            { name: 'machine', value: rows.Machine ? rows.Machine : '' },
             { name: 'registUser', value: registUser },
             { name: 'modifyUser', value: modifyUser }
           ];
 
           const request = new sql.Request(transantion);
           params?.forEach(p => request.input(p.name, p.value));
-          let result = await request.query(query);
+          let result = await request.query(queryString);
 
           equipName = rows.Equipment;
 
           if (result.rowsAffected[0] > 0) {
-            query = 
+            queryString = 
               `select max(equip_no) as equip_no
                  from [equipment] 
                 where vessel_no = @vesselNo;`
 
-            result = await request.query(query);
+            result = await request.query(queryString);
 
             if (result.recordset.length > 0)
               equipNo = result.recordset[0].equip_no;
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
         }
 
         if (sectionName !== rows.Section) {          
-          let query = 
+          let queryString = 
             `merge [section] as a
              using (select @vesselNo as vessel_no
                          , @equipNo as equip_no
@@ -152,18 +152,18 @@ export async function POST(req: Request) {
 
           const request = new sql.Request(transantion);
           params?.forEach(p => request.input(p.name, p.value));
-          let result = await request.query(query);
+          let result = await request.query(queryString);
           
           sectionName = rows.Section;
 
           if (result.rowsAffected[0] > 0) {
-            query = 
+            queryString = 
               `select max(section_code) as section_code
                  from [section] 
                 where vessel_no = @vesselNo
                   and equip_no = @equipNo;`
 
-            result = await request.query(query);
+            result = await request.query(queryString);
 
             if (result.recordset.length > 0)
               sectionCode = result.recordset[0].section_code;
@@ -172,7 +172,7 @@ export async function POST(req: Request) {
           }
         }
 
-        let query = 
+        let queryString = 
             `merge [maintenance_plan] as a
              using (select @vesselNo as vessel_no 
                          , @equipNo as equip_no 
@@ -185,7 +185,9 @@ export async function POST(req: Request) {
                          , @workHours as work_hours 
                          , @intervalTerm as interval_term 
                          , @interval as interval 
-                         , @location as location 
+                         , case @location when 'DOCK' then 'D'
+                                          when 'IN PORT' then 'P'
+                                          when 'SAILING' then 'S' else '' end as location 
                          , @manager as manager 
                          , @selfMaintenance as self_maintenance 
                          , @critical as critical 
@@ -265,31 +267,32 @@ export async function POST(req: Request) {
           { name: 'equipNo', value: equipNo },
           { name: 'sectionCode', value: sectionCode },
           { name: 'planName', value: rows.MaintenanceName},
-          { name: 'manufacturer', value: rows.Manufacturer},
-          { name: 'model', value: rows.Model},
-          { name: 'specifications', value: rows.Specifications},
+          { name: 'manufacturer', value: rows.Manufacturer ? rows.Manufacturer : '' },
+          { name: 'model', value: rows.Model ? rows.Model : '' },
+          { name: 'specifications', value: rows.Specifications ? rows.Specifications : '' },
           { name: 'workers', value: rows.Workers},
           { name: 'workHours', value: rows.WorkHours},
           { name: 'intervalTerm', value: rows.IntervalTerm},
           { name: 'interval', value: rows.Interval},
-          { name: 'location', value: rows.Location},
-          { name: 'manager', value: rows.Manager},
-          { name: 'selfMaintenance', value: rows.SelfMaintenance},
-          { name: 'critical', value: rows.Critical},
+          { name: 'location', value: rows.Location? rows.Location : '' },
+          { name: 'manager', value: rows.Manager? rows.Manager : 0 },
+          { name: 'selfMaintenance', value: rows.SelfMaintenance? rows.SelfMaintenance : '' },
+          { name: 'critical', value: rows.Critical? rows.Critical : '' },
           { name: 'lastestDate', value: rows.LastestDate},
-          { name: 'instructions', value: rows.Instructions},
+          { name: 'instructions', value: rows.Instructions? rows.Instructions : '' },
           { name: 'registUser', value: registUser },
           { name: 'modifyUser', value: modifyUser }
         ];
-        
 
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
 
         count += result.rowsAffected[0];
       }
+
+      console.log(count)
 
       transantion.commit();
 

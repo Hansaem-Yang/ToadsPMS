@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import {
   Ship,
@@ -27,6 +28,7 @@ import {
   Upload,
   Download,
 } from "lucide-react"
+import * as XLSX from 'xlsx';
 import { Vessel as VesselCode } from '@/types/common/vessel'; // ✅ interface import
 import { Machine as MachinesCode } from '@/types/common/machine'; // ✅ interface import
 import { Warehouse } from '@/types/common/warehouse'; // ✅ interface import
@@ -60,6 +62,10 @@ export default function PartsManagementPage() {
     warehouse_name: ""
   };
 
+  interface ExcelData {
+    [key: string]: any;
+  }
+
   const [userInfo, setUserInfo] = useState<any>(null)
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([])
   const [materialUnits, setMaterialUnits] = useState<MaterialUnit[]>([])
@@ -79,11 +85,12 @@ export default function PartsManagementPage() {
   const [editMaterial, setEditMaterial] = useState<Material>(initialMaterial)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
-  const [isExcelUploadOpen, setIsExcelUploadOpen] = useState(false)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   
   const [availableMachine, setAvailableMachine] = useState<MachinesCode[]>([])
   const [availableWarehouse, setAvailableWarehouse] = useState<Warehouse[]>([])
   const [availableInsertedMachine, setAvailableInsertedMachine] = useState<MachinesCode[]>([])
+  const [excelData, setExcelData] = useState<ExcelData[]>([]);
   
   const fetchVesselCodes = () => {
     fetch(`/api/admin/common/vessel`)
@@ -317,44 +324,77 @@ export default function PartsManagementPage() {
       }
     }
   }
+  
+  const sendDataToServer = async (excelData: ExcelData[]) => {
+    try {
+      const sendData = {
+        'registUser': userInfo.account_no,
+        'modifyUser': userInfo.account_no,
+        'excelData': excelData
+      }
 
-  const handleDownloadTemplate = () => {
-    const csvContent =
-      "선박ID,장비ID,부품명,부품코드,Part No.1,Part No.2,Part No.3,단위,최소재고,기초재고\n" +
-      "SHIP-001,EQ-001,샘플 부품,SP-001,PN-001,PN-002,,개,10,50\n"
+      const res = await fetch(`/api/admin/inventory/material/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sendData),
+      });
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const link = document.createElement("a")
-    const url = URL.createObjectURL(blob)
-    link.setAttribute("href", url)
-    link.setAttribute("download", "부품_등록_템플릿.csv")
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+      const data = await res.json();
 
-  const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      console.log("Uploading file:", file.name)
-      const sampleParts = [
-        {
-          id: `PART-EXCEL-${Date.now()}`,
-          shipId: "SHIP-001",
-          equipmentId: "EQ-001",
-          partName: "Excel 업로드 부품",
-          partCode: "EX-001",
-          partNumbers: ["PN-EXCEL-001"],
-          unit: "개",
-          minStock: 10,
-          initialStock: 25,
-        },
-      ]
-      alert("파일이 성공적으로 업로드되었습니다.")
-      setIsExcelUploadOpen(false)
+      if (data.success) {
+        alert('데이터가 성공적으로 전송되었습니다.');
+        setIsUploadDialogOpen(false);
+
+        fetchMaterials()
+      } else {
+        alert('데이터 전송 실패');
+      }
+    } catch (error) {
+      alert(`네트워크 에러: ${error}`);
     }
-  }
+  };
+  
+  const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        const headerMapping = [
+          "CallSign",
+          "Machine", 
+          "MaterialGroup", 
+          "MaterialName", 
+          "Type", 
+          "Unit", 
+          "Warehouse", 
+          "DrawingNo", 
+          "StandardQty", 
+          "InitialStock"
+        ]
+
+        const jsonData: ExcelData[] = XLSX.utils.sheet_to_json(worksheet, {header: headerMapping});
+        
+        setExcelData(jsonData);
+        
+        // 서버로 데이터 전송
+        sendDataToServer(jsonData);
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+        
+    if (event.target) {
+        event.target.value = '';
+    }
+  };
 
   const machineChanged = (mode: string, value: string) => {
     const foundMachine = availableInsertedMachine.find(machine => machine.machine_id === value)
@@ -412,42 +452,16 @@ export default function PartsManagementPage() {
                   <p className="text-gray-600">각 선박의 장비별 부품 정보를 관리합니다</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleDownloadTemplate}>
+                  <Button variant="outline">
                     <Download className="w-4 h-4 mr-2" />
-                    템플릿 다운로드
+                    <a href="/template/PMS Material Upload Template.xlsx">
+                      템플릿 다운로드
+                    </a>
                   </Button>
-                  <Dialog open={isExcelUploadOpen} onOpenChange={setIsExcelUploadOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Excel 업로드
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Excel 파일 업로드</DialogTitle>
-                        <DialogDescription>
-                          CSV 또는 Excel 파일을 업로드하여 부품을 일괄 등록할 수 있습니다.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="text-sm text-gray-600">
-                          <p>• CSV 또는 Excel 파일을 업로드하여 부품을 일괄 등록할 수 있습니다.</p>
-                          <p>• 먼저 템플릿을 다운로드하여 형식을 확인하세요.</p>
-                        </div>
-                        <div>
-                          <Label htmlFor="excel-file">파일 선택</Label>
-                          <Input
-                            id="excel-file"
-                            type="file"
-                            accept=".csv,.xlsx,.xls"
-                            onChange={handleExcelUpload}
-                            className="mt-2"
-                          />
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button onClick={() => setIsUploadDialogOpen(true)} variant="outline">
+                    <Upload className="w-4 h-4 mr-2" />
+                    엑셀 업로드
+                  </Button>
                   <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
                       <Button>
@@ -912,6 +926,29 @@ export default function PartsManagementPage() {
                 style={{cursor: 'pointer'}}
               >수정</Button>
             </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>엑셀 파일 업로드</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">
+                <p>• 먼저 템플릿을 다운로드하여 양식에 맞게 작성해주세요.</p>
+                <p>• 엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.</p>
+                <p>• 기존 부품 정보와 중복되는 내용은 업데이트됩니다.</p>
+              </div>
+              <div>
+                <Label>파일 선택</Label>
+                <Input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} className="cursor-pointer" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                취소
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

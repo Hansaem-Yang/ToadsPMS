@@ -318,8 +318,8 @@ export default function MaintenanceWorkManagementPage() {
                           )}
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span>작업시간: {history.work_hours} 시간</span>
-                            {history.used_parts && (
-                              <span>부품: {history.used_parts}</span>
+                            {history.used_partnames && (
+                              <span>부품: {history.used_partnames}</span>
                             )}
                             {history.manager && (
                               <div className="flex items-center gap-1">

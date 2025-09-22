@@ -10,5 +10,6 @@ export interface Inventory {
     warehouse_name: string;
     standard_qty: number;
     stock_qty: number;
+    order_use: number;
     use_qty: number;
 }

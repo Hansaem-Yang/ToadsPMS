@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       for (const item of works) {
         // DB에서 사용자 정보 확인
 
-        let query = `
+        let queryString = `
         insert into [maintenance_work] (
                 vessel_no
               , work_order
@@ -61,20 +61,152 @@ export async function POST(req: Request) {
           { name: 'planDate', value: item.extension_date? item.extension_date : item.due_date }, 
           { name: 'manager', value: item.manager }, 
           { name: 'workDetails', value: item.work_details }, 
-          { name: 'usedParts', value: item.used_parts }, 
+          { name: 'usedParts', value: item.used_partnames }, 
           { name: 'workHours', value: item.work_hours }, 
           { name: 'delayReason', value: item.delay_reason }, 
           { name: 'registUser', value: item.regist_user }, 
           { name: 'modifyUser', value: item.modify_user }, 
         ];
 
-        const request = new sql.Request(transantion);
+        let request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
 
-        query = `
+        queryString = `
+        select max(work_order) as work_order
+          from [maintenance_work]
+        where vessel_no = @vesselNo
+          and equip_no = @equipNo
+          and section_code = @sectionCode
+          and plan_code = @planCode
+          and regist_user = @registUser;`
+
+        params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'equipNo', value: item.equip_no }, 
+          { name: 'sectionCode', value: item.section_code }, 
+          { name: 'planCode', value: item.plan_code }, 
+          { name: 'registUser', value: item.regist_user }, 
+          { name: 'modifyUser', value: item.modify_user }, 
+        ];
+
+        request = new sql.Request(transantion);
+        
+        params?.forEach(p => request.input(p.name, p.value));
+        result = await request.query(queryString);
+        const workOrder = result.recordset[0].work_order;
+        
+        for(const part of item.used_parts) {
+          queryString = `
+          insert into [used_parts] (
+                vessel_no
+              , work_order
+              , part_seq
+              , warehouse_no
+              , material_code
+              , use_unit
+              , use_qty
+              , regist_date
+              , regist_user
+          )
+          values (
+                @vesselNo
+              , @workOrder
+              , (select isnull(max(part_seq), 0) + 1
+                    from [used_parts]
+                  where vessel_no = @vesselNo
+                    and work_order = @workOrder)
+              , @warehouseNo
+              , @materialCode
+              , @useUnit
+              , @useQty
+              , getdate()
+              , @registUser
+          );`;
+          params = [
+            { name: 'vesselNo', value: item.vessel_no }, 
+            { name: 'workOrder', value: workOrder }, 
+            { name: 'warehouseNo', value: part.warehouse_no }, 
+            { name: 'materialCode', value: part.material_code }, 
+            { name: 'useUnit', value: part.use_unit }, 
+            { name: 'useQty', value: part.use_qty }, 
+            { name: 'registUser', value: item.regist_user }, 
+            { name: 'modifyUser', value: item.modify_user }, 
+          ];
+
+          request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          result = await request.query(queryString);
+          
+          
+          queryString = `
+          select max(part_seq) as part_seq
+            from [used_parts]
+          where vessel_no = @vesselNo
+            and work_order = @workOrder;`
+
+          params = [
+            { name: 'vesselNo', value: item.vessel_no }, 
+            { name: 'workOrder', value: workOrder }, 
+          ];
+          request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          result = await request.query(queryString);
+
+          const partSeq = result.recordset[0].part_seq;
+
+          queryString = `
+          insert into [release] (
+                vessel_no
+              , release_no
+              , material_code
+              , release_date
+              , release_location
+              , release_type
+              , release_unit
+              , release_qty
+              , work_order
+              , part_seq
+              , regist_date
+              , regist_user
+          )
+          values (
+                @vesselNo
+              , (select 'O0' + format(getdate(), 'yyMM') + format(isnull(right(max(release_no), 3), 0) + 1, '000')
+                    from [release]
+                  where vessel_no = @vesselNo
+                    and release_type = 'O0')
+              , @materialCode
+              , getdate()
+              , @warehouseNo
+              , 'O0'
+              , @useUnit
+              , @useQty
+              , @workOrder
+              , @partSeq
+              , getdate()
+              , @registUser
+          );`;
+          params = [
+            { name: 'vesselNo', value: item.vessel_no }, 
+            { name: 'workOrder', value: workOrder }, 
+            { name: 'partSeq', value: partSeq }, 
+            { name: 'warehouseNo', value: part.warehouse_no }, 
+            { name: 'materialCode', value: part.material_code }, 
+            { name: 'useUnit', value: part.use_unit }, 
+            { name: 'useQty', value: part.use_qty }, 
+            { name: 'registUser', value: item.regist_user }, 
+            { name: 'modifyUser', value: item.modify_user }, 
+          ];
+
+          request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          result = await request.query(queryString);
+        }
+
+        queryString = `
         update maintenance_plan
            set lastest_date = getdate()
              , modify_date = getdate()
@@ -83,21 +215,44 @@ export async function POST(req: Request) {
            and equip_no = @equipNo
            and section_code = @sectionCode
            and plan_code = @planCode;`;
+
+        params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'equipNo', value: item.equip_no }, 
+          { name: 'sectionCode', value: item.section_code }, 
+          { name: 'planCode', value: item.plan_code }, 
+          { name: 'registUser', value: item.regist_user }, 
+          { name: 'modifyUser', value: item.modify_user }, 
+        ];
+
+        request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        result = await request.query(queryString);
         
-        result = await request.query(query);
-        
-        query = `
+        queryString = `
         update equipment
            set lastest_date = getdate()
              , modify_date = getdate()
              , modify_user = @modifyUser
          where vessel_no = @vesselNo
            and equip_no = @equipNo;`;
+
+        params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'equipNo', value: item.equip_no }, 
+          { name: 'registUser', value: item.regist_user }, 
+          { name: 'modifyUser', value: item.modify_user }, 
+        ];
+
+        request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
         
-        result = await request.query(query);
+        result = await request.query(queryString);
+      }
 
       transantion.commit();
-      }
 
       if (count === 0) {
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });

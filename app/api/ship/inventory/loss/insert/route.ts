@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       for (const item of items) {
         // DB에서 사용자 정보 확인
 
-        let query = `
+        let queryString = `
         insert into [loss] (
                vessel_no
              , loss_no
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
 

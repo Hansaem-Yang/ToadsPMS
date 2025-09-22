@@ -188,7 +188,7 @@ export async function GET(req: Request) {
       const transantion = pool.transaction();
       await transantion.begin();
       try {
-        let query = `
+        let queryString = `
         update [vessel]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
@@ -202,52 +202,52 @@ export async function GET(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        await request.query(query);
+        await request.query(queryString);
 
-        query = `
+        queryString = `
         update [equipment]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
            and (regist_date > last_send_date or modify_date > last_send_date)
            and (regist_date > last_receive_date or modify_date > last_receive_date);`;
 
-        await request.query(query);
+        await request.query(queryString);
 
-        query = `
+        queryString = `
         update [section]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
            and (regist_date > last_send_date or modify_date > last_send_date)
            and (regist_date > last_receive_date or modify_date > last_receive_date);`;
            
-        await request.query(query);
+        await request.query(queryString);
 
-        query = `
+        queryString = `
         update [maintenance_plan]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
            and (regist_date > last_send_date or modify_date > last_send_date)
            and (regist_date > last_receive_date or modify_date > last_receive_date);`;
            
-        await request.query(query);
+        await request.query(queryString);
 
-        query = `
+        queryString = `
         update [maintenance_extension]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
            and (regist_date > last_send_date or modify_date > last_send_date)
            and (regist_date > last_receive_date or modify_date > last_receive_date);`;
            
-        await request.query(query);
+        await request.query(queryString);
 
-        query = `
+        queryString = `
         update [maintenance_work]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
            and (regist_date > last_send_date or modify_date > last_send_date)
            and (regist_date > last_receive_date or modify_date > last_receive_date);`;
            
-        await request.query(query);
+        await request.query(queryString);
 
         transantion.commit();
         // 성공 정보 반환

@@ -5,7 +5,7 @@ import { Material } from '@/types/inventory/material/material';
 export async function POST(req: Request) {
   const remoteSiteUrl = process.env.REMOTE_SITE_URL;
   const body = await req.json();
-  const {vesselNo, registUser, modifyUser, excelData} = body;
+  const {registUser, modifyUser, excelData} = body;
 
   if (!Array.isArray(excelData) || excelData.length === 0) {
     return NextResponse.json({ success: false, message: 'There is no valid data.' }, { status: 400 });
@@ -21,10 +21,6 @@ export async function POST(req: Request) {
       let count = 0;
 
       for (const rows of excelData) {
-        if (vesselNo !== rows.CallSign) {
-          continue;
-        }
-
         let queryString = 
         `merge [material] as a
           using (select @vesselNo as vessel_no
@@ -87,7 +83,7 @@ export async function POST(req: Request) {
               );`
 
         let params = [
-          { name: 'vesselNo', value: vesselNo },
+          { name: 'vesselNo', value: rows.CallSign },
           { name: 'materialName', value: rows.MaterialName ? rows.MaterialName : '' },
           { name: 'materialGroup', value: rows.MaterialGroup ? rows.MaterialGroup : '' },
           { name: 'materialType', value: rows.Type ? rows.Type : '' },
@@ -184,11 +180,9 @@ export async function POST(req: Request) {
               , regist_date
               , regist_user
             from [material]
-          where vessel_no = @vesselNo
-            and regist_user = @registUser
+          where regist_user = @registUser
             and convert(varchar(10), regist_date, 121) = convert(varchar(10), getdate(), 121);`,
         [
-          { name: 'vesselNo', value: vesselNo },
           { name: 'registUser', value: registUser },
         ]
       );

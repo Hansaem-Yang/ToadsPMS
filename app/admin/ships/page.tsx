@@ -171,7 +171,30 @@ export default function ShipManagementPage() {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         
-        const jsonData: ExcelData[] = XLSX.utils.sheet_to_json(worksheet);
+        const headerMapping = [
+          "CallSign", 
+          "Equipment", 
+          "Machine", 
+          "Category", 
+          "Maker", 
+          "Type", 
+          "Section", 
+          "MaintenanceName", 
+          "Manufacturer", 
+          "Model", 
+          "Specifications", 
+          "Workers", 
+          "WorkHours", 
+          "IntervalTerm", 
+          "Interval", 
+          "Location", 
+          "SelfMaintenace", 
+          "PIC", 
+          "Critical", 
+          "LastestDate", 
+          "Instructions"
+        ]
+        const jsonData: ExcelData[] = XLSX.utils.sheet_to_json(worksheet, {header: headerMapping});
         
         setExcelData(jsonData);
         

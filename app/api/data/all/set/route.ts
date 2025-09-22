@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       let count = 0;
       // 선박 정보 등록 및 수정
       for (const item of receivePmsData.vessels) {
-        let query = `
+        let queryString = `
         merge [vessel] as a
         using (select @vesselNo as vessel_no
                     , @vesselName as vessel_name
@@ -67,13 +67,13 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
 
       // 선박 장비 등록 및 수정
       for (const item of receivePmsData.equipments) {
-        let query = `
+        let queryString = `
         merge [equipment] as a
         using (select @vesselNo as vessel_no
                     , @equipNo as equip_no
@@ -132,13 +132,13 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
       
       // 선박 장비의 섹션 등록 및 수정
       for (const item of receivePmsData.sections) {
-        let query = `
+        let queryString = `
         merge [section] as a
         using (select @vesselNo as vessel_no
                     , @equipNo as equip_no
@@ -186,13 +186,13 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
       
       // 선박 정비 등록 및 수정
       for (const item of receivePmsData.maintenances) {
-        let query = `
+        let queryString = `
         merge [maintenance_plan] as a
         using (select @vesselNo as vessel_no
                     , @equipNo as equip_no
@@ -312,13 +312,13 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
       
       // 선박 정비 연장 등록 및 수정
       for (const item of receivePmsData.extensions) {
-        let query = `
+        let queryString = `
         merge [maintenance_extension] as a
         using (select @vesselNo as vessel_no
                     , @equipNo as equip_no
@@ -403,7 +403,7 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
 

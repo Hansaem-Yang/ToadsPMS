@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       for (const item of works) {
         // DB에서 사용자 정보 확인
 
-        let query = `
+        let queryString = `
         insert into [maintenance_work] (
                 vessel_no
               , work_order
@@ -71,10 +71,10 @@ export async function POST(req: Request) {
         const request = new sql.Request(transantion);
 
         params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(query);
+        let result = await request.query(queryString);
         count += result.rowsAffected[0];
 
-        query = `
+        queryString = `
         update maintenance_plan
            set lastest_date = getdate()
              , modify_date = getdate()
@@ -84,9 +84,9 @@ export async function POST(req: Request) {
            and section_code = @sectionCode
            and plan_code = @planCode;`;
         
-        result = await request.query(query);
+        result = await request.query(queryString);
         
-        query = `
+        queryString = `
         update equipment
            set lastest_date = getdate()
              , modify_date = getdate()
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
          where vessel_no = @vesselNo
            and equip_no = @equipNo;`;
         
-        result = await request.query(query);
+        result = await request.query(queryString);
       }
 
       transantion.commit();

@@ -95,6 +95,7 @@ export default function MaintenanceExecutionPage() {
   const [inventorys, setInventorys] = useState<Inventory[]>([])
   const [filteredInventorys, setFilteredInventorys] = useState(inventorys)
   const [selectedUsedWork, setSelectedUsedWork] = useState<any>(null)
+  const [isSingle, setIsSingle] = useState<boolean>(false)
 
   const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
@@ -196,10 +197,40 @@ export default function MaintenanceExecutionPage() {
     setFilteredEquipment(filtered)
   }, [equipmentWorks, searchTerm, categoryFilter])
 
-  useEffect(() => {
-    const filtered = selectedUsedWork
-    if (filtered){
-      fetchInventorys(filtered.vessel_no, filtered.machine_id)
+  useEffect(() => {    
+    if (selectedUsedWork) {
+      if (filteredInventorys && filteredInventorys.length > 0) {
+        if (filteredInventorys.filter(inventory => (inventory.vessel_no == selectedUsedWork.vessel_no && inventory.machine_id === selectedUsedWork.machine_id)).length < 0) {
+          fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_id)
+        }
+      } else {
+        fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_id)
+      }
+      
+      if (usedItems && usedItems.length > 0 && filteredInventorys && filteredInventorys.length > 0) {
+        let filtered = filteredInventorys
+        const filterdUsedItems = usedItems.filter(used => (used.equip_no === selectedUsedWork.equip_no && used.section_code === selectedUsedWork.section_code && used.plan_code === selectedUsedWork.plan_code))
+        if (filterdUsedItems && filterdUsedItems.length > 0) {
+          filtered = filtered.map(inventory => {
+            const usedItem = filterdUsedItems.filter(used => (used.machine_id === inventory.machine_id && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
+            if (usedItem && usedItem.length > 0) {
+              return { ...inventory, use_qty: usedItem[0]?.use_qty }
+            }
+
+            return inventory
+          })
+        } else {
+          filtered = filtered.map(inventory => {
+            const usedItem = usedItems.filter(used => (used.machine_id === inventory.machine_id && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
+            if (usedItem && usedItem.length > 0) {
+              return { ...inventory, stock_qty: inventory.stock_qty - usedItem[0]?.use_qty, use_qty: 0 }
+            }
+            return inventory
+          })
+        }
+
+        setFilteredInventorys(filtered)
+      }
     }
   }, [selectedUsedWork])
 
@@ -208,6 +239,18 @@ export default function MaintenanceExecutionPage() {
 
     setFilteredInventorys(filtered)
   }, [inventorys])
+
+  useEffect(() => {
+    alert(`${isBulkExecutionDialogOpen}:${isExecutionDialogOpen}`)
+    
+    if (!isBulkExecutionDialogOpen && !isExecutionDialogOpen) {
+      setUsedItems([])
+      setSelectedWork(null)
+      setSelectedWorks([])
+      setFilteredInventorys([])
+    }
+    
+  }, [isBulkExecutionDialogOpen, isExecutionDialogOpen])
 
   if (!userInfo) return null
 
@@ -295,8 +338,9 @@ export default function MaintenanceExecutionPage() {
       })),
     )
 
-    setIsExecutionDialogOpen(false)
+    setUsedItems([])
     setSelectedWork(null)
+    setIsExecutionDialogOpen(false)
   }
 
   const handleExtension = (equipment: any, task: any) => {
@@ -426,6 +470,7 @@ export default function MaintenanceExecutionPage() {
       })),
     )
 
+    setUsedItems([])
     setSelectedWorks([])
     setIsBulkExecutionDialogOpen(false)
   }
@@ -437,14 +482,19 @@ export default function MaintenanceExecutionPage() {
     }))
   }
 
-  const updateTaskUsedParts = (equip_no: string, section_code: string, plan_code: string, field: string, usedParts: any[]) => {
+  const updateTaskUsedParts = (equip_no: string, section_code: string, plan_code: string, usedPartnames: string, usedParts: any[]) => {
     setBulkExecutionData((prev) => ({
       ...prev,
-      tasks: prev.tasks.map((task) => (task.equip_no === equip_no && task.section_code === section_code && task.plan_code === plan_code ? { ...task, [field]: usedParts } : task)),
+      tasks: prev.tasks.map((task) => (
+        (task.equip_no === equip_no && task.section_code === section_code && task.plan_code === plan_code) ? { 
+          ...task, used_parts: usedParts, used_partnames: usedPartnames
+        } : task
+      )),
     }))
   }
 
-  const handleInventoryOpen = (item: any) => {
+  const handleInventoryOpen = (item: any, isSingle: boolean) => {
+    setIsSingle(isSingle)
     setSelectedUsedWork(item)
     setIsInventoryDialogOpen(true)
   }
@@ -462,8 +512,12 @@ export default function MaintenanceExecutionPage() {
     filtered.map((item) => {
       const usedItem = {
         vessel_no: item.vessel_no,
+        equip_no: selectedUsedWork.equip_no,
+        section_code: selectedUsedWork.section_code,
+        plan_code: selectedUsedWork.plan_code,
         work_order: "",
         part_seq: "",
+        machine_id: item.machine_id,
         warehouse_no: item.warehouse_no,
         warehouse_name: item.warehouse_name,
         material_code: item.material_code,
@@ -481,10 +535,15 @@ export default function MaintenanceExecutionPage() {
     })
     
     setUsedItems(usedParts);
-    setSelectedWork((prev: any) => ({...prev, used_partnanes: usedPartnames}))
-    setExecutionResult((prev) => ({...prev, used_parts: usedParts}))
 
-    //updateTaskUsedParts(selectedUsedWork.equip_no, selectedUsedWork.section_code, selectedUsedWork.plan_code, "used_parts", usedParts);
+    if (isSingle) {
+      setSelectedWork((prev: any) => ({...prev, used_partnanes: usedPartnames}))
+      setExecutionResult((prev) => ({...prev, used_partnames: usedPartnames, used_parts: usedParts}))
+    }
+    else {
+      updateTaskUsedParts(selectedUsedWork.equip_no, selectedUsedWork.section_code, selectedUsedWork.plan_code, usedPartnames, usedParts);
+    }
+
     setIsInventoryDialogOpen(false)
   }
 
@@ -615,7 +674,7 @@ export default function MaintenanceExecutionPage() {
                       </div>
                     </div>
                     {selectedWorks.length > 0 && (
-                      selectedWorks.filter(selected => selected.includes(eq.equip_no)).length > 0 && (
+                      selectedWorks.filter(selected => selected.startsWith(eq.equip_no)).length > 0 && (
                       <div className="flex items-center gap-4">
                         <span className="text-sm text-gray-600">{selectedWorks.filter(selected => selected.includes(eq.equip_no)).length}개 작업 선택됨</span>
                         <Button onClick={() => handleBulkExecution(eq.equip_no, eq.equip_name)} className="bg-blue-600 hover:bg-blue-700" style={{cursor: 'pointer'}}>
@@ -681,6 +740,7 @@ export default function MaintenanceExecutionPage() {
             ))}
           </div>
 
+          {/* 일괄 정비 작업 실행 등록 */}
           <Dialog open={isBulkExecutionDialogOpen} onOpenChange={setIsBulkExecutionDialogOpen}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
@@ -721,12 +781,17 @@ export default function MaintenanceExecutionPage() {
                           </div>
                           <div>
                             <Label className="text-xs">사용 부품</Label>
-                            <Input
-                              placeholder="부품명"
-                              value={task.used_parts}
-                              onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "used_parts", e.target.value)}
-                              className="text-sm"
-                            />
+                            <div className="flex flex-row gap-4">
+                              <Input
+                                placeholder="부품명"
+                                value={task.used_partnames}
+                                className="text-sm"
+                                disabled
+                              />
+                              <Button
+                                id="parts-select"
+                                onClick={() => handleInventoryOpen(task, false)}>...</Button>
+                            </div>
                           </div>
                           <div>
                             <Label className="text-xs">작업 내용</Label>
@@ -813,9 +878,8 @@ export default function MaintenanceExecutionPage() {
                       />
                       <Button
                         id="parts-select"
-                        onClick={() => handleInventoryOpen(selectedWork)}>...</Button>
+                        onClick={() => handleInventoryOpen(selectedWork, true)}>...</Button>
                     </div>
-
                   </div>
                   <div>
                     <Label htmlFor="notes">작업 내용</Label>

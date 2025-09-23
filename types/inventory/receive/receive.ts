@@ -6,7 +6,7 @@ export interface Receive {
     receive_type: string;
     receive_unit: string;
     receive_qty: number;
-    receive_location: string;
+    delivery_location: string;
     receive_reason: string;
     receive_remark: string;
     regist_date: string;

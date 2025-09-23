@@ -5,7 +5,7 @@ import { MaintenanceWork } from '@/types/vessel/maintenance_work';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const works : MaintenanceWork[] = body;
+    const items : MaintenanceWork[] = body;
 
     const sql = await getSql();
     const pool = await getPool();
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     await transantion.begin();
     try {
       let count = 0;
-      for (const item of works) {
+      for (const item of items) {
         // DB에서 사용자 정보 확인
 
         let queryString = `

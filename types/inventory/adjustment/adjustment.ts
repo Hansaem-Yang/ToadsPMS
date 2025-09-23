@@ -1,6 +1,7 @@
 export interface Adjustment {
     vessel_no: string;
     vessel_name: string;
+    receive_no: string;
     machine_id: string;
     machine_name: string;
     material_code: string;

@@ -30,7 +30,7 @@ export default function PartsReceivingPage() {
     receive_type: "",
     receive_unit: "",
     receive_qty: 0,
-    receive_location: "",
+    delivery_location: "",
     receive_reason: "",
     receive_remark: "",
     regist_date: "",

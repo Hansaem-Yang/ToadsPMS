@@ -48,6 +48,7 @@ export async function POST(req: Request) {
             , warehouse_no
             , warehouse_name
             , warehouse_location
+            , use_yn
             , regist_date
             , regist_user
          from [warehouse]

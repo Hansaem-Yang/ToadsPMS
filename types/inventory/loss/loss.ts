@@ -7,6 +7,7 @@ export interface Loss {
     material_code: string;
     material_name: string;
     loss_date: string;
+    loss_type: string;
     loss_unit: string;
     loss_qty: number;
     loss_location: string;

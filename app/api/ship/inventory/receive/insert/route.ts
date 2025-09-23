@@ -14,7 +14,6 @@ export async function POST(req: Request) {
     const transantion = pool.transaction();
     await transantion.begin();
 
-    console.log(receiveData)
     try {
       let count = 0;
       for (const item of receiveData.materials) {
@@ -63,7 +62,7 @@ export async function POST(req: Request) {
           { name: 'deliveryLocation', value: receiveData.delivery_location }, 
           { name: 'receiveType', value: item.receive_type }, 
           { name: 'receiveQty', value: item.receive_qty }, 
-          { name: 'receiveLocation', value: item.receive_location }, 
+          { name: 'receiveLocation', value: item.delivery_location }, 
           { name: 'receiveRemark', value: item.receive_remark }, 
           { name: 'registUser', value: receiveData.regist_user }, 
           { name: 'modifyUser', value: receiveData.modify_user }, 

@@ -4,7 +4,6 @@ import { Material } from '@/types/inventory/material/material';
 
 export async function POST(req: Request) {
   try {
-    const remoteSiteUrl = process.env.REMOTE_SITE_URL;
     const body = await req.json();
     const item : Material = body;
 
@@ -14,43 +13,67 @@ export async function POST(req: Request) {
     await transantion.begin();
     try {
       let count = 0;
-      let queryString = `
-      insert into [material] (
-              vessel_no
-            , material_code
-            , machine_id
-            , material_name
-            , material_group
-            , material_spec
-            , material_type
-            , material_unit
-            , warehouse_no
-            , drawing_no
-            , standard_qty
-            , regist_date
-            , regist_user
-      )
-      values (
-              @vesselNo
-            , (select @materialType + format(getdate(), 'yyMM') + format(isnull(right(max(material_code), 3), 0) + 1, '000')
-                 from [material]
-                where vessel_no = @vesselNo
-                  and material_type = @materialType)
-            , @machineId
-            , @materialName
-            , @materialGroup
-            , @materialSpec
-            , @materialType
-            , @materialUnit
-            , @warehouseNo
-            , @drawingNo
-            , @standardQty
-            , getdate()
-            , @registUser
-      );`;
+      let queryString = 
+      `merge [material] as a
+      using (select @vesselNo as vessel_no
+                  , @materialCode as material_code
+                  , @machineId as machine_id
+                  , @materialName as material_name
+                  , @materialGroup as material_group
+                  , @materialSpec as material_spec
+                  , @materialType as material_type
+                  , @materialUnit as material_unit
+                  , @warehouseNo as warehouse_no
+                  , @drawingNo as drawing_no
+                  , @standardQty as standard_qty
+                  , @registDate as regist_date
+                  , @registUser as regist_user) as b
+          on (a.vessel_no = b.vessel_no 
+          and a.material_code = b.material_code)
+        when matched then
+            update
+                set a.machine_id = b.machine_id
+                  , a.material_name = b.material_name
+                  , a.material_group = b.material_group
+                  , a.material_spec = b.material_spec
+                  , a.material_type = b.material_type
+                  , a.material_unit = b.material_unit
+                  , a.warehouse_no = b.warehouse_no
+                  , a.drawing_no = b.drawing_no
+                  , a.standard_qty = b.standard_qty
+                  , a.regist_date = b.regist_date
+                  , a.regist_user = b.regist_user
+        when not matched then
+            insert (vessel_no
+                  , material_code
+                  , machine_id
+                  , material_name
+                  , material_group
+                  , material_spec
+                  , material_type
+                  , material_unit
+                  , warehouse_no
+                  , drawing_no
+                  , standard_qty
+                  , regist_date
+                  , regist_user)
+            values (b.vessel_no
+                  , b.material_code
+                  , b.machine_id
+                  , b.material_name
+                  , b.material_group
+                  , b.material_spec
+                  , b.material_type
+                  , b.material_unit
+                  , b.warehouse_no
+                  , b.drawing_no
+                  , b.standard_qty
+                  , b.regist_date
+                  , b.regist_user);`
 
       let params = [
         { name: 'vesselNo', value: item.vessel_no }, 
+        { name: 'materialCode', value: item.material_code }, 
         { name: 'machineId', value: item.machine_id }, 
         { name: 'materialName', value: item.material_name }, 
         { name: 'materialGroup', value: item.material_group }, 
@@ -61,8 +84,8 @@ export async function POST(req: Request) {
         { name: 'drawingNo', value: item.drawing_no }, 
         { name: 'standardQty', value: item.standard_qty }, 
         { name: 'initialStock', value: item.initial_stock }, 
+        { name: 'registDate', value: item.regist_date }, 
         { name: 'registUser', value: item.regist_user }, 
-        { name: 'modifyUser', value: item.modify_user }, 
       ];
 
       let request = new sql.Request(transantion);
@@ -94,11 +117,11 @@ export async function POST(req: Request) {
             and a.receive_type = b.receive_type)
       when matched then
             update
-              set a.receive_unit = b.receive_unit
-                , a.receive_qty = b.receive_qty
-                , a.receive_location = b.receive_location
-                , a.modify_date = getdate()
-                , a.modify_user = b.modify_user
+               set a.receive_unit = b.receive_unit
+                 , a.receive_qty = b.receive_qty
+                 , a.receive_location = b.receive_location
+                 , a.modify_date = getdate()
+                 , a.modify_user = b.modify_user
       when not matched then
             insert (vessel_no
                   , receive_no
@@ -141,68 +164,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
       }
       
-      // 저장된 자재 정보 조회
-      const sendData: Material[] = await query(
-        `select vessel_no
-              , material_code
-              , machine_id
-              , material_name
-              , material_group
-              , material_spec
-              , material_type
-              , material_unit
-              , warehouse_no
-              , drawing_no
-              , standard_qty
-              , regist_date
-              , regist_user
-            from [material]
-          where vessel_no = @vesselNo
-            and material_code = (select max(material_code) 
-                                   from [material]
-                                  where vessel_no = @vesselNo
-                                    and machine_id = @machineId
-                                    and regist_user = @registUser);`,
-        [
-          { name: 'vesselNo', value: item.vessel_no },
-          { name: 'machineId', value: item.machine_id },
-          { name: 'registUser', value: item.regist_user },
-        ]
-      );
-      
-      // 선박에서 저장된 자재 정보 전송
-      if (sendData[0]) {
-        fetch(`${remoteSiteUrl}/api/data/inventory/material/set`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(sendData[0]),
-        })
-        .then(res => {
-          if (res.ok) {
-            // 자재 정보의 마지막 전송일자 수정
-            execute(
-              `update [material]
-                  set last_send_date = getdate()
-                where vessel_no = @vesselNo
-                  and material_code = @materialCode;`,
-              [
-                { name: 'vesselNo', value: sendData[0].vessel_no },
-                { name: 'materialCode', value: sendData[0].material_code },
-              ]
-            );
-          }
-          
-          return res.json();
-        })
-        .catch(err => {
-          console.error('Error triggering cron job:', err);
-        });
-      }
-
       // 성공 정보 반환
-      return NextResponse.json({ success: true, data: sendData[0] });
+      return NextResponse.json({ success: true });
     } catch (err) {
       transantion.rollback();
       console.log(err);

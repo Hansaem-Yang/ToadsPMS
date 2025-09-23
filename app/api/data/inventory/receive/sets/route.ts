@@ -79,7 +79,7 @@ export async function POST(req: Request) {
           { name: 'receiveType', value: item.receive_type }, 
           { name: 'receiveUnit', value: item.receive_unit }, 
           { name: 'receiveQty', value: item.receive_qty }, 
-          { name: 'receiveLocation', value: item.delivery_location }, 
+          { name: 'receiveLocation', value: item.receive_location }, 
           { name: 'receiveRemark', value: item.receive_remark }, 
           { name: 'registDate', value: item.regist_date }, 
           { name: 'registUser', value: item.regist_user }, 

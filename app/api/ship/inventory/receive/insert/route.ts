@@ -75,12 +75,11 @@ export async function POST(req: Request) {
         count += result.rowsAffected[0];
       }
 
+      await transantion.commit();
+
       if (count === 0) {
-        transantion.rollback();
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
       }
-
-      transantion.commit();
 
       // 저장된 정비 정보 조회
       const sendData: Receive[] = await query(
@@ -88,12 +87,12 @@ export async function POST(req: Request) {
               , receive_no
               , material_code
               , receive_date
-              , delivery_location
+              , receive_location
               , receive_type
               , receive_unit
               , receive_qty
-              , receive_location
               , receive_remark
+              , delivery_location
               , regist_date
               , regist_user
            from [receive]
@@ -108,51 +107,46 @@ export async function POST(req: Request) {
       
       // 선박에서 저장된 정비 정보 전송
       if (sendData[0]) {
-        const transantion1 = pool.transaction();
-        await transantion1.begin();
 
-        fetch(`${remoteSiteUrl}/api/data/inventory/receive/sets`, {
+        const fetchResponse = await fetch(`${remoteSiteUrl}/api/data/inventory/receive/sets`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(sendData),
-        })
-        .then(res => {
-          if (res.ok) {
-            // 정비 정보의 마지막 전송일자 수정
-            try {
-              
-              for (const item of sendData) {
-                const queryString = 
-                  `update [receive]
-                      set last_send_date = getdate()
-                    where vessel_no = @vesselNo
-                      and receive_no = @receiveNo;`
-
-                const request = new sql.Request(transantion);
-                const params = [
-                  { name: 'vesselNo', value: item.vessel_no },
-                  { name: 'receiveNo', value: item.receive_no },
-                ];
-
-                params?.forEach(p => request.input(p.name, p.value));
-                request.query(queryString);
-              }
-              
-              transantion1.commit();
-            } catch (err) {
-              transantion1.rollback();
-              console.log(err);
-              return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
-            }
-          }
-          
-          return res.json();
-        })
-        .catch(err => {
-          console.error('Error triggering cron job:', err);
         });
+
+        if (fetchResponse.ok) {
+          const pool1 = await getPool();
+          const transantion1 = pool1.transaction();
+          await transantion1.begin();
+
+          // 정비 정보의 마지막 전송일자 수정
+          try {
+            for (const item of sendData) {
+              const queryString = 
+                `update [receive]
+                    set last_send_date = getdate()
+                  where vessel_no = @vesselNo
+                    and receive_no = @receiveNo;`
+
+              const params = [
+                { name: 'vesselNo', value: item.vessel_no },
+                { name: 'receiveNo', value: item.receive_no },
+              ];
+
+              const request = new sql.Request(transantion1);
+              params?.forEach(p => request.input(p.name, p.value));
+              await request.query(queryString);
+            }
+            
+            transantion1.commit();
+          } catch (err) {
+            transantion1.rollback();
+            console.log(err);
+            return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+          }
+        }
       }
       // 성공 정보 반환
       return NextResponse.json({ success: true });

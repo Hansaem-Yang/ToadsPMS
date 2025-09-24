@@ -34,7 +34,7 @@ export async function POST(req: Request) {
                   , a.release_qty = b.release_qty
                   , a.release_location = b.release_location
                   , a.release_reason = b.release_reason
-                  , a.last_release_date = getdate()
+                  , a.last_receive_date = getdate()
                   , a.modify_date = b.modify_date
                   , a.modify_user = b.modify_user
         when not matched then
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
                    , release_qty
                    , release_location
                    , release_reason
-                   , last_release_date
+                   , last_receive_date
                    , regist_date
                    , regist_user)
              values (b.vessel_no

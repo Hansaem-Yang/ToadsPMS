@@ -66,7 +66,8 @@ export default function ShipWarehouseManagementPage() {
 
       fetchWarehouses(user.ship_no)
       
-      setAddWarehouse((prev: any) => ({ ...prev, vessel_no: user.ship_no }));
+      initialWarehouse.vessel_no = user.ship_no;
+      setAddWarehouse(initialWarehouse);
     } catch (error) {
       // Redirect handled by requireAuth
     }
@@ -116,8 +117,9 @@ export default function ShipWarehouseManagementPage() {
       alert("저장이 완료되었습니다.");
 
       setWarehouses([...warehouses, result.data])
+      
+      initialWarehouse.vessel_no = userInfo.ship_no;
       setAddWarehouse(initialWarehouse)
-      setAddWarehouse((prev: any) => ({ ...prev, vessel_no: userInfo.ship_no }));
       setIsAddWarehouseDialogOpen(false)
     } else {
       alert(result.message);
@@ -319,7 +321,7 @@ export default function ShipWarehouseManagementPage() {
                     <Input
                       id="warehouseName"
                       placeholder="예: 주엔진 부품창고"
-                      value={addWarehouse.warehouse_name}
+                      defaultValue={addWarehouse.warehouse_name}
                       onChange={(e) => setAddWarehouse({ ...addWarehouse, warehouse_name: e.target.value })}
                     />
                   </div>
@@ -328,7 +330,7 @@ export default function ShipWarehouseManagementPage() {
                     <Input
                       id="location"
                       placeholder="예: 선수 1층"
-                      value={addWarehouse.warehouse_location}
+                      defaultValue={addWarehouse.warehouse_location}
                       onChange={(e) => setAddWarehouse({ ...addWarehouse, warehouse_location: e.target.value })}
                     />
                   </div>
@@ -340,9 +342,9 @@ export default function ShipWarehouseManagementPage() {
                   <Button 
                     onClick={handleInsert} 
                     style={{cursor:"pointer"}}
-                    disabled={!selectedWarehouse?.vessel_no || 
-                      !selectedWarehouse?.warehouse_name || 
-                      !selectedWarehouse?.warehouse_location}
+                    disabled={!addWarehouse.vessel_no || 
+                      !addWarehouse.warehouse_name || 
+                      !addWarehouse.warehouse_location}
                   >추가</Button>
                 </DialogFooter>
               </DialogContent>

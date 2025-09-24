@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       )
       values (
               @vesselNo
-            , (select 'W' + format(getdate(), 'yyMM') + format(isnull(right(max(warehouse_no), 3), 0) + 1, '000') 
+            , (select 'W' + format(isnull(right(max(warehouse_no), 3), 0) + 1, '000') 
                  from [warehouse] 
                 where vessel_no = @vesselNo)
             , @warehouseName
@@ -62,36 +62,32 @@ export async function POST(req: Request) {
         { name: 'registUser', value: item.regist_user },
       ]
     );
+
+    console.log(sendData);
     
     // 선박에서 저장된 창고 정보 전송
     if (sendData[0]) {
-      fetch(`${remoteSiteUrl}/api/data/inventory/warehouse/set`, {
+      const fetchResponse = await fetch(`${remoteSiteUrl}/api/data/inventory/warehouse/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(sendData[0]),
-      })
-      .then(res => {
-        if (res.ok) {
-          // 창고 정보의 마지막 전송일자 수정
-          execute(
-            `update [warehouse]
-                set last_send_date = getdate()
-              where vessel_no = @vesselNo
-                and warehouse_no = @warehouseNo;`,
-            [
-              { name: 'vesselNo', value: sendData[0].vessel_no },
-              { name: 'warehouseNo', value: sendData[0].warehouse_no },
-            ]
-          );
-        }
-        
-        return res.json();
-      })
-      .catch(err => {
-        console.error('Error triggering cron job:', err);
       });
+      
+      if (fetchResponse.ok) {
+        // 창고 정보의 마지막 전송일자 수정
+        execute(
+          `update [warehouse]
+              set last_send_date = getdate()
+            where vessel_no = @vesselNo
+              and warehouse_no = @warehouseNo;`,
+          [
+            { name: 'vesselNo', value: sendData[0].vessel_no },
+            { name: 'warehouseNo', value: sendData[0].warehouse_no },
+          ]
+        );
+      }
     }
 
     // 성공 정보 반환

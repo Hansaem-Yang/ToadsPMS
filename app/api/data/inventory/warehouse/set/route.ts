@@ -20,7 +20,7 @@ export async function POST(req: Request) {
                    , @modifyDate as modify_date
                    , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no 
-          and a.warehouseNo = b.warehouseNo)
+          and a.warehouse_no = b.warehouse_no)
         when matched then
              update
                 set a.warehouse_name = b.warehouse_name

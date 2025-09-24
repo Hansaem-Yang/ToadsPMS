@@ -6,6 +6,8 @@ import { Equipment } from '@/types/vessel/equipment';
 import { Section } from '@/types/vessel/section';
 import { MaintenancePlan } from '@/types/vessel/maintenance_plan';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
+import { Material } from '@/types/inventory/material/material';
+import { Receive } from '@/types/inventory/receive/receive';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
             , description
             , category
             , lastest_date
-            , machine
+            , machine_id
             , regist_date
             , regist_user
             , modify_date
@@ -136,6 +138,56 @@ export async function POST(req: Request) {
         { name: 'lastReceiveDate', value: receivePmsData.last_receive_date }
       ]
     );
+
+    const materials: Material[] = await query(
+      `select vessel_no
+            , material_code
+            , machine_id
+            , material_name
+            , material_group
+            , material_spec
+            , material_type
+            , material_unit
+            , warehouse_no
+            , drawing_no
+            , standard_qty
+            , regist_date
+            , regist_user
+            , modify_date
+            , modify_user
+          from [material]
+        where vessel_no = @vesselNo
+          and (regist_date >= @lastReceiveDate or modify_date >= @lastReceiveDate)`,
+      [
+        { name: 'vesselNo', value: receivePmsData.vessel_no },
+        { name: 'lastReceiveDate', value: receivePmsData.last_receive_date }
+      ]
+    );
+
+    const receives: Receive[] = await query(
+      `select vessel_no
+            , receive_no
+            , material_code
+            , receive_date
+            , receive_location
+            , receive_type
+            , receive_unit
+            , receive_qty
+            , receive_remark
+            , delivery_location
+            , regist_date
+            , regist_user
+            , modify_date
+            , modify_user
+         from [receive]
+        where vessel_no = @vesselNo
+          and (regist_date >= @lastReceiveDate or modify_date >= @lastReceiveDate)
+          and receive_type = 'S0'`,
+      [
+        { name: 'vesselNo', value: receivePmsData.vessel_no },
+        { name: 'lastReceiveDate', value: receivePmsData.last_receive_date }
+      ]
+    );
     
     const sendPmsData : PMSData = {
       vessel_no: receivePmsData.vessel_no,
@@ -146,6 +198,11 @@ export async function POST(req: Request) {
       maintenances: maintenances,
       extensions: extensions,
       works: [],
+      warehouses: [],
+      materials: materials,
+      receives: receives,
+      releases: [],
+      losses: []
     };
 
     // 성공 시 정보 반환

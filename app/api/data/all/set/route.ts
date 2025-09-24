@@ -24,7 +24,9 @@ export async function POST(req: Request) {
                     , @vesselShortName as vessel_short_name
                     , @imoNo as imo_no
                     , @useYn as use_yn
+                    , @registDate as regist_date
                     , @registUser as regist_user
+                    , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
            on (a.vessel_no = b.vessel_no)
          when matched then
@@ -34,8 +36,8 @@ export async function POST(req: Request) {
                    , a.imo_no = b.imo_no
                    , a.use_yn = b.use_yn
                    , a.last_receive_date = getdate()
-                   , a.modify_date = getdate()
-                   , a.modify_user = b.modify_user
+                   , a.modify_date = b.modify_date
+                   , a.modify_date = b.modify_date
          when not matched then
               insert (vessel_no
                     , vessel_name
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
                     , b.imo_no
                     , b.use_yn
                     , getdate()
-                    , getdate()
+                    , b.regist_date
                     , b.regist_user);`;
 
         let params = [
@@ -60,8 +62,10 @@ export async function POST(req: Request) {
           { name: 'vesselShortName', value: item.vessel_short_name },
           { name: 'imoNo', value: item.imo_no },
           { name: 'useYn', value: item.use_yn },
-          { name: 'registUser', value: '10000' },
-          { name: 'modifyUser', value: '10000' },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
         ];
 
         const request = new sql.Request(transantion);
@@ -82,19 +86,21 @@ export async function POST(req: Request) {
                     , @manufacturer as manufacturer
                     , @model as model
                     , @description as description
+                    , @registDate as regist_date
                     , @registUser as regist_user
+                    , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no and a.equip_no = b.equip_no)
         when matched then
               update
-                set a.equip_name = b.equip_name
-                  , a.category = b.category
-                  , a.manufacturer = b.manufacturer
-                  , a.model = b.model
-                  , a.description = b.description
-                  , a.last_receive_date = getdate()
-                  , a.modify_date = getdate()
-                  , a.modify_user = b.modify_user
+                 set a.equip_name = b.equip_name
+                   , a.category = b.category
+                   , a.manufacturer = b.manufacturer
+                   , a.model = b.model
+                   , a.description = b.description
+                   , a.last_receive_date = getdate()
+                   , a.modify_date = b.modify_date
+                   , a.modify_date = b.modify_date
         when not matched then
               insert (vessel_no
                     , equip_no
@@ -114,7 +120,7 @@ export async function POST(req: Request) {
                     , b.model
                     , b.description
                     , getdate()
-                    , getdate()
+                    , b.regist_date
                     , b.regist_user);`;
 
         let params = [
@@ -125,8 +131,10 @@ export async function POST(req: Request) {
           { name: 'manufacturer', value: item.manufacturer },
           { name: 'model', value: item.model },
           { name: 'description', value: item.description },
-          { name: 'registUser', value: '10000' },
-          { name: 'modifyUser', value: '10000' },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
         ];
 
         const request = new sql.Request(transantion);
@@ -145,7 +153,9 @@ export async function POST(req: Request) {
                     , @sectionCode as section_code
                     , @sectionName as section_name
                     , @description as description
+                    , @registDate as regist_date
                     , @registUser as regist_user
+                    , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
            on (a.vessel_no = b.vessel_no and a.equip_no = b.equip_no and a.section_code = b.section_code)
          when matched then
@@ -153,8 +163,8 @@ export async function POST(req: Request) {
                  set a.section_name = b.section_name
                    , a.description = b.description
                    , a.last_receive_date = getdate()
-                   , a.modify_date = getdate()
-                   , a.modify_user = b.modify_user
+                   , a.modify_date = b.modify_date
+                   , a.modify_date = b.modify_date
          when not matched then
               insert (vessel_no
                     , equip_no
@@ -170,7 +180,7 @@ export async function POST(req: Request) {
                     , b.section_name
                     , b.description
                     , getdate()
-                    , getdate()
+                    , b.regist_date
                     , b.regist_user);`;
 
         let params = [
@@ -179,8 +189,10 @@ export async function POST(req: Request) {
           { name: 'sectionCode', value: item.section_code },
           { name: 'sectionName', value: item.section_name },
           { name: 'description', value: item.description },
-          { name: 'registUser', value: '10000' },
-          { name: 'modifyUser', value: '10000' },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
         ];
 
         const request = new sql.Request(transantion);
@@ -213,7 +225,9 @@ export async function POST(req: Request) {
                     , @importantItems as important_items
                     , @instructions as instructions
                     , @critical as critical
+                    , @registDate as regist_date
                     , @registUser as regist_user
+                    , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no 
           and a.equip_no = b.equip_no 
@@ -221,24 +235,24 @@ export async function POST(req: Request) {
           and a.plan_code = b.plan_code)
         when matched then
               update
-                set a.plan_name = b.plan_name
-                  , a.manufacturer = b.manufacturer
-                  , a.model = b.model
-                  , a.specifications = b.specifications
-                  , a.lastest_date = b.lastest_date
-                  , a.workers = b.workers
-                  , a.work_hours = b.work_hours
-                  , a.interval = b.interval
-                  , a.interval_term = b.interval_term
-                  , a.location = b.location
-                  , a.self_maintenance = b.self_maintenance
-                  , a.manager = b.manager
-                  , a.important_items = b.important_items
-                  , a.instructions = b.instructions
-                  , a.critical = b.critical
-                  , a.last_receive_date = getdate()
-                  , a.modify_date = getdate()
-                  , a.modify_user = b.modify_user
+                 set a.plan_name = b.plan_name
+                   , a.manufacturer = b.manufacturer
+                   , a.model = b.model
+                   , a.specifications = b.specifications
+                   , a.lastest_date = b.lastest_date
+                   , a.workers = b.workers
+                   , a.work_hours = b.work_hours
+                   , a.interval = b.interval
+                   , a.interval_term = b.interval_term
+                   , a.location = b.location
+                   , a.self_maintenance = b.self_maintenance
+                   , a.manager = b.manager
+                   , a.important_items = b.important_items
+                   , a.instructions = b.instructions
+                   , a.critical = b.critical
+                   , a.last_receive_date = getdate()
+                   , a.modify_date = b.modify_date
+                   , a.modify_date = b.modify_date
         when not matched then
               insert (vessel_no
                     , equip_no
@@ -282,7 +296,7 @@ export async function POST(req: Request) {
                     , b.instructions
                     , b.critical
                     , getdate()
-                    , getdate()
+                    , b.regist_date
                     , b.regist_user);`;
 
         let params = [
@@ -305,8 +319,10 @@ export async function POST(req: Request) {
           { name: 'importantItems', value: item.important_items },
           { name: 'instructions', value: item.instructions },
           { name: 'critical', value: item.critical },
-          { name: 'registUser', value: '10000' },
-          { name: 'modifyUser', value: '10000' },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
         ];
 
         const request = new sql.Request(transantion);
@@ -332,7 +348,9 @@ export async function POST(req: Request) {
                     , @approvalStatus as approval_status
                     , @approvalDate as approval_date
                     , @approver as approver
+                    , @registDate as regist_date
                     , @registUser as regist_user
+                    , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no 
           and a.equip_no = b.equip_no 
@@ -341,16 +359,16 @@ export async function POST(req: Request) {
           and a.extension_seq = b.extension_seq)
         when matched then
               update
-                set a.extension_date = b.extension_date
-                  , a.extension_reason = b.extension_reason
-                  , a.request_date = b.request_date
-                  , a.applicant = b.applicant
-                  , a.approval_status = b.approval_status
-                  , a.approval_date = b.approval_date
-                  , a.approver = b.approver
-                  , a.last_receive_date = getdate()
-                  , a.modify_date = getdate()
-                  , a.modify_user = b.modify_user
+                 set a.extension_date = b.extension_date
+                   , a.extension_reason = b.extension_reason
+                   , a.request_date = b.request_date
+                   , a.applicant = b.applicant
+                   , a.approval_status = b.approval_status
+                   , a.approval_date = b.approval_date
+                   , a.approver = b.approver
+                   , a.last_receive_date = getdate()
+                   , a.modify_date = b.modify_date
+                   , a.modify_date = b.modify_date
         when not matched then
               insert (vessel_no
                     , equip_no
@@ -380,7 +398,7 @@ export async function POST(req: Request) {
                     , b.approval_date
                     , b.approver
                     , getdate()
-                    , getdate()
+                    , b.regist_date
                     , b.regist_user);`;
 
         let params = [
@@ -396,8 +414,411 @@ export async function POST(req: Request) {
           { name: 'approvalStatus', value: item.approval_status }, 
           { name: 'approvalDate', value: item.approval_date }, 
           { name: 'approver', value: item.approver }, 
-          { name: 'registUser', value: '10000' },
-          { name: 'modifyUser', value: '10000' },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
+
+      // 선박 창고 등록 및 수정
+      for (const item of receivePmsData.warehouses) {
+        let queryString = `
+        merge [warehouse] as a
+        using (select @vesselNo as vessel_no
+                    , @warehouseNo as warehouse_no
+                    , @warehouseName as warehouse_name
+                    , @warehouseLocation as warehouse_location
+                    , @useYn as use_yn
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+           on (a.vessel_no = b.vessel_no 
+          and a.warehouseNo = b.warehouseNo)
+         when matched then
+              update
+                 set a.warehouse_name = b.warehouse_name
+                   , a.warehouse_location = b.warehouse_location
+                   , a.use_yn = b.use_yn
+                   , a.last_receive_date = getdate()
+                   , a.modify_date = b.modify_date
+                   , a.modify_date = b.modify_date
+         when not matched then
+              insert (vessel_no
+                    , warehouse_no
+                    , warehouse_name
+                    , warehouse_location
+                    , use_yn
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.warehouse_no
+                    , b.warehouse_name
+                    , b.warehouse_location
+                    , b.use_yn
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no },
+          { name: 'warehouseNo', value: item.warehouse_no },
+          { name: 'warehouseName', value: item.warehouse_name },
+          { name: 'warehouseLocation', value: item.warehouse_location },
+          { name: 'useYn', value: item.use_yn },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
+
+      // 선박 자재 등록 및 수정
+      for (const item of receivePmsData.materials) {
+        let queryString = `
+        merge [material] as a
+        using (select @vesselNo as vessel_no
+                    , @materialCode as material_code
+                    , @machineId as machine_id
+                    , @materialName as material_name
+                    , @materialGroup as material_group
+                    , @materialSpec as material_spec
+                    , @materialType as material_type
+                    , @materialUnit as material_unit
+                    , @warehouseNo as warehouse_no
+                    , @drawingNo as drawing_no
+                    , @standardQty as standard_qty
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+            on (a.vessel_no = b.vessel_no 
+            and a.material_code = b.material_code)
+          when matched then
+              update
+                  set a.machine_id = b.machine_id
+                    , a.material_name = b.material_name
+                    , a.material_group = b.material_group
+                    , a.material_spec = b.material_spec
+                    , a.material_type = b.material_type
+                    , a.material_unit = b.material_unit
+                    , a.warehouse_no = b.warehouse_no
+                    , a.drawing_no = b.drawing_no
+                    , a.standard_qty = b.standard_qty
+                    , a.last_receive_date = getdate()
+                    , a.modify_date = b.modify_date
+                    , a.modify_date = b.modify_date
+          when not matched then
+              insert (vessel_no
+                    , material_code
+                    , machine_id
+                    , material_name
+                    , material_group
+                    , material_spec
+                    , material_type
+                    , material_unit
+                    , warehouse_no
+                    , drawing_no
+                    , standard_qty
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.material_code
+                    , b.machine_id
+                    , b.material_name
+                    , b.material_group
+                    , b.material_spec
+                    , b.material_type
+                    , b.material_unit
+                    , b.warehouse_no
+                    , b.drawing_no
+                    , b.standard_qty
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'materialCode', value: item.material_code }, 
+          { name: 'machineId', value: item.machine_id }, 
+          { name: 'materialName', value: item.material_name }, 
+          { name: 'materialGroup', value: item.material_group }, 
+          { name: 'materialSpec', value: item.material_spec }, 
+          { name: 'materialType', value: item.material_type }, 
+          { name: 'materialUnit', value: item.material_unit }, 
+          { name: 'warehouseNo', value: item.warehouse_no }, 
+          { name: 'drawingNo', value: item.drawing_no }, 
+          { name: 'standardQty', value: item.standard_qty }, 
+          { name: 'initialStock', value: item.initial_stock }, 
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
+
+      // 선박 입고 등록 및 수정
+      for (const item of receivePmsData.receives) {
+        let queryString = `
+        merge [receive] as a
+        using (select @vesselNo as vessel_no
+                    , @receiveNo as receive_no
+                    , @materialCode as material_code
+                    , @receiveDate as receive_date
+                    , @deliveryLocation as delivery_location
+                    , @receiveType as receive_type
+                    , @receiveUnit as receive_unit
+                    , @receiveQty as receive_qty
+                    , @receiveLocation as receive_location
+                    , @receiveRemark as receive_remark
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+            on (a.vessel_no = b.vessel_no 
+            and a.receive_no = b.receive_no)
+          when matched then
+              update
+                  set a.material_code = b.material_code
+                    , a.receive_date = b.receive_date
+                    , a.delivery_location = b.delivery_location
+                    , a.receive_type = b.receive_type
+                    , a.receive_unit = b.receive_unit
+                    , a.receive_qty = b.receive_qty
+                    , a.receive_location = b.receive_location
+                    , a.receive_remark = b.receive_remark
+                    , a.last_receive_date = getdate()
+                    , a.modify_date = b.modify_date
+                    , a.modify_date = b.modify_date
+          when not matched then
+              insert (vessel_no
+                    , receive_no
+                    , material_code
+                    , receive_date
+                    , delivery_location
+                    , receive_type
+                    , receive_unit
+                    , receive_qty
+                    , receive_location
+                    , receive_remark
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.receive_no
+                    , b.material_code
+                    , b.receive_date
+                    , b.delivery_location
+                    , b.receive_type
+                    , b.receive_unit
+                    , b.receive_qty
+                    , b.receive_location
+                    , b.receive_remark
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'receiveNo', value: item.receive_no }, 
+          { name: 'materialCode', value: item.material_code }, 
+          { name: 'receiveDate', value: item.receive_date }, 
+          { name: 'deliveryLocation', value: item.delivery_location }, 
+          { name: 'receiveType', value: item.receive_type }, 
+          { name: 'receiveUnit', value: item.receive_unit }, 
+          { name: 'receiveQty', value: item.receive_qty }, 
+          { name: 'receiveLocation', value: item.receive_location }, 
+          { name: 'receiveRemark', value: item.receive_remark }, 
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
+
+      // 선박 출고 등록 및 수정
+      for (const item of receivePmsData.releases) {
+        let queryString = `
+        merge [release] as a
+        using (select @vesselNo as vessel_no
+                    , @receiveNo as receive_no
+                    , @materialCode as material_code
+                    , @releaseDate as receive_date
+                    , @releaseType as receive_type
+                    , @releaseUnit as receive_unit
+                    , @releaseQty as receive_qty
+                    , @releaseLocation as receive_location
+                    , @releaseRemark as receive_remark
+                    , @releaseReason as receive_reason
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+            on (a.vessel_no = b.vessel_no 
+            and a.receive_no = b.receive_no)
+          when matched then
+              update
+                  set a.material_code = b.material_code
+                    , a.release_date = b.release_date
+                    , a.release_type = b.release_type
+                    , a.release_unit = b.release_unit
+                    , a.release_qty = b.release_qty
+                    , a.release_location = b.release_location
+                    , a.release_remark = b.release_remark
+                    , a.release_reason = b.release_reason
+                    , a.last_receive_date = getdate()
+                    , a.modify_date = b.modify_date
+                    , a.modify_date = b.modify_date
+          when not matched then
+              insert (vessel_no
+                    , receive_no
+                    , material_code
+                    , release_date
+                    , release_type
+                    , release_unit
+                    , release_qty
+                    , release_location
+                    , release_remark
+                    , release_reason
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.receive_no
+                    , b.material_code
+                    , b.release_date
+                    , b.release_type
+                    , b.release_unit
+                    , b.release_qty
+                    , b.release_location
+                    , b.release_remark
+                    , b.release_reason
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'releaseNo', value: item.release_no }, 
+          { name: 'materialCode', value: item.material_code }, 
+          { name: 'releaseDate', value: item.release_date }, 
+          { name: 'releaseType', value: item.release_type }, 
+          { name: 'releaseUnit', value: item.release_unit }, 
+          { name: 'releaseQty', value: item.release_qty }, 
+          { name: 'releaseLocation', value: item.release_location }, 
+          { name: 'releaseRemark', value: item.release_remark }, 
+          { name: 'releaseReason', value: item.release_reason }, 
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
+
+      // 선박 출고 등록 및 수정
+      for (const item of receivePmsData.losses) {
+        let queryString = `
+        merge [loss] as a
+        using (select @vesselNo as vessel_no
+                    , @lossNo as loss_no
+                    , @materialCode as material_code
+                    , @lossDate as loss_date
+                    , @lossType as loss_type
+                    , @lossUnit as loss_unit
+                    , @lossQty as loss_qty
+                    , @lossLocation as loss_location
+                    , @lossReason as loss_reason
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+            on (a.vessel_no = b.vessel_no 
+            and a.lossNo = b.lossNo)
+          when matched then
+              update
+                  set a.material_code = b.material_code
+                    , a.loss_date = b.loss_date
+                    , a.loss_type = b.loss_type
+                    , a.loss_unit = b.loss_unit
+                    , a.loss_qty = b.loss_qty
+                    , a.loss_location = b.loss_location
+                    , a.loss_reason = b.loss_reason
+                    , a.last_receive_date = getdate()
+                    , a.modify_date = b.modify_date
+                    , a.modify_date = b.modify_date
+          when not matched then
+              insert (vessel_no
+                    , loss_no
+                    , material_code
+                    , loss_date
+                    , loss_type
+                    , loss_unit
+                    , loss_qty
+                    , loss_location
+                    , loss_reason
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.loss_no
+                    , b.material_code
+                    , b.loss_date
+                    , b.loss_type
+                    , b.loss_unit
+                    , b.loss_qty
+                    , b.loss_location
+                    , b.loss_reason
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no }, 
+          { name: 'lossNo', value: item.loss_no }, 
+          { name: 'materialCode', value: item.material_code }, 
+          { name: 'lossDate', value: item.loss_date }, 
+          { name: 'lossType', value: item.loss_type }, 
+          { name: 'lossUnit', value: item.loss_unit }, 
+          { name: 'lossQty', value: item.loss_qty }, 
+          { name: 'lossLocation', value: item.loss_location }, 
+          { name: 'lossReason', value: item.loss_reason }, 
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
         ];
 
         const request = new sql.Request(transantion);

@@ -14,46 +14,47 @@ export async function GET(req: Request) {
             , a.material_name
             , a.material_unit
             , a.standard_qty
-            , a.stock_qty
-            , a.standard_qty - a.stock_qty as shortage_qty
-            , a.last_used
+            , a.receive_qty - (a.release_qty + a.loss_qty) as stock_qty
+            , a.standard_qty - (a.receive_qty - (a.release_qty + a.loss_qty)) as shortage_qty
+            , isnull(a.last_used, '') as last_used
          from (select a.vessel_no
                     , a.vessel_name
                     , b.machine_id
                     , c.machine_name
+                    , c.sort_no
                     , b.material_code
                     , b.material_name
                     , b.material_unit
                     , isnull(b.standard_qty, 0) as standard_qty
-                    , sum(isnull(d.receive_qty, 0)) - sum(isnull(e.release_qty, 0)) - sum(isnull(f.loss_qty, 0)) as stock_qty
-                    , max(e.release_date) as last_used
+                    , (select sum(isnull(receive_qty, 0))
+                         from [receive]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as receive_qty
+                    , (select sum(isnull(release_qty, 0))
+                         from [release]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as release_qty
+                    , (select sum(isnull(loss_qty, 0))
+                         from [loss]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as loss_qty
+                    , (select max(release_date)
+                         from [release]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as last_used
                  from [vessel] as a
                  left outer join [material] as b
                    on a.vessel_no = b.vessel_no
                  left outer join [machine] as c
                    on b.vessel_no = c.vessel_no
                   and b.machine_id = c.machine_id
-                 left outer join [receive] as d
+                 left outer join [warehouse] as d
                    on b.vessel_no = d.vessel_no
-                  and b.material_code = d.material_code
-                 left outer join [release] as e
-                   on b.vessel_no = e.vessel_no
-                  and b.material_code = e.material_code
-                 left outer join [loss] as f
-                   on b.vessel_no = f.vessel_no
-                  and b.material_code = f.material_code
-                where a.use_yn = 'Y'
-                group by a.vessel_no
-                       , a.vessel_name
-                       , b.machine_id
-                       , c.machine_name
-                       , b.material_code
-                       , b.material_name
-                       , b.material_unit
-                       , b.standard_qty) as a
-        where a.stock_qty < a.standard_qty
+                  and b.warehouse_no = d.warehouse_no
+                where a.use_yn = 'Y') as a
+        where a.standard_qty > a.receive_qty - (a.release_qty + a.loss_qty)
         order by a.vessel_no
-               , a.machine_id
+               , a.sort_no
                , a.material_code`);
 
     // 성공 시 데쉬보드 정보 반환

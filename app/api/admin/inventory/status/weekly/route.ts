@@ -9,44 +9,66 @@ export async function GET(req: Request) {
     const items: Inventory[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , b.machine_id
-            , c.machine_name
-            , b.material_code
-            , b.material_name
-            , b.material_unit
-            , isnull(b.standard_qty, 0) as standard_qty
+            , a.machine_id
+            , a.machine_name
+            , a.material_code
+            , a.material_name
+            , a.material_unit
+            , a.standard_qty
             , cast(year(getdate()) as varchar(4)) + '-' + right('0' + cast(datepart(wk, getdate()) as varchar(2)), 2) as [period]
-            , sum(case when d.receive_date >= dateadd(wk, datediff(wk, 0, getdate()), 0) and d.receive_date < dateadd(wk, datediff(wk, 0, getdate()), 7) then isnull(d.receive_qty, 0) else 0 end) as receive_qty
-            , sum(case when e.release_date >= dateadd(wk, datediff(wk, 0, getdate()), 0) and e.release_date < dateadd(wk, datediff(wk, 0, getdate()), 7) then isnull(e.release_qty, 0) else 0 end) as release_qty
-            , sum(case when f.loss_date >= dateadd(wk, datediff(wk, 0, getdate()), 0) and f.loss_date < dateadd(wk, datediff(wk, 0, getdate()), 7) then isnull(f.loss_qty, 0) else 0 end) as loss_qty
-            , sum(isnull(d.receive_qty, 0)) - sum(isnull(e.release_qty, 0)) - sum(isnull(f.loss_qty, 0)) as stock_qty
-         from [vessel] as a
-         left outer join [material] as b
-           on a.vessel_no = b.vessel_no
-         left outer join [machine] as c
-           on b.vessel_no = c.vessel_no
-          and b.machine_id = c.machine_id
-         left outer join [receive] as d
-           on b.vessel_no = d.vessel_no
-          and b.material_code = d.material_code
-         left outer join [release] as e
-           on b.vessel_no = e.vessel_no
-          and b.material_code = e.material_code
-         left outer join [loss] as f
-           on b.vessel_no = f.vessel_no
-          and b.material_code = f.material_code
-        where a.use_yn = 'Y'
-        group by a.vessel_no
-               , a.vessel_name
-               , b.machine_id
-               , c.machine_name
-               , b.material_code
-               , b.material_name
-               , b.material_unit
-               , b.standard_qty
+            , isnull(a.receive_qty, 0) as receive_qty
+            , isnull(a.release_qty, 0) as release_qty
+            , isnull(a.loss_qty, 0) as loss_qty
+            , isnull(a.total_receive_qty, 0) - (isnull(a.total_release_qty, 0) + isnull(a.total_loss_qty, 0)) as stock_qty
+         from (select a.vessel_no
+                    , a.vessel_name
+                    , b.machine_id
+                    , c.machine_name
+                    , c.sort_no
+                    , b.material_code
+                    , b.material_name
+                    , b.material_unit
+                    , isnull(b.standard_qty, 0) as standard_qty
+                    , (select sum(isnull(receive_qty, 0))
+                         from [receive]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code
+                          and receive_date >= dateadd(wk, datediff(wk, 0, getdate()), 0) and receive_date < dateadd(wk, datediff(wk, 0, getdate()), 7)) as receive_qty
+                    , (select sum(isnull(release_qty, 0))
+                         from [release]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code
+                          and release_date >= dateadd(wk, datediff(wk, 0, getdate()), 0) and release_date < dateadd(wk, datediff(wk, 0, getdate()), 7)) as release_qty
+                    , (select sum(isnull(loss_qty, 0))
+                         from [loss]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code
+                          and loss_date >= dateadd(wk, datediff(wk, 0, getdate()), 0) and loss_date < dateadd(wk, datediff(wk, 0, getdate()), 7)) as loss_qty
+                    , (select sum(isnull(receive_qty, 0))
+                         from [receive]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as total_receive_qty
+                    , (select sum(isnull(release_qty, 0))
+                         from [release]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as total_release_qty
+                    , (select sum(isnull(loss_qty, 0))
+                         from [loss]
+                        where vessel_no = b.vessel_no
+                          and material_code = b.material_code) as total_loss_qty
+                 from [vessel] as a
+                 left outer join [material] as b
+                   on a.vessel_no = b.vessel_no
+                 left outer join [machine] as c
+                   on b.vessel_no = c.vessel_no
+                  and b.machine_id = c.machine_id
+                 left outer join [warehouse] as d
+                   on b.vessel_no = d.vessel_no
+                  and b.warehouse_no = d.warehouse_no
+                where a.use_yn = 'Y') as a
         order by a.vessel_no
-               , b.machine_id
-               , b.material_code`);
+               , a.sort_no
+               , a.material_code`);
 
     let vessels: Vessel[] = [];
     let vessel: Vessel;

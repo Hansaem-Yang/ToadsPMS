@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
       }
 
-      // 저장된 정비 정보 조회
+      // 저장된 입고 정보 조회
       const sendData: Receive[] = await query(
         `select vessel_no
               , receive_no

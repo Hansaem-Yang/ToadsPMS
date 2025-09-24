@@ -112,8 +112,12 @@ export default function InventoryStatusPage() {
     }, 0)
   }
   
-  const shortageCount = inventoryData.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
-  const lossCount = inventoryData.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
+  let shortageCount = 0;
+  let lossCount = 0;
+  if(inventoryData.length > 0) {
+    shortageCount = inventoryData.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
+    lossCount = inventoryData.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
+  }
 
   const getTableHeaders = () => {
     const headers = []
@@ -155,7 +159,7 @@ export default function InventoryStatusPage() {
       <td key="material_unit" className="py-3 text-center">
         {item.material_unit}
       </td>,
-      <td key="period" className="py-3 text-gray-500">
+      <td key="period" className="py-3 text-center">
         {item.period}
       </td>,
     )
@@ -228,7 +232,7 @@ export default function InventoryStatusPage() {
               </div>
 
               <div className="space-y-4">
-                {inventoryData.map(item => (
+                {inventoryData.length > 0 && inventoryData.map(item => (
                   <Card key={item.vessel_name}>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">

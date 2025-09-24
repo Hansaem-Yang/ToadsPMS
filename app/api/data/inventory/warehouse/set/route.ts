@@ -26,6 +26,7 @@ export async function POST(req: Request) {
                 set a.warehouse_name = b.warehouse_name
                   , a.warehouse_location = b.warehouse_location
                   , a.use_yn = b.use_yn
+                  , a.last_receive_date = getdate()
                   , a.modify_date = b.modify_date
                   , a.modify_user = b.modify_user
         when not matched then
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
                    , warehouse_name
                    , warehouse_location
                    , use_yn
+                   , last_receive_date
                    , regist_date
                    , regist_user)
              values (b.vessel_no
@@ -41,6 +43,7 @@ export async function POST(req: Request) {
                    , b.warehouse_name
                    , b.warehouse_location
                    , b.use_yn
+                   , getdate()
                    , b.regist_date
                    , b.regist_user);`,
       [

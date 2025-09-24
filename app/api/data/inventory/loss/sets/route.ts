@@ -28,7 +28,9 @@ export async function POST(req: Request) {
                     , @lossLocation as loss_location
                     , @lossReason as loss_reason
                     , @registDate as regist_date
-                    , @registUser as regist_user) as b
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
             on (a.vessel_no = b.vessel_no 
             and a.lossNo = b.lossNo)
           when matched then
@@ -40,8 +42,9 @@ export async function POST(req: Request) {
                     , a.loss_qty = b.loss_qty
                     , a.loss_location = b.loss_location
                     , a.loss_reason = b.loss_reason
-                    , a.regist_date = b.regist_date
-                    , a.regist_user = b.regist_user
+                    , a.last_receive_date = getdate()
+                    , a.modify_date = b.modify_date
+                    , a.modify_user = b.modify_user
           when not matched then
               insert (vessel_no
                     , loss_no
@@ -52,6 +55,7 @@ export async function POST(req: Request) {
                     , loss_qty
                     , loss_location
                     , loss_reason
+                    , last_receive_date
                     , regist_date
                     , regist_user)
               values (b.vessel_no
@@ -63,6 +67,7 @@ export async function POST(req: Request) {
                     , b.loss_qty
                     , b.loss_location
                     , b.loss_reason
+                    , getdate()
                     , b.regist_date
                     , b.regist_user);`
 
@@ -78,6 +83,8 @@ export async function POST(req: Request) {
           { name: 'lossReason', value: item.loss_reason }, 
           { name: 'registDate', value: item.regist_date }, 
           { name: 'registUser', value: item.regist_user }, 
+          { name: 'modifyDate', value: item.modify_date }, 
+          { name: 'modifyUser', value: item.modify_user }, 
         ];
 
         const request = new sql.Request(transantion);

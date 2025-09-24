@@ -102,9 +102,11 @@ export async function POST(req: Request) {
                   , a1.warehouse_no as receive_location
                   , @initialStock as receive_qty
                   , 'S0' as receive_type
+                  , @registDate as regist_date
                   , @registUser as regist_user
+                  , @modifyDate as modify_date
                   , @modifyUser as modify_user
-              from [material] as a1
+               from [material] as a1
               where a1.vessel_no = @vesselNo
                 and a1.machine_id = @machineId
                 and a1.material_code = (select max(material_code) 
@@ -120,7 +122,8 @@ export async function POST(req: Request) {
                set a.receive_unit = b.receive_unit
                  , a.receive_qty = b.receive_qty
                  , a.receive_location = b.receive_location
-                 , a.modify_date = getdate()
+                 , a.last_receive_date = getdate()
+                 , a.modify_date = b.modify_date
                  , a.modify_user = b.modify_user
       when not matched then
             insert (vessel_no
@@ -130,6 +133,7 @@ export async function POST(req: Request) {
                   , receive_type
                   , receive_qty
                   , receive_location
+                  , last_receive_date
                   , regist_date
                   , regist_user)
             values (b.vessel_no
@@ -143,12 +147,15 @@ export async function POST(req: Request) {
                   , b.receive_qty
                   , b.receive_location
                   , getdate()
+                  , a.regist_date
                   , b.regist_user);`;
       params = [
         { name: 'vesselNo', value: item.vessel_no }, 
         { name: 'machineId', value: item.machine_id }, 
         { name: 'initialStock', value: item.initial_stock }, 
+        { name: 'registDate', value: item.regist_date }, 
         { name: 'registUser', value: item.regist_user }, 
+        { name: 'modifyDate', value: item.modify_date }, 
         { name: 'modifyUser', value: item.modify_user }, 
       ];
       

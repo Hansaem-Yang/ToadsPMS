@@ -20,7 +20,9 @@ export async function POST(req: Request) {
                    , @adjustmentLocation as receive_location
                    , @adjustmentReason as receive_reason
                    , @registDate as regist_date
-                   , @registUser as regist_user) as b
+                   , @registUser as regist_user
+                   , @modifyDate as modify_date
+                   , @modifyUser as modify_user) as b
           on (a.vessel_no = b.vessel_no 
           and a.receive_no = b.receive_no)
         when matched then
@@ -32,8 +34,9 @@ export async function POST(req: Request) {
                   , a.receive_qty = b.receive_qty
                   , a.receive_location = b.receive_location
                   , a.receive_reason = b.receive_reason
-                  , a.regist_date = b.regist_date
-                  , a.regist_user = b.regist_user
+                  , a.last_receive_date = getdate()
+                  , a.modify_date = b.modify_date
+                  , a.modify_user = b.modify_user
         when not matched then
              insert (vessel_no
                    , receive_no
@@ -44,6 +47,7 @@ export async function POST(req: Request) {
                    , receive_qty
                    , receive_location
                    , receive_reason
+                   , last_receive_date
                    , regist_date
                    , regist_user)
              values (b.vessel_no
@@ -55,6 +59,7 @@ export async function POST(req: Request) {
                    , b.receive_qty
                    , b.receive_location
                    , b.receive_reason
+                   , getdate()
                    , b.regist_date
                    , b.regist_user);`,
       [
@@ -68,7 +73,9 @@ export async function POST(req: Request) {
         { name: 'adjustmentLocation', value: item.adjustment_location },
         { name: 'adjustmentReason', value: item.adjustment_reason },
         { name: 'registDate', value: item.regist_date },
-        { name: 'registUser', value: item.regist_user }
+        { name: 'registUser', value: item.regist_user },
+        { name: 'modifyDate', value: item.modify_date },
+        { name: 'modifyUser', value: item.modify_user },
       ]
     );
 

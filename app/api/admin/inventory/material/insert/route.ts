@@ -89,7 +89,8 @@ export async function POST(req: Request) {
                                           from [material]
                                          where vessel_no = @vesselNo
                                            and machine_id = @machineId
-                                           and regist_user = @registUser)) as b
+                                           and regist_user = @registUser
+                                           and material_code like 'A%')) as b
          on (a.vessel_no = b.vessel_no 
              and a.material_code = b.material_code
              and a.receive_type = b.receive_type)

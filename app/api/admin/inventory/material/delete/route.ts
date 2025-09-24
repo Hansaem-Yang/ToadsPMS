@@ -8,7 +8,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const item : Material = body;
 
-    console.log(item)
     const sql = await getSql();
     const pool = await getPool();
     const transantion = pool.transaction();
@@ -50,7 +49,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     } catch (err) {
       transantion.rollback();
-      console.log(err);
+      console.error(err);
       return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
   } catch (err) {

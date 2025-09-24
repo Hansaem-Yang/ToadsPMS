@@ -7,8 +7,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const item: Section = body;
 
-    console.log(item);
-
     // DB에서 사용자 정보 확인
     const count = await execute(
       `update [section]

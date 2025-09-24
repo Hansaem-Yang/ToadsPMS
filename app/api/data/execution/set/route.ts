@@ -103,7 +103,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     } catch (err) {
       transantion.rollback();
-      console.log(err);
+      console.error(err);
       return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
   } catch (err) {

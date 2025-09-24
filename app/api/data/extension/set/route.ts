@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     // 성공 정보 반환
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
   }
 }

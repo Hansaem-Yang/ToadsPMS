@@ -6,7 +6,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const vesselNo = searchParams.get('vesselNo');
 
-  console.log(vesselNo);
   try {
     // DB에서 데쉬보드 정보 확인
     const items: Equipment[] = await query(

@@ -46,8 +46,6 @@ export async function GET(req: Request) {
         { name: 'vesselNo', value: vesselNo }
       ]
     ); 
-
-    console.log(`${vesselNo}, ${lastReceiveDates[0].last_receive_date}`)
     
     const sendPmsData : PMSData = {
       vessel_no: vesselNo,
@@ -76,7 +74,6 @@ export async function GET(req: Request) {
     if (response.ok) {
       const receivePmsData = await response.json();
 
-      console.log(receivePmsData);
       const sql = await getSql();
       const pool = await getPool();
       const transantion = pool.transaction();

@@ -93,8 +93,6 @@ export async function POST(req: Request) {
         { name: 'type', value: item.type },
       ]);
 
-      console.log(item)
-
     // 성공 시 데쉬보드 정보 반환
     return NextResponse.json(items);
   } catch (err) {

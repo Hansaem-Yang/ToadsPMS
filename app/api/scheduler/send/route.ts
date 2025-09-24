@@ -20,6 +20,9 @@ export async function GET(req: Request) {
     let vesselNo = process.env.VESSEL;
     if (!vesselNo)
       vesselNo = ''
+    
+    if (!remoteSiteUrl)
+      return NextResponse.json({ success: true });
 
     const vessels: Vessel[] = await query(
       `select vessel_no

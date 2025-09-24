@@ -8,6 +8,9 @@ export async function GET(req: Request) {
   if (!vesselNo)
     vesselNo = ''
 
+  if (!remoteSiteUrl)
+    return NextResponse.json({ success: true });
+
   try {
     const lastReceiveDates: any[] = await query(
       `select max(a.last_receive_date) as last_receive_date

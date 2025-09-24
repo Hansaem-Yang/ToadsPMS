@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       )
       values (
               @vesselNo
-            , (select @materialType + format(getdate(), 'yyMM') + format(isnull(right(max(material_code), 3), 0) + 1, '000')
+            , (select @materialType + format(getdate(), 'yyMM') + format(isnull(right(max(case when left(material_code, 1) = 'A' then '' else material_code end), 3), 0) + 1, '000')
                  from [material]
                 where vessel_no = @vesselNo
                   and material_type = @materialType)
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
                   , regist_date
                   , regist_user)
             values (b.vessel_no
-                  , (select b.receive_type + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000') 
+                  , (select b.receive_type + format(getdate(), 'yyMM') + format(isnull(right(max(case when left(receive_no, 1) = 'A' then '' else receive_no end), 3), 0) + 1, '000') 
                       from [receive] 
                       where vessel_no = b.vessel_no
                         and receive_type = b.receive_type)

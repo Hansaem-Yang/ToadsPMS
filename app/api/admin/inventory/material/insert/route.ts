@@ -32,10 +32,11 @@ export async function POST(req: Request) {
       )
       values (
               @vesselNo
-            , (select @materialType + format(getdate(), 'yyMM') + format(isnull(right(max(material_code), 3), 0) + 1, '000')
+            , (select 'A' + @materialType + format(getdate(), 'yyMM') + format(isnull(right(max(material_code), 3), 0) + 1, '000')
                  from [material]
                 where vessel_no = @vesselNo
-                  and material_type = @materialType)
+                  and material_type = @materialType
+                  and material_code like 'A%')
             , @machineId
             , @materialName
             , @materialGroup
@@ -110,10 +111,11 @@ export async function POST(req: Request) {
                   , regist_date
                   , regist_user)
             values (b.vessel_no
-                  , (select b.receive_type + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000') 
+                  , (select 'A' + b.receive_type + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000') 
                        from [receive] 
                       where vessel_no = b.vessel_no
-                        and receive_type = b.receive_type)
+                        and receive_type = b.receive_type
+                        and receive_no like 'A%')
                   , b.material_code
                   , b.receive_unit
                   , b.receive_type

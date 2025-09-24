@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const count = await execute(
       `merge [receive] as a
        using (select @vesselNo as vessel_no
-                   , @receiveNo as receive_no
+                   , @adjustmentNo as receive_no
                    , @materialCode as material_code
                    , @adjustmentDate as receive_date
                    , @adjustmentType as receive_type
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
                    , b.regist_user);`,
       [
         { name: 'vesselNo', value: item.vessel_no },
-        { name: 'receiveNo', value: item.receive_no },
+        { name: 'adjustmentNo', value: item.adjustment_no },
         { name: 'materialCode', value: item.material_code },
         { name: 'adjustmentDate', value: item.adjustment_date },
         { name: 'adjustmentType', value: item.adjustment_type },

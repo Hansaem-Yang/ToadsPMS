@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
       // 선박에서 저장된 창고 정보 전송
       if (sendData[0]) {
-        fetch(`${remoteSiteUrl}/api/data/inventory/adjustment/set`, {
+        fetch(`${remoteSiteUrl}/api/data/inventory/adjustment/receive/set`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ export async function POST(req: Request) {
               , release_reason as adjustment_reason
               , regist_date
               , regist_user
-          from [release]
+           from [release]
           where vessel_no = @vesselNo
             and release_no = (select max(release_no) 
                                 from [release]
@@ -193,7 +193,7 @@ export async function POST(req: Request) {
 
       // 선박에서 저장된 창고 정보 전송
       if (sendData[0]) {
-        fetch(`${remoteSiteUrl}/api/data/inventory/adjustment/set`, {
+        fetch(`${remoteSiteUrl}/api/data/inventory/adjustment/release/set`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

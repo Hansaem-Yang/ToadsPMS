@@ -83,7 +83,7 @@ export async function POST(req: Request) {
                   , regist_date
                   , regist_user)
             values (b.vessel_no
-                  , (select b.receive_type + format(getdate(), 'yyMM') + format(isnull(right(max(case when left(receive_no, 1) = 'A' then '' else receive_no end), 3), 0) + 1, '000') 
+                  , (select b.receive_type + format(getdate(), 'yyMM') + format(isnull(right(max(receive_no), 3), 0) + 1, '000') 
                        from [receive] 
                       where vessel_no = b.vessel_no
                         and receive_type = b.receive_type)
@@ -161,7 +161,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     } catch (err) {
       transantion.rollback();
-      console.error(err);
+      console.log(err);
       return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
   } catch (err) {

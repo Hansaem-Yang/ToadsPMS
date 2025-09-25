@@ -400,7 +400,6 @@ export default function PartsManagementPage() {
     const foundMachine = availableInsertedMachine.find(machine => machine.machine_id === value)
     
     if (foundMachine) {
-      alert(mode);
       if (mode === 'add') {
         setAddMaterial({ ...addMaterial, machine_id: foundMachine.machine_id, machine_name: foundMachine.machine_name })
       } else {
@@ -408,7 +407,6 @@ export default function PartsManagementPage() {
       }
     }
     else {
-      alert("?");
       if (mode === 'add') {
         setAddMaterial({ ...addMaterial, machine_id: value })
       } else {

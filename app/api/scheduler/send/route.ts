@@ -7,6 +7,7 @@ import { Section } from '@/types/vessel/section';
 import { MaintenancePlan } from '@/types/vessel/maintenance_plan';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
 import { MaintenanceWork } from '@/types/vessel/maintenance_work';
+import { UsedParts } from "@/types/vessel/used_parts";
 
 import { Warehouse } from '@/types/inventory/warehouse/warehouse';
 import { Material } from '@/types/inventory/material/material';
@@ -36,8 +37,8 @@ export async function GET(req: Request) {
             , modify_user
          from [vessel]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -60,8 +61,8 @@ export async function GET(req: Request) {
             , modify_user
          from [equipment]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -79,8 +80,8 @@ export async function GET(req: Request) {
             , modify_user
          from [section]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -112,8 +113,8 @@ export async function GET(req: Request) {
             , modify_user
          from [maintenance_plan]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -138,8 +139,8 @@ export async function GET(req: Request) {
             , modify_user
          from [maintenance_extension]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -164,8 +165,29 @@ export async function GET(req: Request) {
             , modify_user
          from [maintenance_work]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
+      [
+        { name: 'vesselNo', value: vesselNo }
+      ]
+    );
+    
+    const usedParts: UsedParts[] = await query(
+      `select vessel_no
+            , work_order
+            , part_seq
+            , warehouse_no
+            , material_code
+            , use_unit
+            , use_qty
+            , regist_date
+            , regist_user
+            , modify_date
+            , modify_user
+         from [used_parts]
+        where vessel_no = @vesselNo
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -184,8 +206,8 @@ export async function GET(req: Request) {
             , modify_user
          from [warehouse]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -209,8 +231,8 @@ export async function GET(req: Request) {
             , modify_user
          from [material]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -234,8 +256,8 @@ export async function GET(req: Request) {
             , modify_user
          from [receive]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -258,8 +280,8 @@ export async function GET(req: Request) {
             , modify_user
          from [release]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -282,8 +304,8 @@ export async function GET(req: Request) {
             , modify_user
          from [loss]
         where vessel_no = @vesselNo
-          and (regist_date > last_send_date or modify_date > last_send_date)
-          and (regist_date > last_receive_date or modify_date > last_receive_date)`,
+          and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+          and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''))`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -298,6 +320,7 @@ export async function GET(req: Request) {
       maintenances: maintenances,
       extensions: extensions,
       works: works,
+      usedParts: usedParts,
       warehouses: warehouses,
       materials: materials,
       receives: receives,
@@ -323,69 +346,114 @@ export async function GET(req: Request) {
         update [vessel]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
-           and (regist_date > last_send_date or modify_date > last_send_date)
-           and (regist_date > last_receive_date or modify_date > last_receive_date);`;
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
 
         let params = [
           { name: 'vesselNo', value: vesselNo },
         ];
 
         const request = new sql.Request(transantion);
-
         params?.forEach(p => request.input(p.name, p.value));
         await request.query(queryString);
-
+    
         queryString = `
         update [equipment]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
-           and (regist_date > last_send_date or modify_date > last_send_date)
-           and (regist_date > last_receive_date or modify_date > last_receive_date);`;
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
 
         await request.query(queryString);
-
+    
         queryString = `
         update [section]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
-           and (regist_date > last_send_date or modify_date > last_send_date)
-           and (regist_date > last_receive_date or modify_date > last_receive_date);`;
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
            
         await request.query(queryString);
-
+    
         queryString = `
         update [maintenance_plan]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
-           and (regist_date > last_send_date or modify_date > last_send_date)
-           and (regist_date > last_receive_date or modify_date > last_receive_date);`;
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
            
         await request.query(queryString);
-
+    
         queryString = `
         update [maintenance_extension]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
-           and (regist_date > last_send_date or modify_date > last_send_date)
-           and (regist_date > last_receive_date or modify_date > last_receive_date);`;
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
            
         await request.query(queryString);
-
+    
         queryString = `
         update [maintenance_work]
            set last_send_date = getdate()
          where vessel_no = @vesselNo
-           and (regist_date > last_send_date or modify_date > last_send_date)
-           and (regist_date > last_receive_date or modify_date > last_receive_date);`;
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
            
         await request.query(queryString);
-
+    
+        queryString = `
+        update [warehouse]
+           set last_send_date = getdate()
+         where vessel_no = @vesselNo
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
+           
+        await request.query(queryString);
+    
+        queryString = `
+        update [material]
+           set last_send_date = getdate()
+         where vessel_no = @vesselNo
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
+           
+        await request.query(queryString);
+    
+        queryString = `
+        update [receive]
+           set last_send_date = getdate()
+         where vessel_no = @vesselNo
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
+           
+        await request.query(queryString);
+    
+        queryString = `
+        update [release]
+           set last_send_date = getdate()
+         where vessel_no = @vesselNo
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
+           
+        await request.query(queryString);
+    
+        queryString = `
+        update [loss]
+           set last_send_date = getdate()
+         where vessel_no = @vesselNo
+           and (regist_date > isnull(last_send_date, '') or modify_date > isnull(last_send_date, ''))
+           and (regist_date > isnull(last_receive_date, '') or modify_date > isnull(last_receive_date, ''));`;
+           
+        await request.query(queryString);
+    
         transantion.commit();
         // 성공 정보 반환
         return NextResponse.json({ success: true });
       } catch (err) {
+        console.error(err);
         transantion.rollback();
-        return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Server error!' }, { status: 500 });
       }
     }
     else {

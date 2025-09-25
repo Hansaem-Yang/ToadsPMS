@@ -241,8 +241,6 @@ export default function MaintenanceExecutionPage() {
   }, [inventorys])
 
   useEffect(() => {
-    alert(`${isBulkExecutionDialogOpen}:${isExecutionDialogOpen}`)
-    
     if (!isBulkExecutionDialogOpen && !isExecutionDialogOpen) {
       setUsedItems([])
       setSelectedWork(null)

@@ -65,7 +65,6 @@ export default function InventoryStatusPage() {
           break;
         case 'weekly':
           if (weekly.length === 0) {
-            alert("?");
             fetchInventory();
           }
           else {

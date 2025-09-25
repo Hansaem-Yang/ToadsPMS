@@ -11,7 +11,7 @@ export async function register() {
   //   // 매일 자정에 실행되는 스케쥴을 설정
   //   // Cron 표현식: '분 시 일 월 요일'
   //   // 예: '0 0 * * *' -> 매일 0시 0분에 실행
-    cron.schedule('30 * * * *', () => {
+    cron.schedule('01 * * * *', () => {
       console.log('🚀 Running a scheduled job at midnight...');
 
       fetch(`${siteUrl}/api/scheduler/send`)

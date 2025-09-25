@@ -37,7 +37,7 @@ export async function POST(req: Request) {
                    , a.use_yn = b.use_yn
                    , a.last_receive_date = getdate()
                    , a.modify_date = b.modify_date
-                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
          when not matched then
               insert (vessel_no
                     , vessel_name
@@ -74,7 +74,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("1");
 
       // 선박 장비 등록 및 수정
       for (const item of receivePmsData.equipments) {
@@ -101,7 +100,7 @@ export async function POST(req: Request) {
                    , a.description = b.description
                    , a.last_receive_date = getdate()
                    , a.modify_date = b.modify_date
-                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
         when not matched then
               insert (vessel_no
                     , equip_no
@@ -144,7 +143,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("2");
       
       // 선박 장비의 섹션 등록 및 수정
       for (const item of receivePmsData.sections) {
@@ -166,7 +164,7 @@ export async function POST(req: Request) {
                    , a.description = b.description
                    , a.last_receive_date = getdate()
                    , a.modify_date = b.modify_date
-                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
          when not matched then
               insert (vessel_no
                     , equip_no
@@ -203,7 +201,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("3");
       
       // 선박 정비 등록 및 수정
       for (const item of receivePmsData.maintenances) {
@@ -255,7 +252,7 @@ export async function POST(req: Request) {
                    , a.critical = b.critical
                    , a.last_receive_date = getdate()
                    , a.modify_date = b.modify_date
-                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
         when not matched then
               insert (vessel_no
                     , equip_no
@@ -334,7 +331,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("4");
       
       // 선박 정비 연장 등록 및 수정
       for (const item of receivePmsData.extensions) {
@@ -372,7 +368,7 @@ export async function POST(req: Request) {
                    , a.approver = b.approver
                    , a.last_receive_date = getdate()
                    , a.modify_date = b.modify_date
-                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
         when not matched then
               insert (vessel_no
                     , equip_no
@@ -430,7 +426,100 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("5");
+      
+      // 선박 정비 작업 등록 및 수정
+      for (const item of receivePmsData.works) {
+        let queryString = `
+        merge [maintenance_work] as a
+        using (select @vesselNo as vessel_no
+                    , @workOrder as work_order
+                    , @workDate as work_date
+                    , @manager as manager
+                    , @workDetails as work_details
+                    , @usedParts as used_parts
+                    , @workHours as work_hours
+                    , @delayReason as delay_reason
+                    , @planDate as plan_date
+                    , @equipNo as equip_no
+                    , @sectionCode as section_code
+                    , @planCode as plan_code
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+          on (a.vessel_no = b.vessel_no 
+          and a.work_order = b.work_order)
+        when matched then
+              update
+                 set a.work_date = b.work_date
+                   , a.manager = b.manager
+                   , a.work_details = b.work_details
+                   , a.used_parts = b.used_parts
+                   , a.work_hours = b.work_hours
+                   , a.delay_reason = b.delay_reason
+                   , a.plan_date = b.plan_date
+                   , a.equip_no = b.equip_no
+                   , a.section_code = b.section_code
+                   , a.plan_code = b.plan_code
+                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
+        when not matched then
+              insert (work_order
+                    , work_date
+                    , manager
+                    , work_details
+                    , used_parts
+                    , work_hours
+                    , delay_reason
+                    , plan_date
+                    , vessel_no
+                    , equip_no
+                    , section_code
+                    , plan_code
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.work_order
+                    , b.work_date
+                    , b.manager
+                    , b.work_details
+                    , b.used_parts
+                    , b.work_hours
+                    , b.delay_reason
+                    , b.plan_date
+                    , b.vessel_no
+                    , b.equip_no
+                    , b.section_code
+                    , b.plan_code
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'workOrder', value: item.work_order },
+          { name: 'workDate', value: item.work_date },
+          { name: 'manager', value: item.manager },
+          { name: 'workDetails', value: item.work_details },
+          { name: 'usedParts', value: item.used_parts },
+          { name: 'workHours', value: item.work_hours },
+          { name: 'delayReason', value: item.delay_reason },
+          { name: 'planDate', value: item.plan_date },
+          { name: 'vesselNo', value: item.vessel_no },
+          { name: 'equipNo', value: item.equip_no },
+          { name: 'sectionCode', value: item.section_code },
+          { name: 'planCode', value: item.plan_code },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
 
       // 선박 창고 등록 및 수정
       for (const item of receivePmsData.warehouses) {
@@ -454,7 +543,7 @@ export async function POST(req: Request) {
                    , a.use_yn = b.use_yn
                    , a.last_receive_date = getdate()
                    , a.modify_date = b.modify_date
-                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
          when not matched then
               insert (vessel_no
                     , warehouse_no
@@ -491,7 +580,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("6");
 
       // 선박 자재 등록 및 수정
       for (const item of receivePmsData.materials) {
@@ -527,7 +615,7 @@ export async function POST(req: Request) {
                     , a.standard_qty = b.standard_qty
                     , a.last_receive_date = getdate()
                     , a.modify_date = b.modify_date
-                    , a.modify_date = b.modify_date
+                    , a.modify_user = b.modify_user
           when not matched then
               insert (vessel_no
                     , material_code
@@ -583,7 +671,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("7");
 
       // 선박 입고 등록 및 수정
       for (const item of receivePmsData.receives) {
@@ -617,7 +704,7 @@ export async function POST(req: Request) {
                     , a.receive_remark = b.receive_remark
                     , a.last_receive_date = getdate()
                     , a.modify_date = b.modify_date
-                    , a.modify_date = b.modify_date
+                    , a.modify_user = b.modify_user
           when not matched then
               insert (vessel_no
                     , receive_no
@@ -669,7 +756,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("8");
 
       // 선박 출고 등록 및 수정
       for (const item of receivePmsData.releases) {
@@ -690,7 +776,7 @@ export async function POST(req: Request) {
                     , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
             on (a.vessel_no = b.vessel_no 
-            and a.receive_no = b.receive_no)
+            and a.release_no = b.release_no)
           when matched then
               update
                   set a.material_code = b.material_code
@@ -703,7 +789,7 @@ export async function POST(req: Request) {
                     , a.release_reason = b.release_reason
                     , a.last_receive_date = getdate()
                     , a.modify_date = b.modify_date
-                    , a.modify_date = b.modify_date
+                    , a.modify_user = b.modify_user
           when not matched then
               insert (vessel_no
                     , release_no
@@ -755,7 +841,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("9");
 
       // 선박 출고 등록 및 수정
       for (const item of receivePmsData.losses) {
@@ -775,7 +860,7 @@ export async function POST(req: Request) {
                     , @modifyDate as modify_date
                     , @modifyUser as modify_user) as b
             on (a.vessel_no = b.vessel_no 
-            and a.lossNo = b.lossNo)
+            and a.loss_no = b.loss_no)
           when matched then
               update
                   set a.material_code = b.material_code
@@ -787,7 +872,7 @@ export async function POST(req: Request) {
                     , a.loss_reason = b.loss_reason
                     , a.last_receive_date = getdate()
                     , a.modify_date = b.modify_date
-                    , a.modify_date = b.modify_date
+                    , a.modify_user = b.modify_user
           when not matched then
               insert (vessel_no
                     , loss_no
@@ -836,7 +921,6 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
-      console.log("10");
 
       transantion.commit();
       // 성공 정보 반환

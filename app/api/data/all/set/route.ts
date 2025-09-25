@@ -520,6 +520,76 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      
+      // 선박 정비 작업에 사용 부품 등록 및 수정
+      for (const item of receivePmsData.usedParts) {
+        let queryString = `
+        merge [used_parts] as a
+        using (select @vesselNo as vessel_no
+                    , @workOrder as work_order
+                    , @partSeq as part_seq
+                    , @warehouseNo as warehouse_no
+                    , @materialCode as material_code
+                    , @useUnit as use_unit
+                    , @useQty as use_qty
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+          on (a.vessel_no = b.vessel_no 
+          and a.work_order = b.work_order
+          and a.part_seq = b.part_seq)
+        when matched then
+              update
+                 set a.warehouse_no = b.warehouse_no
+                   , a.material_code = b.material_code
+                   , a.use_unit = b.use_unit
+                   , a.use_qty = b.use_qty
+                   , a.last_receive_date = getdate()
+                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
+        when not matched then
+              insert (vessel_no
+                    , work_order
+                    , part_seq
+                    , warehouse_no
+                    , material_code
+                    , use_unit
+                    , use_qty
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.work_order
+                    , b.part_seq
+                    , b.warehouse_no
+                    , b.material_code
+                    , b.use_unit
+                    , b.use_qty
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no },
+          { name: 'workOrder', value: item.work_order },
+          { name: 'partSeq', value: item.part_seq },
+          { name: 'warehouseNo', value: item.warehouse_no },
+          { name: 'materialCode', value: item.material_code },
+          { name: 'useUnit', value: item.use_unit },
+          { name: 'useQty', value: item.use_qty },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
 
       // 선박 창고 등록 및 수정
       for (const item of receivePmsData.warehouses) {

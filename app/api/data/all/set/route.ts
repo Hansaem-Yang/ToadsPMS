@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     try {
       let count = 0;
       // 선박 정보 등록 및 수정
-      for (const item of receivePmsData.vessels) {
+        for (const item of receivePmsData.vessels) {
         let queryString = `
         merge [vessel] as a
         using (select @vesselNo as vessel_no
@@ -74,6 +74,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("1");
 
       // 선박 장비 등록 및 수정
       for (const item of receivePmsData.equipments) {
@@ -143,6 +144,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("2");
       
       // 선박 장비의 섹션 등록 및 수정
       for (const item of receivePmsData.sections) {
@@ -201,6 +203,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("3");
       
       // 선박 정비 등록 및 수정
       for (const item of receivePmsData.maintenances) {
@@ -331,6 +334,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("4");
       
       // 선박 정비 연장 등록 및 수정
       for (const item of receivePmsData.extensions) {
@@ -426,6 +430,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("5");
 
       // 선박 창고 등록 및 수정
       for (const item of receivePmsData.warehouses) {
@@ -486,6 +491,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("6");
 
       // 선박 자재 등록 및 수정
       for (const item of receivePmsData.materials) {
@@ -577,6 +583,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("7");
 
       // 선박 입고 등록 및 수정
       for (const item of receivePmsData.receives) {
@@ -662,21 +669,22 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("8");
 
       // 선박 출고 등록 및 수정
       for (const item of receivePmsData.releases) {
         let queryString = `
         merge [release] as a
         using (select @vesselNo as vessel_no
-                    , @receiveNo as receive_no
+                    , @releaseNo as release_no
                     , @materialCode as material_code
-                    , @releaseDate as receive_date
-                    , @releaseType as receive_type
-                    , @releaseUnit as receive_unit
-                    , @releaseQty as receive_qty
-                    , @releaseLocation as receive_location
-                    , @releaseRemark as receive_remark
-                    , @releaseReason as receive_reason
+                    , @releaseDate as release_date
+                    , @releaseType as release_type
+                    , @releaseUnit as release_unit
+                    , @releaseQty as release_qty
+                    , @releaseLocation as release_location
+                    , @releaseRemark as release_remark
+                    , @releaseReason as release_reason
                     , @registDate as regist_date
                     , @registUser as regist_user
                     , @modifyDate as modify_date
@@ -698,7 +706,7 @@ export async function POST(req: Request) {
                     , a.modify_date = b.modify_date
           when not matched then
               insert (vessel_no
-                    , receive_no
+                    , release_no
                     , material_code
                     , release_date
                     , release_type
@@ -711,7 +719,7 @@ export async function POST(req: Request) {
                     , regist_date
                     , regist_user)
               values (b.vessel_no
-                    , b.receive_no
+                    , b.release_no
                     , b.material_code
                     , b.release_date
                     , b.release_type
@@ -747,6 +755,7 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("9");
 
       // 선박 출고 등록 및 수정
       for (const item of receivePmsData.losses) {
@@ -827,12 +836,14 @@ export async function POST(req: Request) {
         let result = await request.query(queryString);
         count += result.rowsAffected[0];
       }
+      console.log("10");
 
       transantion.commit();
       // 성공 정보 반환
       return NextResponse.json({ success: true });
     } catch (err) {
       transantion.rollback();
+      console.error(err);
       return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
   } catch (err) {

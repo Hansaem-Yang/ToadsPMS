@@ -1,12 +1,12 @@
 {
-  "name": "Toads-PMS",
+  "name": "YoungChang-PMS",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev -p 3002",
+    "dev": "next dev -p 30001",
     "lint": "next lint",
-    "start": "next start -p 3002"
+    "start": "next start -p 30001"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

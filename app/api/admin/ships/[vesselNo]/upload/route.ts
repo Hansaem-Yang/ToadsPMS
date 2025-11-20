@@ -86,7 +86,7 @@ export async function POST(req: Request) {
             { name: 'registUser', value: registUser },
             { name: 'modifyUser', value: modifyUser }
           ];
-
+          
           const request = new sql.Request(transantion);
           params?.forEach(p => request.input(p.name, p.value));
           let result = await request.query(queryString);
@@ -197,11 +197,11 @@ export async function POST(req: Request) {
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
                and  a.equip_no = b.equip_no
-               and  a.section_code = b.section_code)
+               and  a.section_code = b.section_code
+               and  a.plan_name = b.plan_name)
               when matched then
                    update 
-                      set a.plan_name = b.plan_name
-                        , a.manufacturer = b.manufacturer
+                      set a.manufacturer = b.manufacturer
                         , a.model = b.model
                         , a.specifications = b.specifications
                         , a.workers = b.workers
@@ -261,6 +261,11 @@ export async function POST(req: Request) {
                          , getdate()
                          , b.regist_user
                    );`
+        
+        let lastestDate = rows.LastestDate == 'N/A' ? null : rows.LastestDate;
+        if (typeof lastestDate === 'number') {
+          lastestDate = ConvertExcelSerialToData(lastestDate);
+        }
 
         let params = [
           { name: 'vesselNo', value: vesselNo },
@@ -278,7 +283,7 @@ export async function POST(req: Request) {
           { name: 'manager', value: rows.Manager? rows.Manager : 0 },
           { name: 'selfMaintenance', value: rows.SelfMaintenance? rows.SelfMaintenance : '' },
           { name: 'critical', value: rows.Critical? rows.Critical : '' },
-          { name: 'lastestDate', value: rows.LastestDate},
+          { name: 'lastestDate', value: lastestDate },
           { name: 'instructions', value: rows.Instructions? rows.Instructions : '' },
           { name: 'registUser', value: registUser },
           { name: 'modifyUser', value: modifyUser }
@@ -308,4 +313,25 @@ export async function POST(req: Request) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
   }
+}
+
+function ConvertExcelSerialToData(serial: number): String {
+  let daysToSubtract = 1;
+  if (serial > 60) {
+    daysToSubtract = 2; 
+  }
+  
+  const excelEpoch = new Date(Date.UTC(1900, 0, 1));
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const dateInMilliseconds = excelEpoch.getTime() + (serial - daysToSubtract) * millisecondsPerDay;
+  const convertedDate = new Date(dateInMilliseconds);
+
+  const year = convertedDate.getUTCFullYear();
+  const month = convertedDate.getUTCMonth() + 1; // getUTCMonth()는 0부터 시작하므로 +1
+  const day = convertedDate.getUTCDate();
+
+  const formattedMonth = String(month).padStart(2, '0');
+  const formattedDay = String(day).padStart(2, '0');
+
+  return `${year}-${formattedMonth}-${formattedDay}`;
 }

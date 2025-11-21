@@ -141,37 +141,37 @@ export default function MaintenanceWorkManagementPage() {
       //     className="mt-1"
       //   />
       // </td>,
-      <td key="code" className="py-3 text-gray-500 text-center">
+      <td key="code" width="120px;" className="py-3 text-gray-500 text-center">
         {`${item.equip_no}-${item.section_code}-${item.plan_code}`}
       </td>,
-      <td key="section" className="py-3 text-gray-500">
+      <td key="section" width="320px;" className="py-3 text-gray-500">
         {item.section_name}
       </td>,
       <td key="maintenance" className="py-3 text-gray-500">
         {item.plan_name}
       </td>,
-      <td key="request_date" className="py-3 text-center text-gray-500">
+      <td key="request_date" width="120px;" className="py-3 text-center text-gray-500">
         {item.request_date}
       </td>,
-      <td key="applicant" className="py-3 text-center text-gray-500">
+      <td key="applicant" width="120px;" className="py-3 text-center text-gray-500">
         {item.applicant_name}
       </td>,
-      <td key="due_date" className="py-3 text-center text-gray-500">
+      <td key="due_date" width="120px;" className="py-3 text-center text-gray-500">
         {item.due_date}
       </td>,
-      <td key="extension_date" className="py-3 text-center text-gray-500">
+      <td key="extension_date" width="120px;" className="py-3 text-center text-gray-500">
         {item.extension_date}
       </td>,
-      <td key="extension_reason" className="py-3 text-gray-500">
+      <td key="extension_reason" width="320px;"  className="py-3 text-gray-500">
         {item.extension_reason}
       </td>,
-      <td key="approval_date" className="py-3 text-center text-gray-500">
+      <td key="approval_date" width="120px;" className="py-3 text-center text-gray-500">
         {item.approval_date}
       </td>,
-      <td key="approver" className="py-3 text-center text-gray-500">
+      <td key="approver" width="120px;" className="py-3 text-center text-gray-500">
         {item.approver_name}
       </td>,
-      <td key="approval_status" className="py-3 text-center text-gray-500">
+      <td key="approval_status" width="120px;" className="py-3 text-center text-gray-500">
         {item.approval_status}
       </td>,
       <td key="approval" className="py-3 text-center text-gray-500">

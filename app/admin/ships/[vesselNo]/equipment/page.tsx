@@ -473,7 +473,7 @@ export default function ShipEquipmentPage() {
                 </div>
               )}
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} style={{cursor: 'pointer'}}>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} style={{cursor: 'pointer'}}>
                   취소
                 </Button>
                 <Button 

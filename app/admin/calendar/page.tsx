@@ -11,6 +11,7 @@ import { Settings } from "lucide-react"
 import { addDays, format } from 'date-fns';
 import { Vessel } from '@/types/calendar/vessel';
 import { Maintenance } from '@/types/calendar/maintenance';
+import { Tooltip } from 'react-tooltip';
 import '@/styles/styles.css'
 
 export default function AdminCalendarPage() {
@@ -382,6 +383,9 @@ export default function AdminCalendarPage() {
                                     zIndex: 10,
                                   }}
                                   onClick={() => handleCalendarClick(calendar)}
+                                  data-tooltip-id="calendar-tooltip"
+                                  data-tooltip-content={`${calendar.children.length} 건`} // 툴팁에 표시할 내용
+                                  data-tooltip-place="top"
                                 >
                                   <div className="px-2 py-1 text-xs text-white font-medium truncate">{calendar.children.length} 건</div>
                                 </div>
@@ -391,6 +395,7 @@ export default function AdminCalendarPage() {
                         </div>
                       </div>
                     )})}
+                    <Tooltip id="calendar-tooltip" />
                   </div>
                 </div>                
               </CardContent>

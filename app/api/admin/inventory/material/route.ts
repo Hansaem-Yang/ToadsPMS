@@ -9,8 +9,7 @@ export async function GET(req: Request) {
     const items: Material[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , b.machine_id
-            , c.machine_name
+            , b.machine_name
             , b.material_code
             , b.material_name
             , b.material_group
@@ -33,9 +32,6 @@ export async function GET(req: Request) {
          from vessel as a
          left outer join material as b
            on a.vessel_no = b.vessel_no
-         left outer join [machine] as c
-           on b.vessel_no = c.vessel_no
-          and b.machine_id = c.machine_id
          left outer join [receive] as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
@@ -63,7 +59,7 @@ export async function GET(req: Request) {
         vesselNo = item.vessel_no;
       }
       
-      if (item.machine_id)
+      if (item.machine_name)
         vessel.children.push(item);
     });
 

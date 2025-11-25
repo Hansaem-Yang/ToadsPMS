@@ -12,7 +12,6 @@ export async function GET(req: Request) {
     const items: Inventory[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , a.machine_id
             , a.machine_name
             , a.material_code
             , a.material_name
@@ -20,8 +19,7 @@ export async function GET(req: Request) {
             , a.standard_qty
          from (select a.vessel_no
                     , a.vessel_name
-                    , b.machine_id
-                    , c.machine_name
+                    , b.machine_name
                     , b.material_code
                     , b.material_name
                     , isnull(b.standard_qty, 0) as standard_qty
@@ -42,7 +40,7 @@ export async function GET(req: Request) {
                    on a.vessel_no = b.vessel_no
                  left outer join [machine] as c
                    on b.vessel_no = c.vessel_no
-                  and b.machine_id = c.machine_id
+                  and b.machine_name = c.machine_name
                  left outer join [warehouse] as d
                    on b.vessel_no = d.vessel_no
                   and b.warehouse_no = d.warehouse_no
@@ -50,7 +48,7 @@ export async function GET(req: Request) {
                   and a.use_yn = 'Y') as a
         where a.standard_qty > isnull(receive_qty, 0) - (isnull(release_qty, 0) + isnull(loss_qty, 0))
         order by a.vessel_no
-               , a.machine_id
+               , a.machine_name
                , a.material_code`,
     [
       { name: 'vesselNo', value: vesselNo }
@@ -59,20 +57,19 @@ export async function GET(req: Request) {
     let machines: Machine[] = [];
     let machine: Machine;
 
-    let machineId: string = '';
+    let machineName: string = '';
 
     items.map(item => {
-      if (machineId !== item.machine_id) {
+      if (machineName !== item.machine_name) {
         machine = {
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
-          machine_id: item.machine_id,
           machine_name: item.machine_name,
           children: [] = []
         }
 
         machines.push(machine);
-        machineId = item.machine_id;
+        machineName = item.machine_name;
       }
       
       if (item.material_code)

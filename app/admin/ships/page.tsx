@@ -36,6 +36,7 @@ export default function ShipManagementPage() {
   const [selectedVessel, setSelectedVessel] = useState<any>(null);
   const [excelData, setExcelData] = useState<ExcelData[]>([]);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [filteredValue, setFilteredValue] = useState('');
 
   const fetchVessels = () => {
     fetch('/api/admin/ships/all')
@@ -150,9 +151,12 @@ export default function ShipManagementPage() {
 
       if (data.success) {
         alert('데이터가 성공적으로 전송되었습니다.');
+        fetchVessels();
       } else {
         alert('데이터 전송 실패');
       }
+      
+      setIsUploadDialogOpen(false);
     } catch (error) {
       alert(`네트워크 에러: ${error}`);
     }
@@ -376,9 +380,10 @@ export default function ShipManagementPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="선박명, ID, 유형, 선장명으로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="선박번호, 선박명으로 검색..."
+                      value={filteredValue}
+                      onChange={(e) => setFilteredValue(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(filteredValue) : ""}
                       className="pl-10"
                     />
                   </div>

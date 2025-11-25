@@ -42,7 +42,6 @@ export default function InventoryTransactionsPage() {
     no: "",
     material_code: "",
     material_name: "",
-    machine_id: "",
     machine_name: "",
     location: "",
     unit: "",
@@ -290,8 +289,8 @@ export default function InventoryTransactionsPage() {
                       <div className="space-y-2">
                         <Label>장비</Label>
                         <Select 
-                          value={searchData.machine_id} 
-                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, machine_id: value }))}
+                          value={searchData.machine_name} 
+                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, machine_name: value }))}
                         >
                           <SelectTrigger className="w-48">
                             <SelectValue placeholder="전체" />
@@ -299,7 +298,7 @@ export default function InventoryTransactionsPage() {
                           <SelectContent>
                             <SelectItem value="all">전체</SelectItem>
                             {selectedVesselCode?.machines.map((machine) => (
-                              <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                              <SelectItem key={machine.machine_name} value={machine.machine_name}>
                                 {machine.machine_name}
                               </SelectItem>
                             ))}

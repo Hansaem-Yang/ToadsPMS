@@ -42,12 +42,12 @@ export default function ShipInventoryStatusPage() {
     let filtered = machines
 
     if (!selectedMachine) {
-      setSelectedMachine(machines[0]?.machine_id)
+      setSelectedMachine(machines[0]?.machine_name)
       return;
     }
 
     if (searchTerm || selectedMachine) {
-      const selectedMachineData = filtered.find((machine) => machine.machine_id === selectedMachine)
+      const selectedMachineData = filtered.find((machine) => machine.machine_name === selectedMachine)
       const filteredMaterials =
         selectedMachineData?.children.filter(
           (stock) =>
@@ -107,10 +107,10 @@ export default function ShipInventoryStatusPage() {
                   <div className="space-y-1">
                     {machines.map((machine) => (
                       <button
-                        key={machine.machine_id}
-                        onClick={() => setSelectedMachine(machine.machine_id)}
+                        key={machine.machine_name}
+                        onClick={() => setSelectedMachine(machine.machine_name)}
                         className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-l-4 ${
-                          selectedMachine === machine.machine_id
+                          selectedMachine === machine.machine_name
                             ? "border-blue-500 bg-blue-50 text-blue-700"
                             : "border-transparent"
                         }`}

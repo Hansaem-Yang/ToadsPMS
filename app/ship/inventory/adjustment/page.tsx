@@ -27,14 +27,14 @@ export default function InventoryAdjustmentPage() {
   const initialAdjustment : Adjustment = {
     vessel_no: "",
     vessel_name: "",
-    machine_id: "",
+    adjustment_no: "",
     machine_name: "",
     material_code: "",
     material_name: "",
     adjustment_date: "",
-    adjustment_unit: "",
     adjustment_type: "",
     adjustment_qty: 0,
+    adjustment_unit: "",
     adjustment_location: "",
     adjustment_location_name: "",
     adjustment_reason: "",
@@ -44,7 +44,7 @@ export default function InventoryAdjustmentPage() {
     regist_date: "",
     regist_user: "",
     modify_date: "",
-    modify_user: "",
+    modify_user: ""
   }
 
   const [userInfo, setUserInfo] = useState<any>(null)
@@ -80,7 +80,7 @@ export default function InventoryAdjustmentPage() {
     let filtered = machines
 
     if (selectedMachine) {
-      const selectedMachineData = filtered.find((machine) => machine.machine_id === selectedMachine)
+      const selectedMachineData = filtered.find((machine) => machine.machine_name === selectedMachine)
       const filteredStocks =
         selectedMachineData?.stocks.filter(
           (stock) =>
@@ -121,7 +121,6 @@ export default function InventoryAdjustmentPage() {
       ...prev,
       vessel_no: item.vessel_no,
       vessel_name: item.vessel_name,
-      machine_id: item.machine_id,
       machine_name: item.machine_name,
       material_code: item.material_code,
       material_name: item.naterial_name,
@@ -138,7 +137,7 @@ export default function InventoryAdjustmentPage() {
 
   const updatedMachines = (item: any) => {
     const updatedMachines = machines.map(machine => {
-      if (machine.machine_id === item.machine_id) {
+      if (machine.machine_name === item.machine_name) {
         const updatedStocks = machine.stocks.map(stock => {
           if (stock.material_code === item.material_code && stock.location === item.adjustment_location) {
             const adjustmentQty = (stock.adjustment_qty + ((item.adjustment_type === 'AI'? 1 : -1) * item.adjustment_qty))
@@ -234,10 +233,10 @@ export default function InventoryAdjustmentPage() {
                   <div className="space-y-1">
                     {machines.map((machine) => (
                       <button
-                        key={machine.machine_id}
-                        onClick={() => setSelectedMachine(machine.machine_id)}
+                        key={machine.machine_name}
+                        onClick={() => setSelectedMachine(machine.machine_name)}
                         className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-l-4 ${
-                          selectedMachine === machine.machine_id
+                          selectedMachine === machine.machine_name
                             ? "border-blue-500 bg-blue-50 text-blue-700"
                             : "border-transparent"
                         }`}

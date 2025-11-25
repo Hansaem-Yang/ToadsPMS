@@ -5,7 +5,7 @@ export interface Maintenance {
     vessel_name: string;
     equip_no: string;
     equip_name: string;
-    machine_id: string;
+    machine_name: string;
     section_code: string;
     section_name: string;
     plan_code: string;

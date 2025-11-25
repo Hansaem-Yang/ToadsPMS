@@ -10,7 +10,6 @@ export async function GET(req: Request) {
     // DB에서 데쉬보드 정보 확인
     const items: Machine[] = await query(
       `select vessel_no
-            , machine_id
             , machine_name
          from [machine]
         where vessel_no = @vesselNo

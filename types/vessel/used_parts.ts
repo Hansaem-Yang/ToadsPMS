@@ -5,7 +5,7 @@ export interface UsedParts {
     plan_code: string;
     work_order: string;
     part_seq: string;
-    machine_id: string;
+    machine_name: string;
     warehouse_no: string;
     warehouse_name: string;
     material_code: string;

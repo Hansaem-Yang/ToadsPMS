@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       let params = [
         { name: 'vesselNo', value: item.vessel_no }, 
         { name: 'materialCode', value: item.material_code }, 
-        { name: 'machineId', value: item.machine_id }, 
+        { name: 'machineName', value: item.machine_name }, 
         { name: 'materialName', value: item.material_name }, 
         { name: 'materialGroup', value: item.material_group }, 
         { name: 'materialSpec', value: item.material_spec }, 
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       const sendData: Material[] = await query(
         `select vessel_no
               , material_code
-              , machine_id
+              , machine_name
               , material_name
               , material_group
               , material_spec

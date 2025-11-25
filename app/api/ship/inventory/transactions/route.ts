@@ -16,8 +16,7 @@ export async function POST(req: Request) {
             , a.no
             , a.material_code
             , c.material_name
-            , c.machine_id
-            , d.machine_name
+            , c.machine_name
             , a.location
             , a.unit
             , a.qty
@@ -72,11 +71,8 @@ export async function POST(req: Request) {
         inner join material as c
            on a.vessel_no = c.vessel_no
           and a.material_code = c.material_code
-        inner join [machine] as d
-           on c.vessel_no = d.vessel_no
-          and c.machine_id = d.machine_id
         where a.vessel_no = @vesselNo
-          and c.machine_id like case @machineId when 'all' then '' else @machineId end + '%'
+          and c.machine_name like case @machineName when 'all' then '' else @machineName end + '%'
           and a.location like case @location when 'all' then '' else @location end + '%'
           and a.type like case @type when 'all' then '' else @type end + '%'
         order by a.vessel_no
@@ -88,7 +84,7 @@ export async function POST(req: Request) {
         { name: 'vesselNo', value: item.vessel_no },
         { name: 'startDate', value: item.start_date },
         { name: 'endDate', value: item.end_date },
-        { name: 'machineId', value: item.machine_id },
+        { name: 'machineName', value: item.machine_name },
         { name: 'location', value: item.location },
         { name: 'type', value: item.type },
       ]);

@@ -30,7 +30,7 @@ export default function MaintenanceExecutionPage() {
     vessel_name: "",
     equip_no: "",
     equip_name: "",
-    machine_id: "",
+    machine_name: "",
     section_code: "",
     section_name: "",
     plan_code: "",
@@ -136,8 +136,8 @@ export default function MaintenanceExecutionPage() {
       .catch(err => console.error(err));
   }
   
-  const fetchInventorys = (vesselNo: string, machineId: string) => {
-    fetch(`/api/ship/execution/inventory?vesselNo=${vesselNo}&machineId=${machineId}`)
+  const fetchInventorys = (vesselNo: string, machineName: string) => {
+    fetch(`/api/ship/execution/inventory?vesselNo=${vesselNo}&machineName=${machineName}`)
       .then(res => res.json())
       .then(data => {
         console.log(data)
@@ -200,11 +200,11 @@ export default function MaintenanceExecutionPage() {
   useEffect(() => {    
     if (selectedUsedWork) {
       if (filteredInventorys && filteredInventorys.length > 0) {
-        if (filteredInventorys.filter(inventory => (inventory.vessel_no == selectedUsedWork.vessel_no && inventory.machine_id === selectedUsedWork.machine_id)).length < 0) {
-          fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_id)
+        if (filteredInventorys.filter(inventory => (inventory.vessel_no == selectedUsedWork.vessel_no && inventory.machine_name === selectedUsedWork.machine_name)).length < 0) {
+          fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_name)
         }
       } else {
-        fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_id)
+        fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_name)
       }
       
       if (usedItems && usedItems.length > 0 && filteredInventorys && filteredInventorys.length > 0) {
@@ -212,7 +212,7 @@ export default function MaintenanceExecutionPage() {
         const filterdUsedItems = usedItems.filter(used => (used.equip_no === selectedUsedWork.equip_no && used.section_code === selectedUsedWork.section_code && used.plan_code === selectedUsedWork.plan_code))
         if (filterdUsedItems && filterdUsedItems.length > 0) {
           filtered = filtered.map(inventory => {
-            const usedItem = filterdUsedItems.filter(used => (used.machine_id === inventory.machine_id && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
+            const usedItem = filterdUsedItems.filter(used => (used.machine_name === inventory.machine_name && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
             if (usedItem && usedItem.length > 0) {
               return { ...inventory, use_qty: usedItem[0]?.use_qty }
             }
@@ -221,7 +221,7 @@ export default function MaintenanceExecutionPage() {
           })
         } else {
           filtered = filtered.map(inventory => {
-            const usedItem = usedItems.filter(used => (used.machine_id === inventory.machine_id && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
+            const usedItem = usedItems.filter(used => (used.machine_name === inventory.machine_name && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
             if (usedItem && usedItem.length > 0) {
               return { ...inventory, stock_qty: inventory.stock_qty - usedItem[0]?.use_qty, use_qty: 0 }
             }
@@ -498,7 +498,7 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleChangedMachine = (item: any, value: string) => {
-    setSelectedUsedWork((prev: any) => ({ ...prev, machine_id: value }))
+    setSelectedUsedWork((prev: any) => ({ ...prev, machine_name: value }))
   }
 
   const handleAddUsedParts = () => {
@@ -515,7 +515,7 @@ export default function MaintenanceExecutionPage() {
         plan_code: selectedUsedWork.plan_code,
         work_order: "",
         part_seq: "",
-        machine_id: item.machine_id,
+        machine_name: item.machine_name,
         warehouse_no: item.warehouse_no,
         warehouse_name: item.warehouse_name,
         material_code: item.material_code,
@@ -931,7 +931,7 @@ export default function MaintenanceExecutionPage() {
                   <div className="flex items-center gap-2">
                     <Label>장비</Label>
                     <Select 
-                      value={selectedUsedWork.machine_id} 
+                      value={selectedUsedWork.machine_name} 
                       onValueChange={(value) => handleChangedMachine(selectedUsedWork, value)}
                     >
                       <SelectTrigger className="w-48">
@@ -939,7 +939,7 @@ export default function MaintenanceExecutionPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {machines.map((machine) => (
-                          <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                          <SelectItem key={machine.machine_name} value={machine.machine_name}>
                             {machine.machine_name}
                           </SelectItem>
                         ))}
@@ -961,16 +961,16 @@ export default function MaintenanceExecutionPage() {
                       </thead>
                       <tbody>
                         {filteredInventorys.map((item) => (
-                          <tr key={`${item.machine_id}-${item.material_code}`} className="border-b hover:bg-gray-50">
+                          <tr key={`${item.machine_name}-${item.material_code}`} className="border-b hover:bg-gray-50">
                             <td className="text-center py-2 px-2">
                               <Checkbox
-                                key={`chk_${item.machine_id}-${item.material_code}`}
+                                key={`chk_${item.machine_name}-${item.material_code}`}
                                 checked={item.use_qty > 0}
                                 onCheckedChange={(value) => {
                                   if (!value) {
                                     setInventorys(prev => 
                                       prev.map(invItem => 
-                                        (invItem.machine_id === item.machine_id && invItem.material_code === item.material_code)
+                                        (invItem.machine_name === item.machine_name && invItem.material_code === item.material_code)
                                           ? { ...invItem, use_qty: 0 }
                                           : invItem 
                                       )
@@ -986,7 +986,7 @@ export default function MaintenanceExecutionPage() {
                             <td className="py-2 px-2 text-center">{item.stock_qty}</td>
                             <td className="py-2 px-2 text-center">
                               <input
-                                key={`${item.machine_id}-${item.material_code}`}
+                                key={`${item.machine_name}-${item.material_code}`}
                                 value={item.use_qty}
                                 className="w-10 text-center"
                                 onChange={(e) => {
@@ -994,7 +994,7 @@ export default function MaintenanceExecutionPage() {
 
                                   setInventorys(prevInventorys => 
                                     prevInventorys.map(invItem => 
-                                      (invItem.machine_id === item.machine_id && invItem.material_code === item.material_code)
+                                      (invItem.machine_name === item.machine_name && invItem.material_code === item.material_code)
                                         ? { ...invItem, use_qty: newQty }
                                         : invItem 
                                     )

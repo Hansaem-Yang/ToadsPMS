@@ -2,7 +2,6 @@ export interface Loss {
     vessel_no: string;
     vessel_name: string;
     loss_no: string;
-    machine_id: string;
     machine_name: string;
     material_code: string;
     material_name: string;

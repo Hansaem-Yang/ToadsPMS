@@ -5,15 +5,14 @@ import { Inventory } from '@/types/vessel/inventory';
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const vesselNo = searchParams.get('vesselNo');
-  const machineId = searchParams.get('machineId');
+  const machineName = searchParams.get('machineName');
 
   try {
     // DB에서 데쉬보드 정보 확인
     const items: Inventory[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , b.machine_id
-            , c.machine_name
+            , b.machine_name
             , b.material_code
             , b.material_name
             , b.material_unit
@@ -25,9 +24,6 @@ export async function GET(req: Request) {
          from [vessel] as a
         inner join [material] as b
            on a.vessel_no = b.vessel_no
-         left outer join [machine] as c
-           on b.vessel_no = c.vessel_no
-          and b.machine_id = c.machine_id
          left outer join [receive] as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
@@ -41,12 +37,11 @@ export async function GET(req: Request) {
            on b.vessel_no = g.vessel_no
           and b.warehouse_no = g.warehouse_no
         where a.vessel_no = @vesselNo
-          and b.machine_id = @machineId
+          and b.machine_name = @machineName
           and a.use_yn = 'Y'
         group by a.vessel_no
                , a.vessel_name
-               , b.machine_id
-               , c.machine_name
+               , b.machine_name
                , b.material_code
                , b.material_name
                , b.material_unit
@@ -54,11 +49,11 @@ export async function GET(req: Request) {
                , b.warehouse_no
                , g.warehouse_name
         order by a.vessel_no
-               , b.machine_id
+               , b.machine_name
                , b.material_code`,
     [
       { name: 'vesselNo', value: vesselNo },
-      { name: 'machineId', value: machineId },
+      { name: 'machineName', value: machineName },
     ]);
 
     // 성공 시 데쉬보드 정보 반환

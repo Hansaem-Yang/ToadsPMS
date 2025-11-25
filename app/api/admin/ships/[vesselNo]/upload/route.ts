@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     try {
       let count = 0;
       let equipNo: string = '';
+      let machineName: string = '';
       let equipName: string = '';
       let sectionCode: string = '';
       let sectionName: string = '';
@@ -25,6 +26,54 @@ export async function POST(req: Request) {
       for (const rows of excelData) {
         if (vesselNo !== rows.CallSign) {
           continue;
+        }
+
+        if (machineName !== rows.machine && rows.machine !== '') {
+          let queryString = 
+            `merge [machine] as a
+             using (select @vesselNo as vessel_no
+                         , @machine as machine_name
+                         , @manufacturer as manufacturer
+                         , @registUser as regist_user
+                         , @modifyUser as modify_user) as b
+                on (a.vessel_no = b.vessel_no 
+               and  a.machine_name = b.machine_name)
+              when matched then
+                   update
+                      set a.manufacturer = b.manufacturer
+                        , a.modify_date = getdate()
+                        , a.modify_user = b.modify_user
+              when not matched then
+                   insert (
+                           vessel_no
+                         , machine_name
+                         , manufacturer
+                         , sort_no
+                         , regist_date
+                         , regist_user
+                   )
+                   values (
+                           b.vessel_no
+                         , b.machine_name
+                         , b.manufacturer
+                         , (select isnull(max(sort_no), 0) + 1 from [machine] where vessel_no = b.vessel_no)
+                         , getdate()
+                         , b.regist_user
+                   );`
+
+          let params = [
+            { name: 'vesselNo', value: vesselNo },
+            { name: 'machine', value: rows.Machine ? rows.Machine : '' },
+            { name: 'manufacturer', value: rows.Maker ? rows.Maker : '' },
+            { name: 'registUser', value: registUser },
+            { name: 'modifyUser', value: modifyUser }
+          ];
+          
+          const request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          let result = await request.query(queryString);
+
+          machineName = rows.Machine;
         }
 
         if (equipName !== rows.Equipment) {
@@ -38,7 +87,7 @@ export async function POST(req: Request) {
                          , @category as category
                          , @manufacturer as manufacturer
                          , @model as model
-                         , @machine as machine_id
+                         , @machine as machine_name
                          , @registUser as regist_user
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
@@ -49,7 +98,7 @@ export async function POST(req: Request) {
                         , a.category = lower(b.category)
                         , a.manufacturer = b.manufacturer
                         , a.model = b.model
-                        , a.machine_id = b.machine_id
+                        , a.machine_name = b.machine_name
                         , a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
@@ -60,7 +109,7 @@ export async function POST(req: Request) {
                          , category
                          , manufacturer
                          , model
-                         , machine_id
+                         , machine_name
                          , regist_date
                          , regist_user
                    )
@@ -71,7 +120,7 @@ export async function POST(req: Request) {
                          , lower(b.category)
                          , b.manufacturer
                          , b.model
-                         , b.machine_id
+                         , b.machine_name
                          , getdate()
                          , b.regist_user
                    );`

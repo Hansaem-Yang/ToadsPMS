@@ -15,7 +15,7 @@ export async function GET(req: Request) {
          from (select 'machine' as type
                     , a.vessel_no
                     , a.vessel_name
-                    , b.machine_id as code
+                    , b.machine_name as code
                     , b.machine_name as name
                     , '' as location
                     , b.sort_no
@@ -62,7 +62,6 @@ export async function GET(req: Request) {
           vessel.machines.push({
             vessel_no: item.vessel_no,
             vessel_name: item.vessel_name,
-            machine_id: item.code,
             machine_name: item.name
           });
         }

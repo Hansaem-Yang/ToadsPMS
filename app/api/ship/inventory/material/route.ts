@@ -12,8 +12,7 @@ export async function GET(req: Request) {
     const items: Material[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , b.machine_id
-            , c.machine_name
+            , b.machine_name
             , b.material_code
             , b.material_name
             , b.material_group
@@ -28,9 +27,6 @@ export async function GET(req: Request) {
          from [vessel] as a
          left outer join [material] as b
            on a.vessel_no = b.vessel_no
-         left outer join [machine] as c
-           on b.vessel_no = c.vessel_no
-          and b.machine_id = c.machine_id
          left outer join [receive] as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
@@ -49,20 +45,19 @@ export async function GET(req: Request) {
     let machines: Machine[] = []
     let machine: Machine
 
-    let machineId: string = '';
+    let machineName: string = '';
 
     items.map(item => {
-      if (machineId !== item.machine_id) {
+      if (machineName !== item.machine_name) {
         machine = {
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
-          machine_id: item.machine_id,
           machine_name: item.machine_name,
           children: []
         }
 
         machines.push(machine);
-        machineId = item.machine_id;
+        machineName = item.machine_name;
       }
       
       if (item.material_code) {

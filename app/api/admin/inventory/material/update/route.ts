@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       let params = [
         { name: 'vesselNo', value: item.vessel_no }, 
         { name: 'materialCode', value: item.material_code }, 
-        { name: 'machineId', value: item.machine_id }, 
+        { name: 'machineName', value: item.machine_name }, 
         { name: 'materialName', value: item.material_name }, 
         { name: 'materialGroup', value: item.material_group }, 
         { name: 'materialSpec', value: item.material_spec }, 

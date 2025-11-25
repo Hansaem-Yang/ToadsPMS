@@ -41,7 +41,6 @@ export default function PartsManagementPage() {
   const initialMaterial: Material = {
     vessel_no: "",
     vessel_name: "",
-    machine_id: "",
     machine_name: "",
     material_code: "",
     material_name: "",
@@ -161,7 +160,7 @@ export default function PartsManagementPage() {
         filtered = filtered.map(vessel => {
           if (vessel.children.length > 0 && selectedMachine !== 'all') {
             const filteredItems = vessel.children.filter(material =>
-              material.machine_id.includes(selectedMachine)
+              material.machine_name.includes(selectedMachine)
             );
 
             if (vessel.vessel_no.includes(selectedVessel) || filteredItems.length > 0) {
@@ -248,7 +247,7 @@ export default function PartsManagementPage() {
           if (material.material_code === item.material_code) {
             return { ...material,  
               vessel_no: item.vessel_no,
-              machine_id: item.machine_id,
+              machine_name: item.machine_name,
               material_code: item.material_code,
               material_name: item.material_name,
               material_unit: item.material_unit,
@@ -271,7 +270,7 @@ export default function PartsManagementPage() {
 
   const handleEditMaterial = (part: any) => {
     setInsertedVessel(part.vessel_no);
-    setInsertedMachine(part.machine_id);
+    setInsertedMachine(part.machine_name);
 
     setEditMaterial(part);
     setIsEditDialogOpen(true);
@@ -397,20 +396,20 @@ export default function PartsManagementPage() {
   };
 
   const machineChanged = (mode: string, value: string) => {
-    const foundMachine = availableInsertedMachine.find(machine => machine.machine_id === value)
+    const foundMachine = availableInsertedMachine.find(machine => machine.machine_name === value)
     
     if (foundMachine) {
       if (mode === 'add') {
-        setAddMaterial({ ...addMaterial, machine_id: foundMachine.machine_id, machine_name: foundMachine.machine_name })
+        setAddMaterial({ ...addMaterial, machine_name: foundMachine.machine_name })
       } else {
-        setEditMaterial({ ...editMaterial, machine_id: foundMachine.machine_id, machine_name: foundMachine.machine_name })
+        setEditMaterial({ ...editMaterial, machine_name: foundMachine.machine_name })
       }
     }
     else {
       if (mode === 'add') {
-        setAddMaterial({ ...addMaterial, machine_id: value })
+        setAddMaterial({ ...addMaterial, machine_name: value })
       } else {
-        setEditMaterial({ ...editMaterial, machine_id: value })
+        setEditMaterial({ ...editMaterial, machine_name: value })
       }
     }
     
@@ -494,7 +493,7 @@ export default function PartsManagementPage() {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="machine_id">장비</Label>
+                          <Label htmlFor="machine_name">장비</Label>
                           <Select 
                             value={insertedMachine}
                             onValueChange={(value) => { machineChanged('add', value) }}>
@@ -503,7 +502,7 @@ export default function PartsManagementPage() {
                             </SelectTrigger>
                             <SelectContent>
                               {availableInsertedMachine?.map((machine) => (
-                                <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                                <SelectItem key={machine.machine_name} value={machine.machine_name}>
                                   {machine.machine_name}
                                 </SelectItem>
                               ))}
@@ -616,7 +615,7 @@ export default function PartsManagementPage() {
                         <Button 
                           onClick={handleInsertMaterial}
                           disabled={!addMaterial?.vessel_no || 
-                            !addMaterial?.machine_id || 
+                            !addMaterial?.machine_name || 
                             !addMaterial?.material_name || 
                             !addMaterial?.material_type || 
                             !addMaterial?.warehouse_no ||
@@ -660,7 +659,7 @@ export default function PartsManagementPage() {
                         <SelectContent>
                           <SelectItem value="all">전체 장비</SelectItem>
                           {availableMachine?.map((machine) => (
-                            <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                            <SelectItem key={machine.machine_name} value={machine.machine_name}>
                               {machine.machine_name}
                             </SelectItem>
                           ))}
@@ -775,9 +774,9 @@ export default function PartsManagementPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit_machine_id">장비</Label>
+                <Label htmlFor="edit_machine_name">장비</Label>
                 <Select 
-                  value={editMaterial?.machine_id}
+                  value={editMaterial?.machine_name}
                   onValueChange={(value) => { machineChanged('edit', value) }}
                   disabled>
                   <SelectTrigger>
@@ -785,7 +784,7 @@ export default function PartsManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {availableInsertedMachine?.map((machine) => (
-                      <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>
                         {machine.machine_name}
                       </SelectItem>
                     ))}
@@ -914,7 +913,7 @@ export default function PartsManagementPage() {
               <Button 
                 onClick={handleUpdateMaterial}
                 disabled={!editMaterial?.vessel_no || 
-                  !editMaterial?.machine_id || 
+                  !editMaterial?.machine_name || 
                   !editMaterial?.material_name || 
                   !editMaterial?.material_type || 
                   !editMaterial?.warehouse_no ||

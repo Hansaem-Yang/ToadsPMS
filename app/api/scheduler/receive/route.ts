@@ -59,11 +59,12 @@ export async function GET(req: Request) {
       maintenances: [],
       extensions: [],
       works: [],
+      usedParts: [],
       warehouses: [],
       materials: [],
       receives: [],
       releases: [],
-      losses: []
+      losses: [],
     };
 
     const response = await fetch(`${remoteSiteUrl}/api/data/all/get`, {
@@ -501,7 +502,7 @@ export async function GET(req: Request) {
           merge [material] as a
           using (select @vesselNo as vessel_no
                       , @materialCode as material_code
-                      , @machineId as machine_id
+                      , @machineName as machine_name
                       , @materialName as material_name
                       , @materialGroup as material_group
                       , @materialSpec as material_spec
@@ -518,7 +519,7 @@ export async function GET(req: Request) {
               and a.material_code = b.material_code)
             when matched then
                 update
-                   set a.machine_id = b.machine_id
+                   set a.machine_name = b.machine_name
                      , a.material_name = b.material_name
                      , a.material_group = b.material_group
                      , a.material_spec = b.material_spec
@@ -533,7 +534,7 @@ export async function GET(req: Request) {
             when not matched then
                 insert (vessel_no
                       , material_code
-                      , machine_id
+                      , machine_name
                       , material_name
                       , material_group
                       , material_spec
@@ -547,7 +548,7 @@ export async function GET(req: Request) {
                       , regist_user)
                 values (b.vessel_no
                       , b.material_code
-                      , b.machine_id
+                      , b.machine_name
                       , b.material_name
                       , b.material_group
                       , b.material_spec
@@ -563,7 +564,7 @@ export async function GET(req: Request) {
           let params = [
             { name: 'vesselNo', value: item.vessel_no }, 
             { name: 'materialCode', value: item.material_code }, 
-            { name: 'machineId', value: item.machine_id }, 
+            { name: 'machineName', value: item.machine_name }, 
             { name: 'materialName', value: item.material_name }, 
             { name: 'materialGroup', value: item.material_group }, 
             { name: 'materialSpec', value: item.material_spec }, 

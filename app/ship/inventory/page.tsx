@@ -165,7 +165,7 @@ export default function ShipInventoryPage() {
                     {shortageMachine.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {shortageMachine.map((machine) => (
-                          <Card key={machine.machine_id} className="border border-red-200">
+                          <Card key={machine.machine_name} className="border border-red-200">
                             <CardContent className="p-4">
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">

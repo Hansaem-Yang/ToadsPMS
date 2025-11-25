@@ -30,12 +30,12 @@ export async function POST(req: Request) {
                       , @materialUnit as material_unit
                       , dbo.fn_get_warehouse_no(@warehouseName) as warehouse_no
                       , @drawingNo as drawing_no
-                      , @machineId as machine_id
+                      , @machineName as machine_name
                       , @standardQty as standard_qty
                       , @registUser as regist_user
                       , @modifyUser as modify_user ) as b
             on (a.vessel_no = b.vessel_no 
-            and a.machine_id = b.machine_id
+            and a.machine_name = b.machine_name
             and a.material_name = b.material_name)
           when matched then
                 update 
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
                     , a.material_unit = b.material_unit
                     , a.warehouse_no = b.warehouse_no
                     , a.drawing_no = b.drawing_no
-                    , a.machine_id = b.machine_id
+                    , a.machine_name = b.machine_name
                     , a.standard_qty = b.standard_qty
                     , a.modify_date = getdate()
                     , a.modify_user = b.modify_user
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
                     , material_unit
                     , warehouse_no
                     , drawing_no
-                    , machine_id
+                    , machine_name
                     , standard_qty
                     , regist_date
                     , regist_user
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
                     , b.material_unit
                     , b.warehouse_no
                     , b.drawing_no
-                    , b.machine_id
+                    , b.machine_name
                     , b.standard_qty
                     , getdate()
                     , b.regist_user
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
           { name: 'materialUnit', value: rows.Unit ? rows.Unit : '' },
           { name: 'warehouseName', value: rows.Warehouse ? rows.Warehouse : '' },
           { name: 'drawingNo', value: rows.DrawingNo ? rows.DrawingNo : '' },
-          { name: 'machineId', value: rows.Machine ? rows.Machine : '' },
+          { name: 'machineName', value: rows.Machine ? rows.Machine : '' },
           { name: 'standardQty', value: rows.StandardQty ? rows.StandardQty : '0' },
           { name: 'initialStock', value: rows.InitialStock ? rows.InitialStock : '0' }, 
           { name: 'registUser', value: registUser },
@@ -117,11 +117,11 @@ export async function POST(req: Request) {
                       , @modifyUser as modify_user
                   from [material] as a1
                   where a1.vessel_no = @vesselNo
-                    and a1.machine_id = @machineId
+                    and a1.machine_name = @machineName
                     and a1.material_code = (select max(material_code) 
                                               from [material]
                                             where vessel_no = @vesselNo
-                                              and machine_id = @machineId
+                                              and machine_name = @machineName
                                               and material_name = @materialName
                                               and regist_user = @registUser)) as b
             on (a.vessel_no = b.vessel_no 
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
       const sendData: Material[] = await query(
         `select vessel_no
               , material_code
-              , machine_id
+              , machine_name
               , material_name
               , material_group
               , material_spec

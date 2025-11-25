@@ -15,7 +15,7 @@ export async function GET(req: Request) {
             , b.equip_no
             , c.equip_name
             , c.category
-            , c.machine_id
+            , c.machine_name
             , b.section_code
             , b.plan_code
             , b.plan_name
@@ -97,7 +97,7 @@ export async function GET(req: Request) {
           equip_no: item.equip_no,
           equip_name: item.equip_name,
           category: item.category,
-          machine_id: item.machine_id,
+          machine_name: item.machine_name,
           children: [] = []
         }
 

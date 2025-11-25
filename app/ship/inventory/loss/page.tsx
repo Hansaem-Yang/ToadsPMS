@@ -80,11 +80,11 @@ export default function ShipInventoryLossPage() {
       vessel_no: item.vessel_no,
       vessel_name: "",
       loss_no: "",
-      machine_id: item.machine_id,
       machine_name: item.machine_name,
       material_code: item.material_code,
       material_name: item.material_name,
       loss_date: lossDate,
+      loss_type: "",
       loss_unit: item.material_unit,
       loss_qty: 0,
       stock_qty: item.stock_qty,
@@ -335,7 +335,7 @@ export default function ShipInventoryLossPage() {
                 </thead>
                 <tbody>
                   {filteredData.map((item) => (
-                    <tr key={`${item.machine_id}-${item.material_code}-${item.location}`} className="border-b hover:bg-gray-50">
+                    <tr key={`${item.machine_name}-${item.material_code}-${item.location}`} className="border-b hover:bg-gray-50">
                       <td className="py-2 px-2">{item.machine_name}</td>
                       <td className="py-2 px-2 font-medium">{item.material_name}</td>
                       <td className="py-2 px-2 text-gray-600">{item.material_code}</td>

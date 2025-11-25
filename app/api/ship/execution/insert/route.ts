@@ -95,112 +95,114 @@ export async function POST(req: Request) {
       result = await request.query(queryString);
       const workOrder = result.recordset[0].work_order;
 
-      for(const part of item.used_parts) {
-        queryString = `
-        insert into [used_parts] (
-               vessel_no
-             , work_order
-             , part_seq
-             , warehouse_no
-             , material_code
-             , use_unit
-             , use_qty
-             , regist_date
-             , regist_user
-        )
-        values (
-               @vesselNo
-             , @workOrder
-             , (select isnull(max(part_seq), 0) + 1
-                  from [used_parts]
-                 where vessel_no = @vesselNo
-                   and work_order = @workOrder)
-             , @warehouseNo
-             , @materialCode
-             , @useUnit
-             , @useQty
-             , getdate()
-             , @registUser
-        );`;
-        params = [
-          { name: 'vesselNo', value: item.vessel_no }, 
-          { name: 'workOrder', value: workOrder }, 
-          { name: 'warehouseNo', value: part.warehouse_no }, 
-          { name: 'materialCode', value: part.material_code }, 
-          { name: 'useUnit', value: part.use_unit }, 
-          { name: 'useQty', value: part.use_qty }, 
-          { name: 'registUser', value: item.regist_user }, 
-          { name: 'modifyUser', value: item.modify_user }, 
-        ];
+      if (item.used_parts) {
+        for(const part of item.used_parts) {
+          queryString = `
+          insert into [used_parts] (
+                vessel_no
+              , work_order
+              , part_seq
+              , warehouse_no
+              , material_code
+              , use_unit
+              , use_qty
+              , regist_date
+              , regist_user
+          )
+          values (
+                @vesselNo
+              , @workOrder
+              , (select isnull(max(part_seq), 0) + 1
+                    from [used_parts]
+                  where vessel_no = @vesselNo
+                    and work_order = @workOrder)
+              , @warehouseNo
+              , @materialCode
+              , @useUnit
+              , @useQty
+              , getdate()
+              , @registUser
+          );`;
+          params = [
+            { name: 'vesselNo', value: item.vessel_no }, 
+            { name: 'workOrder', value: workOrder }, 
+            { name: 'warehouseNo', value: part.warehouse_no }, 
+            { name: 'materialCode', value: part.material_code }, 
+            { name: 'useUnit', value: part.use_unit }, 
+            { name: 'useQty', value: part.use_qty }, 
+            { name: 'registUser', value: item.regist_user }, 
+            { name: 'modifyUser', value: item.modify_user }, 
+          ];
 
-        request = new sql.Request(transantion);
-        params?.forEach(p => request.input(p.name, p.value));
-        result = await request.query(queryString);
-        
-        
-        queryString = `
-        select max(part_seq) as part_seq
-          from [used_parts]
-         where vessel_no = @vesselNo
-           and work_order = @workOrder;`
+          request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          result = await request.query(queryString);
+          
+          
+          queryString = `
+          select max(part_seq) as part_seq
+            from [used_parts]
+          where vessel_no = @vesselNo
+            and work_order = @workOrder;`
 
-        params = [
-          { name: 'vesselNo', value: item.vessel_no }, 
-          { name: 'workOrder', value: workOrder }, 
-        ];
-        request = new sql.Request(transantion);
-        params?.forEach(p => request.input(p.name, p.value));
-        result = await request.query(queryString);
+          params = [
+            { name: 'vesselNo', value: item.vessel_no }, 
+            { name: 'workOrder', value: workOrder }, 
+          ];
+          request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          result = await request.query(queryString);
 
-        const partSeq = result.recordset[0].part_seq;
+          const partSeq = result.recordset[0].part_seq;
 
-        queryString = `
-        insert into [release] (
-               vessel_no
-             , release_no
-             , material_code
-             , release_date
-             , release_location
-             , release_type
-             , release_unit
-             , release_qty
-             , work_order
-             , part_seq
-             , regist_date
-             , regist_user
-        )
-        values (
-               @vesselNo
-             , (select 'O0' + format(getdate(), 'yyMM') + format(isnull(right(max(release_no), 3), 0) + 1, '000')
-                  from [release]
-                 where vessel_no = @vesselNo
-                   and release_type = 'O0')
-             , @materialCode
-             , getdate()
-             , @warehouseNo
-             , 'O0'
-             , @useUnit
-             , @useQty
-             , @workOrder
-             , @partSeq
-             , getdate()
-             , @registUser
-        );`;
-        params = [
-          { name: 'vesselNo', value: item.vessel_no }, 
-          { name: 'workOrder', value: workOrder }, 
-          { name: 'partSeq', value: partSeq }, 
-          { name: 'warehouseNo', value: part.warehouse_no }, 
-          { name: 'materialCode', value: part.material_code }, 
-          { name: 'useUnit', value: part.use_unit }, 
-          { name: 'useQty', value: part.use_qty }, 
-          { name: 'registUser', value: item.regist_user }, 
-          { name: 'modifyUser', value: item.modify_user }, 
-        ];
+          queryString = `
+          insert into [release] (
+                vessel_no
+              , release_no
+              , material_code
+              , release_date
+              , release_location
+              , release_type
+              , release_unit
+              , release_qty
+              , work_order
+              , part_seq
+              , regist_date
+              , regist_user
+          )
+          values (
+                @vesselNo
+              , (select 'O0' + format(getdate(), 'yyMM') + format(isnull(right(max(release_no), 3), 0) + 1, '000')
+                    from [release]
+                  where vessel_no = @vesselNo
+                    and release_type = 'O0')
+              , @materialCode
+              , getdate()
+              , @warehouseNo
+              , 'O0'
+              , @useUnit
+              , @useQty
+              , @workOrder
+              , @partSeq
+              , getdate()
+              , @registUser
+          );`;
+          params = [
+            { name: 'vesselNo', value: item.vessel_no }, 
+            { name: 'workOrder', value: workOrder }, 
+            { name: 'partSeq', value: partSeq }, 
+            { name: 'warehouseNo', value: part.warehouse_no }, 
+            { name: 'materialCode', value: part.material_code }, 
+            { name: 'useUnit', value: part.use_unit }, 
+            { name: 'useQty', value: part.use_qty }, 
+            { name: 'registUser', value: item.regist_user }, 
+            { name: 'modifyUser', value: item.modify_user }, 
+          ];
 
-        request = new sql.Request(transantion);
-        params?.forEach(p => request.input(p.name, p.value));
-        result = await request.query(queryString);
+          request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          result = await request.query(queryString);
+        }
       }
 
       queryString = `

@@ -489,7 +489,7 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>작업시간: {history.work_hours} 시간</span>
                         {history.used_parts && (
-                          <span>부품: {history.used_parts}</span>
+                          <span>부품: {history.used_parts[0].material_name} {history.used_parts.length > 1 ? `외 ${history.used_parts.length - 1}개` : '' }</span>
                         )}
                       </div>
                     </div>

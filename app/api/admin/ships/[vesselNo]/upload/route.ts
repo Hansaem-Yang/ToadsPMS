@@ -9,8 +9,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'There is no valid data.' }, { status: 400 });
   }
 
-  console.log(excelData);
-
   try {
     const sql = await getSql();
     const pool = await getPool();
@@ -30,7 +28,7 @@ export async function POST(req: Request) {
           continue;
         }
 
-        if (machineName !== rows.machine && rows.machine !== '') {
+        if (rows.Machine && machineName !== rows.Machine) {
           let queryString = 
             `merge [machine] as a
              using (select @vesselNo as vessel_no
@@ -96,8 +94,7 @@ export async function POST(req: Request) {
                and  a.equip_name = b.equip_name)
               when matched then
                    update
-                      set a.equip_name = b.equip_name
-                        , a.category = lower(b.category)
+                      set a.category = lower(b.category)
                         , a.manufacturer = b.manufacturer
                         , a.model = b.model
                         , a.machine_name = b.machine_name
@@ -146,9 +143,10 @@ export async function POST(req: Request) {
 
           if (result.rowsAffected[0] > 0) {
             queryString = 
-              `select max(equip_no) as equip_no
+              `select equip_no
                  from [equipment] 
-                where vessel_no = @vesselNo;`
+                where vessel_no = @vesselNo
+                  and equip_name = @equipName;`
 
             result = await request.query(queryString);
 
@@ -159,7 +157,7 @@ export async function POST(req: Request) {
           }
         }
 
-        if (sectionName !== rows.Section) {          
+        if (sectionName !== rows.Section) {
           let queryString = 
             `merge [section] as a
              using (select @vesselNo as vessel_no
@@ -172,8 +170,7 @@ export async function POST(req: Request) {
                and  a.section_name = b.section_name)
               when matched then
                    update
-                      set a.section_name = b.section_name
-                        , a.modify_date = getdate()
+                      set a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
                    insert (
@@ -209,10 +206,11 @@ export async function POST(req: Request) {
 
           if (result.rowsAffected[0] > 0) {
             queryString = 
-              `select max(section_code) as section_code
+              `select section_code
                  from [section] 
                 where vessel_no = @vesselNo
-                  and equip_no = @equipNo;`
+                  and equip_no = @equipNo
+                  and section_name = @sectionName;`
 
             result = await request.query(queryString);
 

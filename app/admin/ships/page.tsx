@@ -196,9 +196,11 @@ export default function ShipManagementPage() {
           "PIC", 
           "Critical", 
           "LastestDate", 
-          "Instructions"
-        ]
-        const jsonData: ExcelData[] = XLSX.utils.sheet_to_json(worksheet, {header: headerMapping});
+          "Instructions",
+          "PrevPMSCode",
+        ];
+        
+        const jsonData: ExcelData[] = XLSX.utils.sheet_to_json(worksheet, {header: headerMapping, range: 1});
         
         setExcelData(jsonData);
         

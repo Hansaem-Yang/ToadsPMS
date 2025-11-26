@@ -9,6 +9,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'There is no valid data.' }, { status: 400 });
   }
 
+  console.log(excelData);
+
   try {
     const sql = await getSql();
     const pool = await getPool();
@@ -242,6 +244,7 @@ export async function POST(req: Request) {
                          , @critical as critical 
                          , @lastestDate as lastest_date 
                          , @instructions as instructions
+                         , @prevPmsCode as prev_pms_code
                          , @registUser as regist_user
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
@@ -263,6 +266,7 @@ export async function POST(req: Request) {
                         , a.critical = b.critical
                         , a.lastest_date = b.lastest_date
                         , a.instructions = b.instructions
+                        , a.prev_pms_code = b.prev_pms_code
                         , a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
@@ -285,6 +289,7 @@ export async function POST(req: Request) {
                          , critical
                          , lastest_date
                          , instructions
+                         , prev_pms_code
                          , regist_date
                          , regist_user
                    )
@@ -307,6 +312,7 @@ export async function POST(req: Request) {
                          , b.critical
                          , b.lastest_date
                          , b.instructions
+                         , b.prev_pms_code
                          , getdate()
                          , b.regist_user
                    );`
@@ -334,6 +340,7 @@ export async function POST(req: Request) {
           { name: 'critical', value: rows.Critical? rows.Critical : '' },
           { name: 'lastestDate', value: lastestDate },
           { name: 'instructions', value: rows.Instructions? rows.Instructions : '' },
+          { name: 'prevPmsCode', value: rows.PrevPMSCode? rows.PrevPMSCode : '' },
           { name: 'registUser', value: registUser },
           { name: 'modifyUser', value: modifyUser }
         ];

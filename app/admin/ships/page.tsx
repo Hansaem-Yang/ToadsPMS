@@ -30,13 +30,13 @@ export default function ShipManagementPage() {
   const [vessels, setVessels] = useState<Vessel[]>([]);
   const [filteredShips, setFilteredShips] = useState(vessels);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilter, setSearchFilter] = useState('');
   const [addVessel, setAddVessel] = useState<Vessel>();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedVessel, setSelectedVessel] = useState<any>(null);
   const [excelData, setExcelData] = useState<ExcelData[]>([]);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
-  const [filteredValue, setFilteredValue] = useState('');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   const fetchVessels = () => {
     fetch('/api/admin/ships/all')
@@ -381,9 +381,9 @@ export default function ShipManagementPage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="선박번호, 선박명으로 검색..."
-                      value={filteredValue}
-                      onChange={(e) => setFilteredValue(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(filteredValue) : ""}
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>

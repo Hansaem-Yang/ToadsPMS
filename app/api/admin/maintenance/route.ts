@@ -8,6 +8,7 @@ export async function GET(req: Request) {
     const items: Maintenance[] = await query(
       `select a.vessel_no
             , a.vessel_name
+            , a.machine_name
             , a.equip_no
             , a.equip_name
             , a.section_code
@@ -38,6 +39,8 @@ export async function GET(req: Request) {
             , datediff(day, getdate(), a.extension_date) as extension_days_until
          from (select a.vessel_no
                     , a.vessel_name
+                    , b.machine_name
+                    , isnull(m.sort_no, 999) as machine_sort
                     , b.equip_no
                     , b.equip_name
                     , c.section_code
@@ -66,6 +69,9 @@ export async function GET(req: Request) {
                  from [vessel] as a
                  left outer join [equipment] as b
                    on a.vessel_no = b.vessel_no
+                 left outer join [machine] as m
+                   on b.vessel_no = m.vessel_no
+                  and b.machine_name = m.machine_name
                  left outer join [section] as c
                    on b.vessel_no = c.vessel_no
                   and b.equip_no = c.equip_no
@@ -74,16 +80,18 @@ export async function GET(req: Request) {
                   and c.equip_no = d.equip_no
                   and c.section_code = d.section_code
                 where a.use_yn = 'Y') as a
-       order by a.vessel_no, a.equip_no, a.section_code, a.plan_code`);
+       order by a.vessel_no, a.machine_sort, a.equip_no, a.section_code, a.plan_code`);
 
 
     let vessels: Maintenance[] = [];
     let vessel: Maintenance;
+    let machine: Maintenance;
     let equipment: Maintenance;
     let section: Maintenance;
     let maintenance: Maintenance;
 
     let vesselNo: string = '';
+    let machineName: string = '';
     let equipNo: string = '';
     let sectionCode: string = '';
 
@@ -91,130 +99,114 @@ export async function GET(req: Request) {
       if (vesselNo !== item.vessel_no) {
         vessel = {
           id: item.vessel_no,
-          name: item.vessel_name,
+          name: item.vessel_name || '',
           vessel_no: item.vessel_no,
-          vessel_name: '',
-          equip_no: '',
-          equip_name: '',
-          section_code: '',
-          section_name: '',
-          plan_code: '',
-          plan_name: '',
-          manufacturer: '',
-          model: '',
-          specifications: '',
-          lastest_date: '',
-          workers: 0,
-          work_hours: 0,
-          interval: 0,
-          interval_term: '',
-          location: '',
-          self_maintenance: '',
-          manager: '',
-          critical: '',
-          due_date: '',
-          next_due_date: '',
-          extension_date: '',
-          status: '',
-          days_until: 0,
-          extension_days_until: 0,
           type: "VESSEL",
           children: [] = []
         }
 
         vessels.push(vessel);
         vesselNo = item.vessel_no;
+        machineName = '';
         equipNo = '';
         sectionCode = '';
       }
 
-      if (item.equip_no !== null) {
-        if (equipNo !== item.equip_no) {
-          equipment = {
-            id: item.equip_no,
-            name: item.equip_name,
+      if (item.machine_name !== null && item.machine_name !== '') {
+        if (machineName !== item.machine_name) {
+          machine = {
+            id: item.machine_name || '',
+            name: item.machine_name || '',
             vessel_no: item.vessel_no,
-            vessel_name: '',
-            equip_no: '',
-            equip_name: '',
-            section_code: '',
-            section_name: '',
-            plan_code: '',
-            plan_name: '',
-            manufacturer: '',
-            model: '',
-            specifications: '',
-            lastest_date: '',
-            workers: 0,
-            work_hours: 0,
-            interval: 0,
-            interval_term: '',
-            location: '',
-            self_maintenance: '',
-            manager: '',
-            critical: '',
-            due_date: '',
-            next_due_date: '',
-            extension_date: '',
-            status: '',
-            days_until: 0,
-            extension_days_until: 0,
-            type: "EQUIPMENT",
+            type: "MACHINE",
             children: [] = []
           }
 
-          vessel?.children.push(equipment);
-          equipNo = item.equip_no;
+          vessel?.children.push(machine);
+          machineName = item.machine_name || '';
+          equipNo = '';
           sectionCode = '';
         }
 
-        if (item.section_code !== null) {
-          if (sectionCode !== item.section_code) {
-            
-            section = {
-              id: `${item.equip_no}-${item.section_code}`,
-              name: item.section_name,
+        if (item.equip_no !== null) {
+          if (equipNo !== item.equip_no) {
+            equipment = {
+              id: item.equip_no || '',
+              name: item.equip_name || '',
               vessel_no: item.vessel_no,
-              vessel_name: '',
-              equip_no: '',
-              equip_name: '',
-              section_code: '',
-              section_name: '',
-              plan_code: '',
-              plan_name: '',
-              manufacturer: '',
-              model: '',
-              specifications: '',
-              lastest_date: '',
-              workers: 0,
-              work_hours: 0,
-              interval: 0,
-              interval_term: '',
-              location: '',
-              self_maintenance: '',
-              manager: '',
-              critical: '',
-              due_date: '',
-              next_due_date: '',
-              extension_date: '',
-              status: '',
-              days_until: 0,
-              extension_days_until: 0,
-              type: "SECTION",
+              type: "EQUIPMENT",
               children: [] = []
             }
 
-            equipment?.children.push(section);
-            sectionCode = item.section_code;
+            machine?.children.push(equipment);
+            equipNo = item.equip_no || '';
+            sectionCode = '';
           }
 
-          if (item.plan_code !== null) {
-            maintenance = item;
-            maintenance.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
-            maintenance.name = item.plan_name;
-            maintenance.type = "TASK";
+          if (item.section_code !== null) {
+            if (sectionCode !== item.section_code) {
+              
+              section = {
+                id: `${item.equip_no}-${item.section_code}`,
+                name: item.section_name || '',
+                vessel_no: item.vessel_no,
+                type: "SECTION",
+                children: [] = []
+              }
 
-            section?.children.push(maintenance);
+              equipment?.children.push(section);
+              sectionCode = item.section_code || '';
+            }
+
+            if (item.plan_code !== null) {
+              maintenance = item;
+              maintenance.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
+              maintenance.name = item.plan_name || '';
+              maintenance.type = "TASK";
+
+              section?.children.push(maintenance);
+            }
+          }
+        }
+      } else {
+        if (item.equip_no !== null) {
+          if (equipNo !== item.equip_no) {
+            equipment = {
+              id: item.equip_no || '',
+              name: item.equip_name || '',
+              vessel_no: item.vessel_no,
+              type: "EQUIPMENT",
+              children: [] = []
+            }
+
+            vessel?.children.push(equipment);
+            equipNo = item.equip_no || '';
+            sectionCode = '';
+          }
+
+          if (item.section_code !== null) {
+            if (sectionCode !== item.section_code) {
+              
+              section = {
+                id: `${item.equip_no}-${item.section_code}`,
+                name: item.section_name || '',
+                vessel_no: item.vessel_no,
+                type: "SECTION",
+                children: [] = []
+              }
+
+              equipment?.children.push(section);
+              sectionCode = item.section_code || '';
+            }
+
+            if (item.plan_code !== null) {
+              maintenance = item;
+              maintenance.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
+              maintenance.name = item.plan_name || '';
+              maintenance.type = "TASK";
+
+              section?.children.push(maintenance);
+            }
           }
         }
       }

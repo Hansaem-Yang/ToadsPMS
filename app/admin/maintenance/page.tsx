@@ -42,6 +42,7 @@ export default function MaintenanceWorkManagementPage() {
   const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
   const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
   const [searchTerm, setSearchTerm] = useState("")
+  const [searchFilter, setSearchFilter] = useState('');
   const [shipFilter, setShipFilter] = useState("ALL")
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -386,17 +387,6 @@ export default function MaintenanceWorkManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="작업명, 작업코드로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
                 <Select value={shipFilter} onValueChange={setShipFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
@@ -420,6 +410,18 @@ export default function MaintenanceWorkManagementPage() {
                     <SelectItem value="COMPLATE">완료</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="작업명, 작업코드로 검색..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

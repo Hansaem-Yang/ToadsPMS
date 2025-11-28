@@ -5,7 +5,6 @@ import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -18,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Search,
@@ -26,7 +24,6 @@ import {
   ChevronRight,
   Wrench,
   Calendar,
-  Settings,
   Ship,
   FolderTree,
   FileText,
@@ -77,7 +74,7 @@ export default function MaintenanceWorkManagementPage() {
       .catch(err => console.error(err));
   };
 
-  const fetchMaintenanceExtension = () => {
+  const fetchExtension = () => {
     fetch(`/api/admin/maintenance/extension`)
       .then(res => res.json())
       .then(data => setMaintenanceData(data))
@@ -90,7 +87,7 @@ export default function MaintenanceWorkManagementPage() {
       setUserInfo(user);
 
       fetchVessels();
-      fetchMaintenanceExtension();
+      fetchExtension();
     } catch (error) {
       // Redirect handled by requireAuth
     }
@@ -420,7 +417,7 @@ export default function MaintenanceWorkManagementPage() {
         alert(`연장 요청이 반려 되었습니다.`);
     }
 
-    fetchMaintenanceExtension();
+    fetchExtension();
 
     setIsApprovalReasonDialogOpen(false);
   }
@@ -513,7 +510,6 @@ export default function MaintenanceWorkManagementPage() {
 
           {/* WBS 트리 구조 */}
           <Card>
-            
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FolderTree className="h-5 w-5" />

@@ -4,12 +4,13 @@ import { useEffect, useState } from "react"
 import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
-import { Card, CardContent,  CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Search,
+  ChevronDown,
+  ChevronRight,
+  Wrench,
   Calendar,
   Settings,
   Ship,
@@ -28,25 +32,55 @@ import {
   FileText,
   
 } from "lucide-react"
-import { Vessel } from '@/types/extension/vessel'; 
-import { Equipment } from '@/types/extension/equipment';
+import { Vessel } from '@/types/vessel/vessel'; // ✅ interface import
+import { Machine } from '@/types/vessel/machine';
+import { Equipment } from '@/types/vessel/equipment';
 import { MaintenanceExtension } from '@/types/extension/maintenance_extension'; // ✅ interface import
 
 export default function MaintenanceWorkManagementPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [vessels, setVessels] = useState<Vessel[]>([])
-  const [filteredData, setFilteredData] = useState<Vessel[]>(vessels)
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [equipmentFilteredData, setEquipmentFilteredData] = useState<Equipment[]>([])
+  const [maintenanceData, setMaintenanceData] = useState<MaintenanceExtension[]>([])
+  const [filteredData, setFilteredData] = useState<MaintenanceExtension[]>(maintenanceData)
   const [searchTerm, setSearchTerm] = useState("")
+  const [searchFilter, setSearchFilter] = useState('');
   const [shipFilter, setShipFilter] = useState("ALL")
+  const [machineFilter, setMachineFilter] = useState("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState("ALL")
   const [selectedExtension, setSelectedExtension] = useState<MaintenanceExtension>()
   const [isApprovalReasonDialogOpen, setIsApprovalReasonDialogOpen] = useState(false)
   
   const [selectedApprovals, setSelectedApprovals] = useState<string[]>([])
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   const fetchVessels = () => {
-    fetch(`/api/admin/maintenance/extension`)
+    fetch(`/api/admin/maintenance/extension/ships`)
       .then(res => res.json())
       .then(data => setVessels(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchMachines = (vesselNo: string) => {
+    fetch(`/api/admin/ships/${vesselNo}/maintenance/extension/machine?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchEquipments = (vesselNo: string) => {
+    fetch(`/api/admin/ships/${vesselNo}/maintenance/extension/equipment?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setEquipments(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchMaintenanceExtension = () => {
+    fetch(`/api/admin/maintenance/extension`)
+      .then(res => res.json())
+      .then(data => setMaintenanceData(data))
       .catch(err => console.error(err));
   };
 
@@ -56,55 +90,97 @@ export default function MaintenanceWorkManagementPage() {
       setUserInfo(user);
 
       fetchVessels();
+      fetchMaintenanceExtension();
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
 
   useEffect(() => {
-    let filtered = vessels
+    fetchMachines(shipFilter);
+    fetchEquipments(shipFilter);
+  }, [shipFilter])
+  
+  useEffect(() => {
+    let equipmentFiltered = equipments
+
+    if (machineFilter !== "ALL") {
+      equipmentFiltered = equipmentFiltered.filter((item) => item.vessel_no === shipFilter && item.machine_name === machineFilter)
+    }
+
+    setEquipmentFilteredData(equipmentFiltered)
+  }, [equipments,  shipFilter, machineFilter])
+
+  useEffect(() => {
+    let filtered = maintenanceData
 
     if (shipFilter !== "ALL") {
       filtered = filtered.filter((item) => item.vessel_no === shipFilter)
     }
 
+    if (machineFilter !== "ALL") {
+      filtered = filterByMachine(filtered, machineFilter)
+    }
+
+    if (equipmentFilter !== "ALL") {
+      filtered = filterByEquipment(filtered, equipmentFilter)
+    }
+
     if (searchTerm) {
-      const lowerKeyword = searchTerm.toLowerCase();
-
-      filtered = filtered.map(vessel => {
-        const filteredEquipments = vessel.children.map(equipment => {
-            const filteredItems = equipment.children.filter(plan =>
-              plan.section_name.toLowerCase().includes(lowerKeyword) || 
-              plan.plan_name.toLowerCase().includes(lowerKeyword)
-            );
-
-            return { ...equipment, children: filteredItems };
-          })
-          .filter(equipment => {
-            return (
-              equipment.equip_name.toLowerCase().includes(lowerKeyword) || equipment.children.length > 0
-            );
-          });
-
-        if (vessel.vessel_name.toLowerCase().includes(lowerKeyword) || filteredEquipments.length > 0) {
-          return { ...vessel, children: filteredEquipments };
-        }
-
-        return null;
-      })
-      .filter((e) => e !== null);
+      filtered = filterBySearch(filtered, searchTerm)
     }
 
     setFilteredData(filtered)
-  }, [vessels, searchTerm, shipFilter])
+  }, [maintenanceData, searchTerm, shipFilter, machineFilter, equipmentFilter])
 
   if (!userInfo) return null
+  
+  const filterByMachine = (items: MaintenanceExtension[], term: string): MaintenanceExtension[] => {
+    return items.map((item) => {
+        const matchesSearch = item.machine_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByMachine(item.children, term) : []
 
-  const truncateString = (str: string, maxLength: number): string  =>{
-    if (str.length > maxLength) {
-      return str.slice(0, maxLength) + '...';
-    }
-    return str;
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as MaintenanceExtension[]
+  }
+
+  const filterByEquipment = (items: MaintenanceExtension[], term: string): MaintenanceExtension[] => {
+    return items.map((item) => {
+        const matchesSearch = item.equip_no?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByEquipment(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as MaintenanceExtension[]
+  }
+  
+  const filterBySearch = (items: MaintenanceExtension[], term: string): MaintenanceExtension[] => {
+    return items.map((item) => {
+        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySearch(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as MaintenanceExtension[]
   }
   
   const getTableHeaders = () => {
@@ -132,15 +208,6 @@ export default function MaintenanceWorkManagementPage() {
     const cells = []
 
     cells.push(
-      // <td key="select" className="py-3 text-gray-500 text-center">
-      //   <Checkbox
-      //     id={`${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`}
-      //     checked={selectedApprovals.includes(`${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`)}
-      //     onCheckedChange={() => handleTaskSelection(`${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`, item)}
-      //     disabled={item.approval_status === "APPROVAL"}
-      //     className="mt-1"
-      //   />
-      // </td>,
       <td key="code" width="120px;" className="py-3 text-gray-500 text-center">
         {`${item.equip_no}-${item.section_code}-${item.plan_code}`}
       </td>,
@@ -201,7 +268,7 @@ export default function MaintenanceWorkManagementPage() {
     })
   }
 
-  const handleSelectAll = (eq: Equipment) => {
+  const handleSelectAll = (eq: MaintenanceExtension) => {
     const allTaskIds = eq.children.filter((task) => task.approval_status !== "COMPLATE").map((task) => `${task.vessel_no}-${task.equip_no}-${task.section_code}-${task.plan_code}`)
 
     if (selectedApprovals.length === allTaskIds.length) {
@@ -211,97 +278,119 @@ export default function MaintenanceWorkManagementPage() {
     }
   }
 
-  // const handleBulkExtension = () => {
+  const toggleExpanded = (id: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id)
+    } else {
+      newExpanded.add(id)
+    }
+    setExpandedItems(newExpanded)
+  }
 
-  //   const tasksToExtension = filteredData.flatMap(vessel => 
-  //     vessel.children.flatMap(equipment => 
-  //       equipment.children.filter(tplan =>
-  //         selectedApprovals.includes(`${tplan.vessel_no}-${tplan.equip_no}-${tplan.section_code}-${tplan.plan_code}`)
-  //       ).map((plan) => ({
-  //         ...plan,
-  //         vessel_no: plan.vessel_no, 
-  //         vessel_name: plan.vessel_name, 
-  //         imo_no: plan.imo_no, 
-  //         equip_no: plan.equip_no, 
-  //         equip_name: plan.equip_name, 
-  //         category: plan.category, 
-  //         section_code: plan.section_code, 
-  //         section_name: plan.section_name, 
-  //         plan_code: plan.plan_code, 
-  //         plan_name: plan.plan_name, 
-  //         extension_seq: plan.extension_seq, 
-  //         extension_date: plan.extension_date, 
-  //         extension_reason: plan.extension_reason, 
-  //         request_date: plan.request_date, 
-  //         applicant: plan.applicant, 
-  //         applicant_name: plan.applicant_name, 
-  //         approval_status: plan.approval_status, 
-  //         approver: plan.approver, 
-  //         approver_name: plan.approver_name, 
-  //         lastest_date: plan.lastest_date, 
-  //         due_date: plan.due_date, 
-  //         regist_user: userInfo.account_no,
-  //         modify_user: userInfo.account_no,
-  //       }))
-  //     )
-  //   )
+  const renderMaintenanceTree = (items: MaintenanceExtension[], level = 0) => {
+    return items.map((item) => (
+      <div key={item.id} className={`${level > 0 ? "ml-6" : ""}`}>
+        <Collapsible open={expandedItems.has(item.id)} onOpenChange={() => toggleExpanded(item.id)}>
+          <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
+            {item.children && item.children.length > 0 && (
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
+                  {expandedItems.has(item.id) ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            )}
 
-  //   setBulkExtensionData({
-  //     tasks: tasksToExtension,
-  //   })
-  //   setIsBulkExtensionDialogOpen(true)
-  // }
+            <div className="flex-1 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {item.type === 'VESSEL' ? (
+                    <Ship className="w-5 h-5" />
+                  ) : (
+                    item.type === "EQUIPMENT" ? (
+                      <FolderTree className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <Wrench className="w-5 h-5 text-orange-600" />
+                    )
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{`${item.name}`}</span>
+                      <span className="text-sm text-gray-500">({item.id})</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-  const updateExtensions = (item: any) => {
-    return vessels.map((vessel) => {
-      if (vessel.vessel_no === item.vessel_no) {
-        const updatedEquipment = vessel.children.map((eq) => {
-          if (eq.equip_no === item.equip_no) {
-            const updatedExtension = eq.children.map((plan) => {
-              if (plan.section_code === item.section_code && plan.plan_code === item.plan_code && plan.extension_seq === item.extension_seq) {
-                return { ...plan,  
-                  vessel_no: item.vessel_no,
-                  vessel_name: item.vessel_name,
-                  imo_no: item.imo_no,
-                  equip_no: item.equip_no,
-                  equip_name: item.equip_name,
-                  category: item.category,
-                  section_code: item.section_code,
-                  section_name: item.section_name,
-                  plan_code: item.plan_code,
-                  plan_name: item.plan_name,
-                  extension_seq: item.extension_seq,
-                  extension_date: item.extension_date,
-                  extension_reason: item.extension_reason,
-                  request_date: item.request_date,
-                  applicant: item.applicant,
-                  applicant_name: item.applicant_name,
-                  approval_status: item.approval_status,
-                  approver: item.approver,
-                  approver_name: item.approver_name,
-                  lastest_date: item.lastest_date,
-                  due_date: item.due_date,
-                  regist_date: item.regist_date,
-                  regist_user: item.regist_user,
-                  modify_date: item.modify_date,
-                  modify_user: item.modify_user,
-                };
-              }
+          {item.children && item.children.length > 0 && item.type !== "EQUIPMENT" && (
+            <CollapsibleContent>
+              <div className="ml-4 border-l-2 border-gray-200 pl-4">
+                {renderMaintenanceTree(item.children, level + 1)}
+              </div>
+            </CollapsibleContent>
+          )}
+          
 
-              return plan;
-            });
-
-            return {...eq, children: updatedExtension }
-          }
-
-          return eq;
-        });
-
-        return {...vessel, children: updatedEquipment }
-      }
-
-      return vessel;
-    });
+          {item.children && item.children.length > 0 && item.type === "EQUIPMENT" && (
+            <CollapsibleContent>
+              <div className="ml-4 border-l-2 border-gray-200 pl-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        {getTableHeaders().map((header) => {
+                          if (header.label === "CheckBox") {
+                            return (
+                              <th key={header.key} className={`${header.align} py-2`}>
+                                <Checkbox
+                                  id="select-all"
+                                  checked={
+                                    selectedApprovals.length > 0 &&
+                                    selectedApprovals.length === item.children.filter((task) => task.approval_status !== "APPROVAL").length
+                                  }
+                                  onCheckedChange={(e) => {
+                                    {handleSelectAll(item)}
+                                  }}
+                                />
+                              </th>
+                            )
+                          } else {
+                            return (
+                              <th key={header.key} className={`${header.align} py-2`}>
+                                {header.label}
+                              </th>
+                            )
+                          }
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {item.children.map((children, index) => (
+                        <tr 
+                          key={`${children.vessel_no}-${children.equip_no}-${children.section_code}-${children.plan_code}`} 
+                          className="border-b hover:bg-gray-50"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                        >
+                          {getTableCells(children, index)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </CollapsibleContent>
+          )}
+        </Collapsible>
+      </div>
+    ))
   }
 
   const handleApprovalOrRejectClick = (item: MaintenanceExtension, status: string) => {
@@ -331,7 +420,7 @@ export default function MaintenanceWorkManagementPage() {
         alert(`연장 요청이 반려 되었습니다.`);
     }
 
-    fetchVessels();
+    fetchMaintenanceExtension();
 
     setIsApprovalReasonDialogOpen(false);
   }
@@ -373,19 +462,8 @@ export default function MaintenanceWorkManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="작업명, 작업코드로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
                 <Select value={shipFilter} onValueChange={setShipFilter}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -395,78 +473,56 @@ export default function MaintenanceWorkManagementPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Select value={machineFilter} onValueChange={setMachineFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 기계</SelectItem>
+                    {machines.map((machine) => (
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 장비</SelectItem>
+                    {equipmentFilteredData.map((equipment) => (
+                      <SelectItem key={equipment.equip_no} value={equipment.equip_no}>{equipment.equip_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="섹션, 작업명으로 검색..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* WBS 트리 구조 */}
           <Card>
+            
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderTree className="h-5 w-5" />
+                장비 연장 신청 WBS
+              </CardTitle>
+              <CardDescription>계층적 구조로 관리되는 장비 연장 신청 목록</CardDescription>
+            </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {filteredData.map(vessel => (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xl font-bold text-gray-600">
-                      <Ship className="w-5 h-5" />{vessel.vessel_name}
-                    </div>
-                    {vessel.children.map((eq) => (
-                      <Card key={`${eq.vessel_no}-${eq.equip_no}`}>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Settings className="w-5 h-5" />{eq.equip_name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b">
-                                  {getTableHeaders().map((header) => {
-                                    if (header.label === "CheckBox") {
-                                      return (
-                                        <th key={header.key} className={`${header.align} py-2`}>
-                                          <Checkbox
-                                            id="select-all"
-                                            checked={
-                                              selectedApprovals.length > 0 &&
-                                              selectedApprovals.length === eq.children.filter((task) => task.approval_status !== "APPROVAL").length
-                                            }
-                                            onCheckedChange={(e) => {
-                                              {handleSelectAll(eq)}
-                                            }}
-                                          />
-                                        </th>
-                                      )
-                                    } else {
-                                      return (
-                                        <th key={header.key} className={`${header.align} py-2`}>
-                                          {header.label}
-                                        </th>
-                                      )
-                                    }
-                                  })}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {eq.children.map((item, index) => (
-                                  <tr 
-                                    key={`${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`} 
-                                    className="border-b hover:bg-gray-50"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                    }}
-                                  >
-                                    {getTableCells(item, index)}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ))}
-              </div>
+              <div className="space-y-2">{renderMaintenanceTree(filteredData)}</div>
 
               {filteredData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">

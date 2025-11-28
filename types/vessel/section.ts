@@ -8,6 +8,7 @@ export interface Section {
     description: string;
     due_date: string;
     maintenance_count: number;
+    machine_name: string;
     regist_date: string;
     regist_user: string;
     modify_date: string;

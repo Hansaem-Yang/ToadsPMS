@@ -49,10 +49,6 @@ export async function GET(req: Request) {
       ]
     );
 
-    // if (items.length === 0) {
-    //   return NextResponse.json({ success: false, message: 'The data does not exist.' }, { status: 401 });
-    // }
-
     // 성공 시 데쉬보드 정보 반환
     return NextResponse.json(items);
   } catch (err) {

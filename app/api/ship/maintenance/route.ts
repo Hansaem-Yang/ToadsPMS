@@ -73,7 +73,7 @@ export async function GET(req: Request) {
           manufacturer: item.equip_manufacturer,
           category: '',
           model: item.equip_model,
-          machine: '',
+          machine_name: '',
           specifications: item.equip_specifications,
           description: '',
           lastest_date: '',

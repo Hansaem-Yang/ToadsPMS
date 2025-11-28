@@ -7,7 +7,7 @@ export interface Equipment {
     manufacturer: string;
     category: string;
     model: string;
-    machine: string;
+    machine_name: string;
     specifications: string;
     description: string;
     lastest_date: string;

@@ -28,14 +28,25 @@ import {
   FileText,
 } from "lucide-react"
 import { Vessel } from '@/types/performance/vessel'; 
+import { Machine } from '@/types/vessel/machine';
+import { Equipment } from '@/types/vessel/equipment';
+import { Section } from '@/types/vessel/section';
 import { MaintenanceWork } from '@/types/vessel/maintenance_work'; // ✅ interface import
 
 export default function MaintenanceWorkManagementPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [vessels, setVessels] = useState<Vessel[]>([])
   const [filteredData, setFilteredData] = useState<Vessel[]>(vessels)
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [equipmentFilteredData, setEquipmentFilteredData] = useState<Equipment[]>([])
+  const [sections, setSections] = useState<Section[]>([])
+  const [sectionFilteredData, setSectionFilteredData] = useState<Section[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [shipFilter, setShipFilter] = useState("ALL")
+  const [machineFilter, setMachineFilter] = useState("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState("ALL")
+  const [sectionFilter, setSectionFilter] = useState("ALL")
   
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
   const [isDetailHistoryDialogOpen, setIsDetailHistoryDialogOpen] = useState(false)
@@ -47,6 +58,27 @@ export default function MaintenanceWorkManagementPage() {
     fetch(`/api/admin/maintenance/performance`)
       .then(res => res.json())
       .then(data => setVessels(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchMachines = (vesselNo: string) => {
+    fetch(`/api/admin/ships/${vesselNo}/machine/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchEquipments = (vesselNo: string) => {
+    fetch(`/api/admin/ships/${vesselNo}/equipment/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setEquipments(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchSections = (vesselNo: string) => {
+    fetch(`/api/admin/ships/${vesselNo}/section/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setSections(data))
       .catch(err => console.error(err));
   };
   
@@ -70,6 +102,32 @@ export default function MaintenanceWorkManagementPage() {
       // Redirect handled by requireAuth
     }
   }, [])
+
+  useEffect(() => {
+    fetchMachines(shipFilter);
+    fetchEquipments(shipFilter);
+    fetchSections(shipFilter);
+  }, [shipFilter])
+  
+  useEffect(() => {
+    let sectionFiltered = sections
+
+    if (machineFilter !== "ALL") {
+      sectionFiltered = sectionFiltered.filter((item) => item.vessel_no === shipFilter && item.machine_name === machineFilter)
+    }
+
+    setSectionFilteredData(sectionFiltered)
+  }, [equipments, shipFilter, machineFilter])
+  
+  useEffect(() => {
+    let sectionFiltered = sections
+
+    if (machineFilter !== "ALL") {
+      sectionFiltered = sectionFiltered.filter((item) => item.vessel_no === shipFilter && item.machine_name === machineFilter&& item.equip_no === equipmentFilter)
+    }
+
+    setSectionFilteredData(sectionFiltered)
+  }, [sections, shipFilter, equipmentFilter, machineFilter])
 
   useEffect(() => {
     let filtered = vessels
@@ -349,8 +407,8 @@ export default function MaintenanceWorkManagementPage() {
                       <p className="text-sm text-gray-600 mb-2">{history.work_details}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>작업시간: {history.work_hours} 시간</span>
-                        {history.used_parts && (
-                          <span>부품: {history.used_parts}</span>
+                        {history.used_parts && history.used_parts.length > 0 && (
+                          <span>부품: {history.used_parts[0].material_name} {history.used_parts.length > 1 ? `외 ${history.used_parts.length - 1} 건` : '' }</span>
                         )}
                       </div>
                     </div>

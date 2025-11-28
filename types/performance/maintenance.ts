@@ -18,5 +18,6 @@ export interface Maintenance {
     due_date?: string;
     work_date?: string;
     type?: string;
+    key?: string;
     children: Maintenance[];
 }

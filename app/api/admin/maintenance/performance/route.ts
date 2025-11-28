@@ -82,6 +82,7 @@ export async function GET(req: Request) {
           vessel_name: item.vessel_name,
           imo_no: item.imo_no,
           type: 'VESSEL',
+          key: item.vessel_no,
           children: [] = [],
         }
 
@@ -100,6 +101,7 @@ export async function GET(req: Request) {
             vessel_no: item.vessel_no,
             machine_name: item.machine_name,
             type: "MACHINE",
+            key: `${item.vessel_no}-${item.machine_name}`,
             children: [] = []
           }
 
@@ -118,6 +120,7 @@ export async function GET(req: Request) {
             equip_name: item.equip_name,
             category: item.category,
             type: "EQUIPMENT",
+            key: `${item.vessel_no}-${item.equip_no}`,
             children: [],
           }
 
@@ -145,6 +148,8 @@ export async function GET(req: Request) {
             lastest_date: item.lastest_date,
             due_date: item.due_date,
             work_date: item.work_date,
+            type: "TASK",
+            key: `${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`,
             children: []
           }
           equipment.children.push(maintenance);
@@ -163,6 +168,7 @@ export async function GET(req: Request) {
             equip_name: item.equip_name,
             category: item.category,
             type: "EQUIPMENT",
+            key: `${item.vessel_no}-${item.equip_no}`,
             children: [],
           }
 
@@ -190,6 +196,8 @@ export async function GET(req: Request) {
             lastest_date: item.lastest_date,
             due_date: item.due_date,
             work_date: item.work_date,
+            type: "TASK",
+            key: `${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`,
             children: []
           }
           equipment.children.push(maintenance);

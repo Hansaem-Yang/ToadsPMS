@@ -28,6 +28,7 @@ export interface MaintenanceExtension {
     regist_user?: string;
     modify_date?: string;
     modify_user?: string;
-    type: string;
+    type?: string;
+    key?: string;
     children: MaintenanceExtension[];
 }

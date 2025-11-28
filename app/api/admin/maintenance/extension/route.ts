@@ -68,6 +68,7 @@ export async function GET(req: Request) {
           vessel_name: item.vessel_name,
           imo_no: item.imo_no,
           type: "VESSEL",
+          key: item.vessel_no,
           children: [] = []
         }
 
@@ -85,6 +86,7 @@ export async function GET(req: Request) {
             vessel_no: item.vessel_no,
             machine_name: item.machine_name,
             type: "MACHINE",
+            key: item.machine_name,
             children: [] = []
           }
 
@@ -101,6 +103,7 @@ export async function GET(req: Request) {
             equip_no: item.equip_no,
             equip_name: item.equip_name,
             type: "EQUIPMENT",
+            key: item.equip_no,
             children: [] = []
           }
 
@@ -112,6 +115,7 @@ export async function GET(req: Request) {
         maintenanceExtension.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
         maintenanceExtension.name = item.plan_name || '';
         maintenanceExtension.type = "TASK";
+        maintenanceExtension.key = `${item.equip_no}-${item.section_code}-${item.plan_code}`,
 
         equipment.children.push(item);
       }
@@ -124,6 +128,7 @@ export async function GET(req: Request) {
             equip_no: item.equip_no,
             equip_name: item.equip_name,
             type: "EQUIPMENT",
+            key: item.equip_no,
             children: [] = []
           }
 
@@ -135,6 +140,7 @@ export async function GET(req: Request) {
         maintenanceExtension.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
         maintenanceExtension.name = item.plan_name || '';
         maintenanceExtension.type = "TASK";
+        maintenanceExtension.key = `${item.equip_no}-${item.section_code}-${item.plan_code}`,
 
         equipment.children.push(item);
       }

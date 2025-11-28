@@ -33,9 +33,11 @@ import {
   FolderTree,
   Clock,
 } from "lucide-react"
+import { Machine } from '@/types/vessel/machine';
 import { Equipment } from '@/types/vessel/equipment'; // ✅ interface import
 import { Section } from '@/types/vessel/section'; // ✅ interface import
-import { MaintenancePlan } from '@/types/vessel/maintenance_plan'; // ✅ interface import
+
+import { Maintenance } from '@/types/vessel/maintenance';
 
 export default function MaintenanceWorkManagementPage() {
   const searchParams = useSearchParams()
@@ -44,29 +46,61 @@ export default function MaintenanceWorkManagementPage() {
   const vesselNo = params.vesselNo as string
 
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [machines, setMachines] = useState<Machine[]>([])
   const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [equipmentFilteredData, setEquipmentFilteredData] = useState<Equipment[]>([])
+  const [sections, setSections] = useState<Section[]>([])
+  const [sectionFilteredData, setSectionFilteredData] = useState<Section[]>([])
 
-  const [filteredData, setFilteredData] = useState<Equipment[]>(equipments)
   const [searchTerm, setSearchTerm] = useState("")
+  const [searchFilter, setSearchFilter] = useState('');
+  const [machineFilter, setMachineFilter] = useState("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState("ALL")
+  const [sectionFilter, setSectionFilter] = useState("ALL")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   
-  const [addSection, setAddSection] = useState<Section>()
+  const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
+  const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
+
+  const [addSection, setAddSection] = useState<Maintenance>()
   const [isAddSectionDialogOpen, setIsAddSectionDialogOpen] = useState(false)
-  const [selectedSection, setSelectedSection] = useState<Section>()
+  const [selectedSection, setSelectedSection] = useState<Maintenance>()
   const [isEditSectionDialogOpen, setIsEditSectionDialogOpen] = useState(false)
 
-  const [addMaintenance, setAddMaintenance] = useState<MaintenancePlan>()
+  const [addMaintenance, setAddMaintenance] = useState<Maintenance>()
   const [isAddMaintenanceDialogOpen, setIsAddMaintenanceDialogOpen] = useState(false)
 
-  const [selectedMaintenance, setSelectedMaintenance] = useState<MaintenancePlan>()
+  const [selectedMaintenance, setSelectedMaintenance] = useState<Maintenance>()
   const [isEditMaintenanceDialogOpen, setIsEditMaintenanceDialogOpen] = useState(false)
   
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment>()
+  const [selectedSections, setSelectedSections] = useState<Section[]>(sections)
+
+  const fetchMachines = () => {
+    fetch(`/api/admin/ships/${vesselNo}/machine/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  };
 
   const fetchEquipments = () => {
-    fetch(`/api/admin/ships/${vesselNo}/maintenance?vesselNo=${vesselNo}`)
+    fetch(`/api/admin/ships/${vesselNo}/equipment/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setEquipments(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchSections = () => {
+    fetch(`/api/admin/ships/${vesselNo}/section/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setSections(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchMaintenances = () => {
+    fetch(`/api/admin/ships/${vesselNo}/maintenance?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMaintenanceData(data))
       .catch(err => console.error(err));
   };
 
@@ -75,7 +109,10 @@ export default function MaintenanceWorkManagementPage() {
       const user = requireAuth();
       setUserInfo(user);
 
+      fetchMaintenances();
+      fetchMachines();
       fetchEquipments();
+      fetchSections();
 
       setAddSection((prev: any) => ({ ...prev, vessel_no: vesselNo }));
       setAddMaintenance((prev: any) => ({ ...prev, vessel_no: vesselNo }));
@@ -83,40 +120,128 @@ export default function MaintenanceWorkManagementPage() {
       // Redirect handled by requireAuth
     }
   }, [])
+  
+  useEffect(() => {
+    let equipmentFiltered = equipments
+
+    if (machineFilter !== "ALL") {
+      equipmentFiltered = equipmentFiltered.filter((item) => item.machine_name === machineFilter)
+    }
+
+    setEquipmentFilteredData(equipmentFiltered)
+  }, [equipments, machineFilter])
+  
+  useEffect(() => {
+    let sectionFiltered = sections
+
+    if (machineFilter !== "ALL") {
+      sectionFiltered = sectionFiltered.filter((item) => item.machine_name === machineFilter)
+    }
+
+    if (equipmentFilter !== "ALL") {
+      sectionFiltered = sectionFiltered.filter((item) => item.equip_no === equipmentFilter)
+    }
+
+    setSectionFilteredData(sectionFiltered)
+  }, [sections, equipmentFilter, machineFilter])
 
   useEffect(() => {
-    let filtered = equipments
+    let filtered = maintenanceData
+
+    if (machineFilter !== "ALL") {
+      filtered = filterByMachine(filtered, machineFilter)
+    }
+
+    if (equipmentFilter !== "ALL") {
+      filtered = filterByEquipment(filtered, equipmentFilter)
+    }
+
+    if (sectionFilter !== "ALL") {
+      filtered = filterBySection(filtered, sectionFilter)
+    }
 
     if (searchTerm) {
-      const lowerKeyword = searchTerm.toLowerCase();
-
-      filtered = filtered.map(equipment => {
-        const filteredSections = equipment.children.map(section => {
-            const filteredItems = section.children.filter(plan =>
-              plan.plan_name.toLowerCase().includes(lowerKeyword)
-            );
-
-            return { ...section, children: filteredItems };
-          })
-          .filter(section => {
-            return (
-              section.section_name.toLowerCase().includes(lowerKeyword) || section.children.length > 0
-            );
-          });
-
-        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
-          return { ...equipment, children: filteredSections };
-        }
-
-        return null;
-      })
-      .filter((e) => e !== null);
+      filtered = filterBySearch(filtered, searchTerm)
     }
 
     setFilteredData(filtered)
-  }, [equipments, searchTerm])
+  }, [maintenanceData, machineFilter, equipmentFilter, sectionFilter, searchTerm])
+  
+  useEffect(() => {
+    let sectionFiltered = sections
+
+    if (selectedEquipment?.equip_no !== "ALL") {
+      sectionFiltered = sectionFiltered.filter((item) => item.equip_no === selectedEquipment?.equip_no)
+    }
+
+    setSelectedSections(sectionFiltered)
+  }, [selectedEquipment])
 
   if (!userInfo) return null
+
+  const filterByMachine = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.machine_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByMachine(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterByEquipment = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.equip_no?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByEquipment(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterBySection = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = `${item.equip_no}-${item.section_code}`?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySection(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+  
+  const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySearch(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
 
   const toggleExpanded = (id: string) => {
     const newExpanded = new Set(expandedItems)
@@ -150,130 +275,26 @@ export default function MaintenanceWorkManagementPage() {
   }
   
   const equipmentCount = equipments.length;
-  const sectionCount = equipments.reduce((acc, eq) => { 
-    return acc + eq.children.length; 
-  }, 0);
-  const maintenanceCount = equipments.reduce((acc, eq) => { 
-    const childrenCount = eq.children.reduce((sectionAcc, section) => {
-      return sectionAcc + section.children.length;
+  const sectionCount = sections.length;
+  const maintenanceCount = maintenanceData.reduce((childAcc1, children1) => { 
+    const childrenCount1 = children1.children.reduce((childAcc2, children2) => {
+      const childrenCount2 = children2.children.reduce((childAcc3, children3) => {
+        return childAcc3 + (children3.children ? children3.children?.length: 0);
+      }, 0);
+      return childAcc2 + (childrenCount2 === 0 ? children2.children?.length : childrenCount2);
     }, 0);
-    return acc + childrenCount; 
+    return childAcc1 + childrenCount1; 
   }, 0);
 
-  const renderMaintenance = (parent: Section, level = 2) => {
-    return parent.children.map((item) => (
-      <div key={`${item.equip_no}-${item.section_code}-${item.plan_code}`} className={`${level > 0 ? "ml-6" : ""}`}>
-        <Collapsible open={expandedItems.has(`${item.equip_no}-${item.section_code}-${item.plan_code}`)} onOpenChange={() => toggleExpanded(`${item.equip_no}-${item.section_code}-${item.plan_code}`)}>
-          <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
-            <div className="flex-1 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Wrench className="w-5 h-5 text-orange-600" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{item.plan_name}</span>
-                      <span className="text-sm text-gray-500">({item.plan_code})</span>
-                      {item.critical && getCriticalBadge(item.critical)}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                      {item.interval && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {getCycleText(item.interval, item.interval_term)}
-                        </span>
-                      )}
-                      {item.manager && <span>담당: {item.manager}</span>}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {item.due_date && (
-                  <span className="text-sm text-gray-500">다음: {item.due_date}</span>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleEditMaintenanceDialogOpen(item)} 
-                  style={{cursor: 'pointer'}}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Collapsible>
-      </div>
-    ))
-  }
-
-  const renderSection =  (parent: Equipment, level = 1) => {
-    return parent.children.map((item) => (
-      <div key={`${item.equip_no}-${item.section_code}`} className={`${level > 0 ? "ml-6" : ""}`}>
-        <Collapsible open={expandedItems.has(`${item.equip_no}-${item.section_code}`)} onOpenChange={() => toggleExpanded(`${item.equip_no}-${item.section_code}`)}>
-          <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
-            {item.children && item.children.length > 0 && (
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
-                  {expandedItems.has(`${item.equip_no}-${item.section_code}`) ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-            )}
-
-            <div className="flex-1 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <FolderTree className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{item.section_name}</span>
-                      <span className="text-sm text-gray-500">({item.section_code})</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {item.due_date && (
-                  <span className="text-sm text-gray-500">다음: {item.due_date}</span>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleEditSectionDialogOpen(item)} 
-                  style={{cursor: 'pointer'}}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {item.children && item.children.length > 0 && (
-            <CollapsibleContent>
-              <div className="ml-4 border-l-2 border-gray-200 pl-4">
-                {renderMaintenance(item, level + 1)}
-              </div>
-            </CollapsibleContent>
-          )}
-        </Collapsible>
-      </div>
-    ))
-  }
-
-  const renderEquipment =  (items: Equipment[], level = 0) => {
+  const renderMaintenanceTree = (items: Maintenance[], level = 0) => {
     return items.map((item) => (
-      <div key={item.equip_no} className={`${level > 0 ? "ml-6" : ""}`}>
-        <Collapsible open={expandedItems.has(item.equip_no)} onOpenChange={() => toggleExpanded(item.equip_no)}>
+      <div key={item.key} className={`${level > 0 ? "ml-6" : ""}`}>
+        <Collapsible open={expandedItems.has(item.key || '')} onOpenChange={() => toggleExpanded(item.key || '')}>
           <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
             {item.children && item.children.length > 0 && (
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
-                  {expandedItems.has(item.equip_no) ? (
+                  {expandedItems.has(item.key || '') ? (
                     <ChevronDown className="w-4 h-4" />
                   ) : (
                     <ChevronRight className="w-4 h-4" />
@@ -285,22 +306,70 @@ export default function MaintenanceWorkManagementPage() {
             <div className="flex-1 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <FolderTree className="w-5 h-5 text-blue-600" />
+                  {item.type === "EQUIPMENT" ? (
+                    <FolderTree className="w-5 h-5 text-blue-600" />
+                  ) : (
+                    <Wrench className="w-5 h-5 text-orange-600" />
+                  )}
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{item.equip_name}</span>
-                      <span className="text-sm text-gray-500">({item.equip_no})</span>
+                      <span className="font-medium">{`${item.name}`}</span>
+                      <span className="text-sm text-gray-500">({item.id})</span>
+                      {item.type === "TASK" && (
+                        item.critical && getCriticalBadge(item.critical)
+                      )}
                     </div>
+                    {item.type === "TASK" && (
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                        {item.interval && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {getCycleText(item.interval, item.interval_term)}
+                          </span>
+                        )}
+                        {item.manager && <span>담당: {item.manager}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+              {item.type === "SECTION" && (
+                <div className="flex items-center gap-2">
+                  {item.due_date && (
+                    <span className="text-sm text-gray-500">다음: {item.due_date}</span>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleEditSectionDialogOpen(item)} 
+                    style={{cursor: 'pointer'}}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              {item.type === "TASK" && (
+                <div className="flex items-center gap-2">
+                  {item.due_date && (
+                    <span className="text-sm text-gray-500">다음: {item.due_date}</span>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleEditMaintenanceDialogOpen(item)} 
+                    style={{cursor: 'pointer'}}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
           {item.children && item.children.length > 0 && (
             <CollapsibleContent>
               <div className="ml-4 border-l-2 border-gray-200 pl-4">
-                {renderSection(item, level + 1)}
+                {renderMaintenanceTree(item.children, level + 1)}
               </div>
             </CollapsibleContent>
           )}
@@ -316,40 +385,65 @@ export default function MaintenanceWorkManagementPage() {
     setSelectedEquipment(filtered[0]);
   }
 
-  const addSections = (item: any) => {
-    return equipments.map((eq) => {
-      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
-        const updatedSections = [...eq.children, item];
-        return {...eq, children: updatedSections }
+  const addSections = (item: any) : Maintenance[] => {
+    return maintenanceData.map((children1) => {
+      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+        const updatedEquipments = children1.children.map((eq) => {
+          if (eq.equip_no === item.equip_no) {
+            const updatedSections = [...eq.children, item];
+            return {...eq, children: updatedSections }
+          }
+        });
+        
+        return {...children1, children: updatedEquipments }
+      }
+      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
+        const updatedSections = [...children1.children, item];
+        return {...children1, children: updatedSections }
       }
 
-      return eq;
+      return children1;
     });
   }
 
-  const updateSections = (item: any) => {
-    return equipments.map((eq) => {
-      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
-        const updatedSections = eq.children.map((section) => {
-          if (section.section_code === item.section_code) {
-            return { ...section,  
-              vessel_no: item.vessel_no,
-              equip_no: item.equip_no,
-              section_code: item.section_code,
-              section_name: item.section_name,
-              description: item.description,
-              due_date: item.due_date,
-              maintenance_count: item.maintenance_count 
-            };
-          }
-
-          return section;
-        });
-
-        return {...eq, children: updatedSections }
+  const updateSectionsByEquipment = (parent: Maintenance, item: any) => {
+    const updatedSections = parent.children.map((section) => {
+      if (section.section_code === item.section_code) {
+        return { ...section,  
+          vessel_no: item.vessel_no,
+          equip_no: item.equip_no,
+          section_code: item.section_code,
+          section_name: item.section_name,
+          description: item.description,
+          due_date: item.due_date,
+          maintenance_count: item.maintenance_count 
+        };
       }
 
-      return eq;
+      return section;
+    });
+
+    return {...parent, children: updatedSections }
+  }
+
+  const updateSections = (item: any) : Maintenance[] => {
+    return maintenanceData.map((children1) => {
+      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+        const updatedEquipments = children1.children.map((eq) => {
+          if (eq.equip_no === item.equip_no) {
+            return updateSectionsByEquipment(children1, item);
+          }
+
+          return eq;
+        });
+        
+        return {...children1, children: updatedEquipments }
+      } 
+      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
+        return updateSectionsByEquipment(children1, item);
+      }
+
+      return children1;
     });
   }
 
@@ -375,7 +469,7 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
-      setEquipments(addSections(addSection));
+      setMaintenanceData(addSections(addSection));
       setIsAddSectionDialogOpen(false);
     } else {
       alert(data.message);
@@ -405,7 +499,7 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
-      setEquipments(updateSections(selectedSection));
+      setMaintenanceData(updateSections(selectedSection));
       setIsEditSectionDialogOpen(false);
     } else {
       alert(data.message);
@@ -440,52 +534,68 @@ export default function MaintenanceWorkManagementPage() {
     });
   }
 
-  const updateMaintenances = (item: any) => {
-    return equipments.map((eq) => {
-      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
-        const updatedSections = eq.children.map((section) => {
-          if (section.section_code === item.section_code) {
-            const updatedMaintenances = section.children.map((plan) => {
-              if (plan.plan_code === item.plan_code) {
-                return { ...plan,  
-                  vessel_no: item.vessel_no,
-                  vessel_name: item.vessel_name,
-                  equip_no: item.equip_no,
-                  equip_name: item.equip_name,
-                  section_code: item.section_code,
-                  plan_code: item.plan_code,
-                  plan_name: item.plan_name,
-                  manufacturer: item.manufacturer,
-                  model: item.model,
-                  specifications: item.specifications,
-                  lastest_date: item.lastest_date,
-                  workers: item.workers,
-                  work_hours: item.work_hours,
-                  interval: item.interval,
-                  interval_term: item.interval_term,
-                  location: item.location,
-                  self_maintenance: item.self_maintenance,
-                  manager: item.manager,
-                  important_items: item.important_items,
-                  instructions: item.instructions,
-                  critical: item.critical,
-                  due_date: item.due_date
-                };
-              }
-
-              return plan;
-            });
-
-            return {...section, children: updatedMaintenances }
+  const updateMaintenancesByEquipment = (parent: Maintenance, item: any) => {
+    const updatedSections = parent.children.map((section) => {
+      if (section.section_code === item.section_code) {
+        const updatedMaintenances = section.children.map((plan) => {
+          if (plan.plan_code === item.plan_code) {
+            return { ...plan,  
+              vessel_no: item.vessel_no,
+              vessel_name: item.vessel_name,
+              equip_no: item.equip_no,
+              equip_name: item.equip_name,
+              section_code: item.section_code,
+              section_name: item.section_name,
+              plan_code: item.plan_code,
+              plan_name: item.plan_name,
+              manufacturer: item.manufacturer,
+              model: item.model,
+              specifications: item.specifications,
+              lastest_date: item.lastest_date,
+              workers: item.workers,
+              work_hours: item.work_hours,
+              interval: item.interval,
+              interval_term: item.interval_term,
+              location: item.location,
+              self_maintenance: item.self_maintenance,
+              manager: item.manager,
+              important_items: item.important_items,
+              instructions: item.instructions,
+              critical: item.critical,
+              due_date: item.due_date
+            };
           }
 
-          return section;
+          return plan;
         });
 
-        return {...eq, children: updatedSections }
+        return {...section, children: updatedMaintenances };
       }
 
-      return eq;
+      return section;
+    });
+
+    return {...parent, children: updatedSections }
+  }
+
+  const updateMaintenances = (item: any) : Maintenance[] => {
+    return maintenanceData.map((children1) => {
+      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+        const updatedEquipments = children1.children.map((eq) => {
+          if (eq.equip_no === item.equip_no) {
+            return updateMaintenancesByEquipment(children1, item);
+          }
+
+          return eq;
+        });
+
+        return {...children1, children: updatedEquipments }
+      }
+      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
+        return updateMaintenancesByEquipment(children1, item);
+      }
+
+      return children1;
     });
   }
 
@@ -527,27 +637,29 @@ export default function MaintenanceWorkManagementPage() {
 
 
   const handleUpdateMaintenance = async () => {
-    const updatedData = {
-      ...selectedMaintenance,
-      regist_user: userInfo.account_no,
-      modify_user: userInfo.account_no,
-    };
-    
-    const res = await fetch(`/api/admin/ships/${vesselNo}/maintenance/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedData),
-    });
+    if (selectedMaintenance) {
+      const updatedData = {
+        ...selectedMaintenance,
+        regist_user: userInfo.account_no,
+        modify_user: userInfo.account_no,
+      };
+      
+      const res = await fetch(`/api/admin/ships/${vesselNo}/maintenance/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      alert("저장이 완료되었습니다.");
+      if (data.success) {
+        alert("저장이 완료되었습니다.");
 
-      setEquipments(updateMaintenances(selectedMaintenance));
-      setIsEditMaintenanceDialogOpen(false);
-    } else {
-      alert(data.message);
+        setMaintenanceData(updateMaintenances(selectedMaintenance));
+        setIsEditMaintenanceDialogOpen(false);
+      } else {
+        alert(data.message);
+      }
     }
   }
 
@@ -611,7 +723,7 @@ export default function MaintenanceWorkManagementPage() {
                           </SelectTrigger>
                           <SelectContent>
                             {equipments.map(eq => (
-                              <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                              <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -683,7 +795,7 @@ export default function MaintenanceWorkManagementPage() {
                           </SelectTrigger>
                           <SelectContent>
                             {equipments.map(eq => (
-                              <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                              <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -697,8 +809,8 @@ export default function MaintenanceWorkManagementPage() {
                             <SelectValue placeholder="섹션 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            {selectedEquipment?.children.map(section => (
-                              <SelectItem value={section.section_code}>{section.section_name}</SelectItem>
+                            {selectedSections.map(section => (
+                              <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_code}>{section.section_name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -721,10 +833,10 @@ export default function MaintenanceWorkManagementPage() {
                             <SelectValue placeholder="단위 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="HOUR">HOUR</SelectItem>
-                            <SelectItem value="DAY">DAY</SelectItem>
-                            <SelectItem value="MONTH">MONTH</SelectItem>
-                            <SelectItem value="YEAR">YEAR</SelectItem>
+                            <SelectItem key="HOUR" value="HOUR">HOUR</SelectItem>
+                            <SelectItem key="DAY" value="DAY">DAY</SelectItem>
+                            <SelectItem key="MONTH" value="MONTH">MONTH</SelectItem>
+                            <SelectItem key="YEAR" value="YEAR">YEAR</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -755,9 +867,9 @@ export default function MaintenanceWorkManagementPage() {
                             <SelectValue placeholder="위치 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="D">DOCK</SelectItem>
-                            <SelectItem value="P">IN PORT</SelectItem>
-                            <SelectItem value="S">SAILING</SelectItem>
+                            <SelectItem key="D" value="D">DOCK</SelectItem>
+                            <SelectItem key="P" value="P">IN PORT</SelectItem>
+                            <SelectItem key="S" value="S">SAILING</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -788,10 +900,10 @@ export default function MaintenanceWorkManagementPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="NORMAL">일상정비</SelectItem>
-                            <SelectItem value="CRITICAL">Critical</SelectItem>
-                            <SelectItem value="DOCK">Dock</SelectItem>
-                            <SelectItem value="CMS">CMS</SelectItem>
+                            <SelectItem key="NORMAL" value="NORMAL">일상정비</SelectItem>
+                            <SelectItem key="CRITICAL" value="CRITICAL">Critical</SelectItem>
+                            <SelectItem key="DOCK" value="DOCK">Dock</SelectItem>
+                            <SelectItem key="CMS" value="CMS">CMS</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -875,13 +987,47 @@ export default function MaintenanceWorkManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
+                <Select value={machineFilter} onValueChange={setMachineFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 기계</SelectItem>
+                    {machines.map((machine) => (
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 장비</SelectItem>
+                    {equipmentFilteredData.map((equipment) => (
+                      <SelectItem key={equipment.equip_no} value={equipment.equip_no}>{equipment.equip_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 섹션</SelectItem>
+                    {sectionFilteredData.map((section) => (
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{section.section_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="장비명, 모델명, 제조사로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>
@@ -900,7 +1046,7 @@ export default function MaintenanceWorkManagementPage() {
               <CardDescription>계층적 구조로 관리되는 유지보수 작업 목록</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">{renderEquipment(filteredData)}</div>
+              <div className="space-y-2">{renderMaintenanceTree(filteredData)}</div>
 
               {filteredData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
@@ -951,7 +1097,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {equipments.map(eq => (
-                          <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                          <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1023,7 +1169,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {equipments.map(eq => (
-                          <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                          <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1039,8 +1185,8 @@ export default function MaintenanceWorkManagementPage() {
                         <SelectValue placeholder="섹션 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        {selectedEquipment?.children.map(section => (
-                          <SelectItem value={section.section_code}>{section.section_name}</SelectItem>
+                        {selectedSections?.map(section => (
+                          <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_code}>{section.section_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1065,10 +1211,10 @@ export default function MaintenanceWorkManagementPage() {
                         <SelectValue placeholder="단위 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="HOUR">HOUR</SelectItem>
-                        <SelectItem value="DAY">DAY</SelectItem>
-                        <SelectItem value="MONTH">MONTH</SelectItem>
-                        <SelectItem value="YEAR">YEAR</SelectItem>
+                        <SelectItem key="HOUR" value="HOUR">HOUR</SelectItem>
+                        <SelectItem key="DAY" value="DAY">DAY</SelectItem>
+                        <SelectItem key="MONTH" value="MONTH">MONTH</SelectItem>
+                        <SelectItem key="YEAR" value="YEAR">YEAR</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1102,9 +1248,9 @@ export default function MaintenanceWorkManagementPage() {
                         <SelectValue placeholder="위치 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="D">DOCK</SelectItem>
-                        <SelectItem value="P">IN PORT</SelectItem>
-                        <SelectItem value="S">SAILING</SelectItem>
+                        <SelectItem key="D" value="D">DOCK</SelectItem>
+                        <SelectItem key="P" value="P">IN PORT</SelectItem>
+                        <SelectItem key="S" value="S">SAILING</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1138,10 +1284,10 @@ export default function MaintenanceWorkManagementPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="NORMAL">일상정비</SelectItem>
-                        <SelectItem value="CRITICAL">Critical</SelectItem>
-                        <SelectItem value="DOCK">Dock</SelectItem>
-                        <SelectItem value="CMS">CMS</SelectItem>
+                        <SelectItem key="NORMAL" value="NORMAL">일상정비</SelectItem>
+                        <SelectItem key="CRITICAL" value="CRITICAL">Critical</SelectItem>
+                        <SelectItem key="DOCK" value="DOCK">Dock</SelectItem>
+                        <SelectItem key="CMS" value="CMS">CMS</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

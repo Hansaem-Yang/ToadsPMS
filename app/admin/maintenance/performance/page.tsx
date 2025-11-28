@@ -47,6 +47,7 @@ export default function MaintenanceWorkManagementPage() {
   const [sections, setSections] = useState<Section[]>([])
   const [sectionFilteredData, setSectionFilteredData] = useState<Section[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [searchFilter, setSearchFilter] = useState('');
   const [shipFilter, setShipFilter] = useState("ALL")
   const [machineFilter, setMachineFilter] = useState("ALL")
   const [equipmentFilter, setEquipmentFilter] = useState("ALL")
@@ -318,13 +319,13 @@ export default function MaintenanceWorkManagementPage() {
 
   const renderMaintenanceTree = (items: Maintenance[], level = 0) => {
     return items.map((item) => (
-      <div key={item.id} className={`${level > 0 ? "ml-6" : ""}`}>
-        <Collapsible open={expandedItems.has(item.id)} onOpenChange={() => toggleExpanded(item.id)}>
+      <div key={item.key} className={`${level > 0 ? "ml-6" : ""}`}>
+        <Collapsible open={expandedItems.has(item.key || '')} onOpenChange={() => toggleExpanded(item.key || '')}>
           <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
             {item.children && item.children.length > 0 && (
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
-                  {expandedItems.has(item.id) ? (
+                  {expandedItems.has(item.key || '') ? (
                     <ChevronDown className="w-4 h-4" />
                   ) : (
                     <ChevronRight className="w-4 h-4" />
@@ -489,8 +490,9 @@ export default function MaintenanceWorkManagementPage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="작업명, 작업코드로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>

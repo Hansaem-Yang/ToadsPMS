@@ -28,6 +28,7 @@ export interface Maintenance {
     status?: string;
     days_until?: number;
     extension_days_until?: number;
-    type: string;
+    type?: string;
+    key?: string;
     children: Maintenance[];
 }

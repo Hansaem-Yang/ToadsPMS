@@ -287,13 +287,13 @@ export default function MaintenanceWorkManagementPage() {
 
   const renderMaintenanceTree = (items: MaintenanceExtension[], level = 0) => {
     return items.map((item) => (
-      <div key={item.id} className={`${level > 0 ? "ml-6" : ""}`}>
-        <Collapsible open={expandedItems.has(item.id)} onOpenChange={() => toggleExpanded(item.id)}>
+      <div key={item.key} className={`${level > 0 ? "ml-6" : ""}`}>
+        <Collapsible open={expandedItems.has(item.key || '')} onOpenChange={() => toggleExpanded(item.key || '')}>
           <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
             {item.children && item.children.length > 0 && (
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
-                  {expandedItems.has(item.id) ? (
+                  {expandedItems.has(item.key || '') ? (
                     <ChevronDown className="w-4 h-4" />
                   ) : (
                     <ChevronRight className="w-4 h-4" />

@@ -69,14 +69,14 @@ export default function InventoryTransactionsPage() {
   const [warehouseFilter, setWarehouseFilter] = useState("")
 
   const fetchMachines = (vesselNo: string) => {
-    fetch(`/api/admin/common/machine?vesselNo=${vesselNo}`)
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setMachines(data))
       .catch(err => console.error(err));
   }
 
   const fetchWarehouses = (vesselNo: string) => {
-    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+    fetch(`/api/common/warehouse/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setWarehouses(data))
       .catch(err => console.error(err));

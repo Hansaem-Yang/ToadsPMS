@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Machine } from '@/types/vessel/machine';
+import { Machine } from '@/types/common/machine';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
             , machine_name
          from [machine]
         where vessel_no = @vesselNo
-        order by sort_no`,
+        order by vessel_no, sort_no`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

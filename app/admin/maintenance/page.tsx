@@ -70,14 +70,14 @@ export default function MaintenanceWorkManagementPage() {
   };
 
   const fetchMachines = (vesselNo: string) => {
-    fetch(`/api/admin/ships/${vesselNo}/machine/code?vesselNo=${vesselNo}`)
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setMachines(data))
       .catch(err => console.error(err));
   };
 
   const fetchEquipments = (vesselNo: string) => {
-    fetch(`/api/admin/ships/${vesselNo}/equipment/code?vesselNo=${vesselNo}`)
+    fetch(`/api/common/equipment/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setEquipments(data))
       .catch(err => console.error(err));

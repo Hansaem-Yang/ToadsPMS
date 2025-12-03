@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Equipment } from '@/types/vessel/equipment';
+import { Section } from '@/types/common/section';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -8,13 +8,17 @@ export async function GET(req: Request) {
 
   try {
     // DB에서 데쉬보드 정보 확인
-    const items: Equipment[] = await query(
-      `select vessel_no
-            , equip_no
-            , equip_name
-            , machine_name
-         from [equipment]
-        where vessel_no = @vesselNo`,
+    const items: Section[] = await query(
+      `select a.vessel_no
+            , a.equip_no
+            , b.machine_name
+            , a.section_code
+            , a.section_name
+         from [section] as a
+        inner join [equipment] as b
+           on a.vessel_no = b.vessel_no
+          and a.equip_no = b.equip_no
+        where a.vessel_no = @vesselNo`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

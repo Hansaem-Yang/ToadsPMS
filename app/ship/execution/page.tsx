@@ -16,9 +16,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label"
 import { Search, Settings, Wrench, Calendar, AlertTriangle, CheckCircle, Plus, PlusCircle } from "lucide-react"
 import { Machine } from '@/types/common/machine'; // ✅ interface import
+import { Equipment } from '@/types/common/equipment'; // ✅ interface import
+import { Section } from '@/types/common/section'; // ✅ interface import
 import { Inventory } from '@/types/vessel/inventory'; // ✅ interface import
 import { UsedParts } from '@/types/vessel/used_parts'; // ✅ interface import
-import { Equipment } from '@/types/dashboard/equipment';
 import { Maintenance } from '@/types/dashboard/maintenance';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
 
@@ -31,37 +32,10 @@ export default function MaintenanceExecutionPage() {
     equip_no: "",
     equip_name: "",
     machine_name: "",
+    category: "",
     section_code: "",
     section_name: "",
-    plan_code: "",
-    plan_name: "",
-    category: "",
-    manufacturer: "",
-    model: "",
-    specifications: "",
-    lastest_date: "",
-    workers: 0,
-    work_hours: 0,
-    interval: 0,
-    interval_term: "",
-    location: "",
-    self_maintenance: "",
-    manager: "",
-    critical: "",
-    due_date: "",
-    next_due_date: "",
-    status: "",
-    days_until: 0,
-    extension_date: "",
-    extension_days_until: 0,
-    work_details: "",
-    delay_reason: "",
-    used_parts: [],
-    used_partnames: "",
-    regist_date: "",
-    regist_user: '',
-    modify_date: "",
-    modify_user: '',
+    children: []
   };
 
   
@@ -92,15 +66,22 @@ export default function MaintenanceExecutionPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [params, setParams] = useState<any>(null)
   const [machines, setMachines] = useState<Machine[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [equipmentFilteredData, setEquipmentFilteredData] = useState<Equipment[]>([])
+  const [sections, setSections] = useState<Section[]>([])
+  const [sectionFilteredData, setSectionFilteredData] = useState<Section[]>([])
   const [inventorys, setInventorys] = useState<Inventory[]>([])
   const [filteredInventorys, setFilteredInventorys] = useState(inventorys)
   const [selectedUsedWork, setSelectedUsedWork] = useState<any>(null)
   const [isSingle, setIsSingle] = useState<boolean>(false)
 
-  const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
+  const [equipmentWorks, setEquipmentWorks] = useState<Maintenance[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("ALL")
+  const [machineFilter, setMachineFilter] = useState("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState("ALL")
+  const [sectionFilter, setSectionFilter] = useState("ALL")
   const [selectedWork, setSelectedWork] = useState<any>(null)
   const [isExecutionDialogOpen, setIsExecutionDialogOpen] = useState(false)
   const [executionResult, setExecutionResult] = useState<Maintenance>(initialMaintenanceItem)
@@ -123,11 +104,25 @@ export default function MaintenanceExecutionPage() {
   const today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
 
   const fetchMachines = (vesselNo: string) => {
-    fetch(`/api/admin/common/machine?vesselNo=${vesselNo}`)
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setMachines(data))
       .catch(err => console.error(err));
   }
+
+  const fetchEquipments = (vesselNo: string) => {
+    fetch(`/api/common/equipment/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setEquipments(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchSections = (vesselNo: string) => {
+    fetch(`/api/common/section/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setSections(data))
+      .catch(err => console.error(err));
+  };
   
   const fetchEquipmentTasks = (vesselNo: string) => {
     fetch(`/api/ship/execution/all?vesselNo=${vesselNo}`)
@@ -152,6 +147,8 @@ export default function MaintenanceExecutionPage() {
       setUserInfo(user)
 
       fetchMachines(user.ship_no)
+      fetchEquipments(user.ship_no)
+      fetchSections(user.ship_no)
       fetchEquipmentTasks(user.ship_no)
       
       if (equipName) {
@@ -167,8 +164,19 @@ export default function MaintenanceExecutionPage() {
       
     if (params) {
       setSearchTerm(params);
-
       setParams('');
+    }
+
+    if (machineFilter !== "ALL") {
+      filtered = filterByMachine(filtered, machineFilter)
+    }
+
+    if (equipmentFilter !== "ALL") {
+      filtered = filterByEquipment(filtered, equipmentFilter)
+    }
+
+    if (sectionFilter !== "ALL") {
+      filtered = filterBySection(filtered, sectionFilter)
     }
 
     if (searchTerm) {
@@ -177,7 +185,7 @@ export default function MaintenanceExecutionPage() {
       filtered = filtered.map(equipment => {
         const filteredSections = equipment.children.filter(plan => {
             return (
-              plan.plan_name.toLowerCase().includes(lowerKeyword)
+              plan.plan_name?.toLowerCase().includes(lowerKeyword)
             );
           });
 
@@ -251,8 +259,56 @@ export default function MaintenanceExecutionPage() {
   }, [isBulkExecutionDialogOpen, isExecutionDialogOpen])
 
   if (!userInfo) return null
+  
+  const filterByMachine = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.machine_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByMachine(item.children, term) : []
 
-  const getStatusBadge = (status: string) => {
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterByEquipment = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.equip_no?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByEquipment(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterBySection = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.section_code?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySection(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
@@ -282,7 +338,7 @@ export default function MaintenanceExecutionPage() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status?: string) => {
     switch (status) {
       case "DELAYED":
         return <AlertTriangle className="w-4 h-4 text-red-600" />
@@ -297,8 +353,79 @@ export default function MaintenanceExecutionPage() {
     }
   }
 
-  const handleExecuteTask = (equipment: any, task: any) => {
-    setSelectedWork({ ...task, equipment: equipment.name })
+  const renderMaintenance = (items: Maintenance[]) => {
+    return items.map((item) => (
+      <div key={`${item.equip_no}-${item.section_code}`} className="border rounded-lg p-4 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-semibold">{item.section_name}</h4>
+                  <span className="text-sm text-gray-500">({item.section_code})</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4">
+          {renderMaintenancePlan(item.children)}
+        </div>
+      </div>
+    ))
+  }
+
+  const renderMaintenancePlan = (items: Maintenance[]) => {
+    return items.map((item) => (
+      <div key={`${item.equip_no}-${item.section_code}-${item.plan_code}`} className="border rounded-lg p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <Checkbox
+              id={`${item.equip_no}-${item.section_code}-${item.plan_code}`}
+              checked={selectedWorks.includes(`${item.equip_no}-${item.section_code}-${item.plan_code}`)}
+              onCheckedChange={() => handleTaskSelection(`${item.equip_no}-${item.section_code}-${item.plan_code}`, item.equip_name, item)}
+              disabled={item.status === "COMPLATE"}
+              className="mt-1"
+            />
+            <div className="flex items-center gap-2">
+              {getStatusIcon(item.status)}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-semibold">{item.plan_name}</h4>
+                  <span className="text-sm text-gray-500">({item.plan_code})</span>
+                  {item.critical && getCriticalBadge(item.critical)}
+                  {getStatusBadge(item.status)}
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{item.specifications}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>예정일: {item.extension_date ? item.extension_date : item.due_date}</span>
+                  <span>담당자: {item.manager}</span>
+                  <span>작업자수: {item.workers}</span>
+                  <span>작업자별 작업시간: {item.work_hours}시간</span>
+                  {item.status === "COMPLATE" && (
+                    <span className="text-green-600">완료일: {item.lastest_date}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          {item.status !== "COMPLATE" && item.status === "DELAYED" && (
+            <Button onClick={() => handleExtension(item)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
+              연장 신청
+            </Button>
+          )}
+          {item.status !== "COMPLATE" && (
+            <Button onClick={() => handleExecuteTask(item)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
+              개별 실행
+            </Button>
+          )}
+        </div>
+      </div>
+    ))
+  }
+
+  const handleExecuteTask = (task: any) => {
+    setSelectedWork({ ...task, equipment: task.equip_name })
     setExecutionResult(task);
     setIsExecutionDialogOpen(true)
   }
@@ -341,8 +468,8 @@ export default function MaintenanceExecutionPage() {
     setIsExecutionDialogOpen(false)
   }
 
-  const handleExtension = (equipment: any, task: any) => {
-    setSelectedExtension({ ...task, equipment: equipment.name });
+  const handleExtension = (task: any) => {
+    setSelectedExtension({ ...task, equipment: task.equip_name });
     setExtensionResult(task);
     setIsExtensionDialogOpen(true);
 
@@ -425,7 +552,7 @@ export default function MaintenanceExecutionPage() {
         .map((task) => ({
           ...task,
           equipmentName: eq.equip_name,
-          actualHours: task.work_hours.toString(),
+          actualHours: task.work_hours?.toString(),
           used_parts: [],
           regist_user: userInfo.account_no,
           modify_user: userInfo.account_no,
@@ -630,6 +757,39 @@ export default function MaintenanceExecutionPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
+                <Select value={machineFilter} onValueChange={setMachineFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 기계</SelectItem>
+                    {machines.map((machine) => (
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 장비</SelectItem>
+                    {equipmentFilteredData.map((equipment) => (
+                      <SelectItem key={equipment.equip_no} value={equipment.equip_no}>{equipment.equip_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 섹션</SelectItem>
+                    {sectionFilteredData.map((section) => (
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{section.section_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -641,7 +801,7 @@ export default function MaintenanceExecutionPage() {
                     />
                   </div>
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -651,7 +811,7 @@ export default function MaintenanceExecutionPage() {
                     <SelectItem value="DECK">Deck</SelectItem>
                     <SelectItem value="ETC">Etc</SelectItem>
                   </SelectContent>
-                </Select>
+                </Select> */}
               </div>
             </CardContent>
           </Card>
@@ -667,8 +827,8 @@ export default function MaintenanceExecutionPage() {
                         <Settings className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">{eq.equip_name}</CardTitle>
-                        <p className="text-gray-600">{eq.category}</p>
+                        <CardTitle className="text-xl">{eq.machine_name}</CardTitle>
+                        <p className="text-gray-600">{eq.equip_name}</p>
                       </div>
                     </div>
                     {selectedWorks.length > 0 && (
@@ -686,52 +846,7 @@ export default function MaintenanceExecutionPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {eq.children.map((task) => (
-                      <div key={`${task.equip_no}-${task.section_code}-${task.plan_code}`} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            <Checkbox
-                              id={`${task.equip_no}-${task.section_code}-${task.plan_code}`}
-                              checked={selectedWorks.includes(`${task.equip_no}-${task.section_code}-${task.plan_code}`)}
-                              onCheckedChange={() => handleTaskSelection(`${task.equip_no}-${task.section_code}-${task.plan_code}`, eq.equip_name, task)}
-                              disabled={task.status === "COMPLATE"}
-                              className="mt-1"
-                            />
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(task.status)}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-semibold">{task.plan_name}</h4>
-                                  <span className="text-sm text-gray-500">({task.plan_code})</span>
-                                  {task.critical && getCriticalBadge(task.critical)}
-                                  {getStatusBadge(task.status)}
-                                </div>
-                                <p className="text-sm text-gray-600 mb-2">{task.specifications}</p>
-                                <div className="flex items-center gap-4 text-sm text-gray-500">
-                                  <span>예정일: {task.extension_date ? task.extension_date : task.due_date}</span>
-                                  <span>담당자: {task.manager}</span>
-                                  <span>작업자수: {task.workers}</span>
-                                  <span>작업자별 작업시간: {task.work_hours}시간</span>
-                                  {task.status === "COMPLATE" && (
-                                    <span className="text-green-600">완료일: {task.lastest_date}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          {task.status !== "COMPLATE" && task.status === "DELAYED" && (
-                            <Button onClick={() => handleExtension(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
-                              연장 신청
-                            </Button>
-                          )}
-                          {task.status !== "COMPLATE" && (
-                            <Button onClick={() => handleExecuteTask(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
-                              개별 실행
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    {renderMaintenance(eq.children)}
                   </div>
                 </CardContent>
               </Card>
@@ -762,7 +877,7 @@ export default function MaintenanceExecutionPage() {
                                 type="number"
                                 placeholder="시간"
                                 value={task.work_hours}
-                                onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_hours", e.target.value)}
+                                onChange={(e) => updateTaskData(task.equip_no, task.section_code || '', task.plan_code || '', "work_hours", e.target.value)}
                                 className="text-sm"
                               />
                             </div>
@@ -796,7 +911,7 @@ export default function MaintenanceExecutionPage() {
                             <Textarea
                               placeholder="이 작업에 대한 내용..."
                               value={task.work_details}
-                              onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_details", e.target.value)}
+                              onChange={(e) => updateTaskData(task.equip_no, task.section_code || '', task.plan_code || '', "work_details", e.target.value)}
                               rows={2}
                               className="text-sm"
                             />
@@ -807,7 +922,7 @@ export default function MaintenanceExecutionPage() {
                               <Textarea
                                 placeholder="이 작업에 대한 지연 사유..."
                                 value={task.delay_reason}
-                                onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "delay_reason", e.target.value)}
+                                onChange={(e) => updateTaskData(task.equip_no, task.section_code || '', task.plan_code || '', "delay_reason", e.target.value)}
                                 rows={2}
                                 className="text-sm"
                               />

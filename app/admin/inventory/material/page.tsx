@@ -92,21 +92,21 @@ export default function PartsManagementPage() {
   const [excelData, setExcelData] = useState<ExcelData[]>([]);
   
   const fetchVesselCodes = () => {
-    fetch(`/api/admin/common/vessel`)
+    fetch(`/api/common/vessel/code`)
       .then(res => res.json())
       .then(data => setVesselCodes(data))
       .catch(err => console.error(err));
   };
   
   const fetchMaterialTypes = () => {
-    fetch(`/api/admin/common/material_type`)
+    fetch(`/api/common/material_type/code`)
       .then(res => res.json())
       .then(data => setMaterialTypes(data))
       .catch(err => console.error(err));
   };
   
   const fetchMaterialUnits = () => {
-    fetch(`/api/admin/common/material_unit`)
+    fetch(`/api/common/material_unit/code`)
       .then(res => res.json())
       .then(data => setMaterialUnits(data))
       .catch(err => console.error(err));

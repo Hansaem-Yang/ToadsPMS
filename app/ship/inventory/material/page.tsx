@@ -72,21 +72,21 @@ export default function InitialStockPage() {
   const [excelData, setExcelData] = useState<ExcelData[]>([]);
 
   const fetchMaterialTypes = () => {
-    fetch(`/api/admin/common/material_type`)
+    fetch(`/api/common/material_type/code`)
       .then(res => res.json())
       .then(data => setMaterialTypes(data))
       .catch(err => console.error(err));
   };
   
   const fetchMaterialUnits = () => {
-    fetch(`/api/admin/common/material_unit`)
+    fetch(`/api/common/material_unit/code`)
       .then(res => res.json())
       .then(data => setMaterialUnits(data))
       .catch(err => console.error(err));
   };
   
   const fetchWarehouses = (vesselNo: string) => {
-    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+    fetch(`/api/common/warehouse/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setWarehouses(data))
       .catch(err => console.error(err));

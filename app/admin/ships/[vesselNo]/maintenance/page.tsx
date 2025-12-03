@@ -77,21 +77,21 @@ export default function MaintenanceWorkManagementPage() {
   const [selectedSections, setSelectedSections] = useState<Section[]>(sections)
 
   const fetchMachines = () => {
-    fetch(`/api/admin/ships/${vesselNo}/machine/code?vesselNo=${vesselNo}`)
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setMachines(data))
       .catch(err => console.error(err));
   };
 
   const fetchEquipments = () => {
-    fetch(`/api/admin/ships/${vesselNo}/equipment/code?vesselNo=${vesselNo}`)
+    fetch(`/api/common/equipment/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setEquipments(data))
       .catch(err => console.error(err));
   };
 
   const fetchSections = () => {
-    fetch(`/api/admin/ships/${vesselNo}/section/code?vesselNo=${vesselNo}`)
+    fetch(`/api/common/section/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setSections(data))
       .catch(err => console.error(err));

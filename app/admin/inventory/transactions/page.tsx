@@ -68,7 +68,7 @@ export default function InventoryTransactionsPage() {
   const [warehouseFilter, setWarehouseFilter] = useState("")
   
   const fetchVesselCodes = () => {
-    fetch(`/api/admin/common/vessel`)
+    fetch(`/api/common/vessel/code`)
       .then(res => res.json())
       .then(data => setVesselCodes(data))
       .catch(err => console.error(err));

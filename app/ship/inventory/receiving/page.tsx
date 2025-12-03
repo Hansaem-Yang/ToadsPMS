@@ -36,7 +36,8 @@ export default function PartsReceivingPage() {
     regist_date: "",
     regist_user: "",
     modify_date: "",
-    modify_user: ""
+    modify_user: "",
+    receive_location: ""
   }
 
   const [userInfo, setUserInfo] = useState<any>(null)
@@ -53,7 +54,7 @@ export default function PartsReceivingPage() {
   })
   
   const fetchWarehouses = (vesselNo: string) => {
-    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+    fetch(`/api/common/warehouse/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setWarehouses(data))
       .catch(err => console.error(err));

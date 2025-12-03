@@ -583,7 +583,7 @@ export default function MaintenanceWorkManagementPage() {
       if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
         const updatedEquipments = children1.children.map((eq) => {
           if (eq.equip_no === item.equip_no) {
-            return updateMaintenancesByEquipment(children1, item);
+            return updateMaintenancesByEquipment(eq, item);
           }
 
           return eq;

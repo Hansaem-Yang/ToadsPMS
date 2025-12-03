@@ -111,13 +111,32 @@ export default function ShipCalendarPage() {
     }
   }
 
+  function findElementById(id: string): HTMLElement | null {
+    // id를 사용하여 요소를 찾습니다.
+    const element = document.getElementById(id); 
+    
+    // HTML 요소이거나 null일 수 있습니다.
+    return element;
+  }
+
   const handleCalendarClick = (calendar: any) => {
     let items: Maintenance[] = []
     calendar.children.map((task: Maintenance) => {
       items = [...items, task];
     })
 
-    setSelectedTasks(items)
+    setSelectedTasks(items);
+    
+    if (items.length > 0) {
+      const element = findElementById("main_task");
+      
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    }
   }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -400,7 +419,7 @@ export default function ShipCalendarPage() {
               </CardContent>
             </Card>
             {selectedTasks.length > 0 && (
-              <Card>
+              <Card id="main_task">
                 <CardContent>
                   <div className="p-2">
                     <div className="flex items-center gap-3 text-xl">
@@ -408,7 +427,7 @@ export default function ShipCalendarPage() {
                     </div>
                   </div>
                   {selectedTasks.map((task) => (
-                    <div className="p-2">
+                    <div key={`${task.equip_no}-${task.section_code}-${task.plan_code}`} className="p-2">
                       <Card>
                         <CardContent>
                           <div className="space-y-4">

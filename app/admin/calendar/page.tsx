@@ -112,6 +112,14 @@ export default function AdminCalendarPage() {
     }
   }
 
+  function findElementById(id: string): HTMLElement | null {
+    // id를 사용하여 요소를 찾습니다.
+    const element = document.getElementById(id); 
+    
+    // HTML 요소이거나 null일 수 있습니다.
+    return element;
+  }
+
   const handleCalendarClick = (calendar: any) => {
     let items: Maintenance[] = []
     calendar.children.map((task: Maintenance) => {
@@ -119,7 +127,18 @@ export default function AdminCalendarPage() {
     })
 
     equipName = "";
-    setSelectedTasks(items)
+    setSelectedTasks(items);
+
+    if (items.length > 0) {
+      const element = findElementById("main_task");
+      
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    }
   }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -401,14 +420,14 @@ export default function AdminCalendarPage() {
               </CardContent>
             </Card>
             {selectedTasks.length > 0 && (
-              <Card>
+              <Card id="main_task">
                 <CardContent>
                   {selectedTasks.map((task, index) => {
                     const prevTask = selectedTasks[index - 1];
                     const isNewEquipName = !prevTask || prevTask.equip_name !== task.equip_name;
 
                     return (
-                      <div>
+                      <div key={index}>
                         {isNewEquipName && (
                           <div className="p-2">
                             <div className="flex items-center gap-3 text-xl">

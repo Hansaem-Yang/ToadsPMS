@@ -226,7 +226,7 @@ export default function MaintenanceWorkManagementPage() {
   
   const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
     return items.map((item) => {
-        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
+        const matchesSearch = item.plan_code?.toLowerCase().includes(term.toLowerCase()) || item.plan_name?.toLowerCase().includes(term.toLowerCase())
         const filteredChildren = item.children ? filterBySearch(item.children, term) : []
 
         if (matchesSearch || filteredChildren.length > 0) {

@@ -196,7 +196,7 @@ export default function MaintenanceWorkManagementPage() {
   
   const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
     return items.map((item) => {
-        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
+        const matchesSearch = item.plan_code?.toLowerCase().includes(term.toLowerCase()) || item.plan_name?.toLowerCase().includes(term.toLowerCase())
         const filteredChildren = item.children ? filterBySearch(item.children, term) : []
 
         if (matchesSearch || filteredChildren.length > 0) {
@@ -448,8 +448,9 @@ export default function MaintenanceWorkManagementPage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="작업명, 작업코드로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>

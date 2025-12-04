@@ -25,7 +25,6 @@ import {
   ChevronRight,
   Wrench,
   Calendar,
-  Settings,
   Ship,
   FolderTree,
   History,
@@ -177,7 +176,6 @@ export default function MaintenanceWorkManagementPage() {
 
   if (!userInfo) return null
 
-  
   const filterByMachine = (items: Maintenance[], term: string): Maintenance[] => {
     return items.map((item) => {
         const matchesSearch = item.machine_name?.toLowerCase().includes(term.toLowerCase())
@@ -254,7 +252,7 @@ export default function MaintenanceWorkManagementPage() {
     )
 
     for(let i = 0; i < 5; i++) {
-      headers.push({ key: `work_date_${i}`, label: "Work Ddata", align: "text-center" })
+      headers.push({ key: `work_date_${i}`, label: "Work Date", align: "text-center" })
     }
     return headers
   }
@@ -381,16 +379,16 @@ export default function MaintenanceWorkManagementPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {item.children.map((children, index) => (
+                      {item.children.map((child, index) => (
                         <tr 
-                          key={`${children.vessel_no}-${children.equip_no}-${children.section_code}-${children.plan_code}`} 
+                          key={`${child.vessel_no}-${child.equip_no}-${child.section_code}-${child.plan_code}`} 
                           className="border-b hover:bg-gray-50"
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleHistoryClick(children)
+                            handleHistoryClick(child)
                           }}
                         >
-                          {getTableCells(children, index)}
+                          {getTableCells(child, index)}
                         </tr>
                       ))}
                     </tbody>
@@ -479,7 +477,7 @@ export default function MaintenanceWorkManagementPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">전체 장비</SelectItem>
+                    <SelectItem value="ALL">전체 섹션</SelectItem>
                     {sectionFilteredData.map((section) => (
                       <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{section.section_name}</SelectItem>
                     ))}

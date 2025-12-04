@@ -173,13 +173,13 @@ export default function MaintenanceExecutionPage() {
       sectionFiltered = sectionFiltered.filter((item) => item.machine_name === machineFilter)
     }
     
-    if (equipmentFilter !== "ALL") {
+    if (equipmentFilter !== "ALL" || equipNo !== '') {
       sectionFiltered = sectionFiltered.filter((item) => item.equip_no === equipmentFilter)
     }
 
     setEquipmentFilteredData(equipmentFiltered)
     setSectionFilteredData(sectionFiltered)
-  }, [equipments,  machineFilter, equipmentFilter])
+  }, [equipments,  machineFilter, equipmentFilter, equipNo])
 
   useEffect(() => {
     let filtered = equipmentWorks

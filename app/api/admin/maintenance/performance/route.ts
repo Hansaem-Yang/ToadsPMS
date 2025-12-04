@@ -121,7 +121,7 @@ export async function GET(req: Request) {
             category: item.category,
             type: "EQUIPMENT",
             key: `${item.vessel_no}-${item.equip_no}`,
-            children: [],
+            children: [] = []
           }
 
           machine.children.push(equipment);
@@ -131,8 +131,8 @@ export async function GET(req: Request) {
 
         if (workCode !== `${item.section_code}-${item.plan_code}`) {
           maintenance = {
-            id: item.section_code || '',
-            name: item.section_name || '',
+            id: `${item.section_code}-${item.plan_code}` || '',
+            name: `${item.section_code}-${item.plan_code}` || '',
             vessel_no: item.vessel_no,
             vessel_name: item.vessel_name,
             imo_no: item.imo_no,
@@ -150,7 +150,7 @@ export async function GET(req: Request) {
             work_date: item.work_date,
             type: "TASK",
             key: `${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`,
-            children: []
+            children: [] = []
           }
           equipment.children.push(maintenance);
           workCode = `${item.section_code}-${item.plan_code}`;
@@ -169,7 +169,7 @@ export async function GET(req: Request) {
             category: item.category,
             type: "EQUIPMENT",
             key: `${item.vessel_no}-${item.equip_no}`,
-            children: [],
+            children: [] = []
           }
 
           vessel.children.push(equipment);
@@ -179,8 +179,8 @@ export async function GET(req: Request) {
 
         if (workCode !== `${item.section_code}-${item.plan_code}`) {
           maintenance = {
-            id: item.section_code || '',
-            name: item.section_name || '',
+            id: `${item.section_code}-${item.plan_code}` || '',
+            name: `${item.section_code}-${item.plan_code}` || '',
             vessel_no: item.vessel_no,
             vessel_name: item.vessel_name,
             imo_no: item.imo_no,
@@ -198,7 +198,7 @@ export async function GET(req: Request) {
             work_date: item.work_date,
             type: "TASK",
             key: `${item.vessel_no}-${item.equip_no}-${item.section_code}-${item.plan_code}`,
-            children: []
+            children: [] = []
           }
           equipment.children.push(maintenance);
           workCode = `${item.section_code}-${item.plan_code}`;

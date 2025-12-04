@@ -58,7 +58,7 @@ export async function POST(req: Request) {
                                 from [section]
                                where vessel_no = @vesselNo
                                  and equip_no = @equipNo
-                                 and registUser = @registUser);`,
+                                 and regist_user = @registUser);`,
       [
         { name: 'vesselNo', value: item.vessel_no },
         { name: 'equipNo', value: item.equip_no },

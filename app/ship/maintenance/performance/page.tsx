@@ -439,7 +439,7 @@ export default function MaintenanceWorkManagementPage() {
                   <SelectContent>
                     <SelectItem value="ALL">전체 섹션</SelectItem>
                     {sectionFilteredData.map((section) => (
-                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{section.section_name}</SelectItem>
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -36,7 +36,6 @@ import {
 import { Machine } from '@/types/vessel/machine';
 import { Equipment } from '@/types/vessel/equipment'; // ✅ interface import
 import { Section } from '@/types/vessel/section'; // ✅ interface import
-
 import { Maintenance } from '@/types/vessel/maintenance';
 
 export default function MaintenanceWorkManagementPage() {
@@ -123,18 +122,10 @@ export default function MaintenanceWorkManagementPage() {
   
   useEffect(() => {
     let equipmentFiltered = equipments
-
-    if (machineFilter !== "ALL") {
-      equipmentFiltered = equipmentFiltered.filter((item) => item.machine_name === machineFilter)
-    }
-
-    setEquipmentFilteredData(equipmentFiltered)
-  }, [equipments, machineFilter])
-  
-  useEffect(() => {
     let sectionFiltered = sections
 
     if (machineFilter !== "ALL") {
+      equipmentFiltered = equipmentFiltered.filter((item) => item.machine_name === machineFilter)
       sectionFiltered = sectionFiltered.filter((item) => item.machine_name === machineFilter)
     }
 
@@ -142,6 +133,7 @@ export default function MaintenanceWorkManagementPage() {
       sectionFiltered = sectionFiltered.filter((item) => item.equip_no === equipmentFilter)
     }
 
+    setEquipmentFilteredData(equipmentFiltered)
     setSectionFilteredData(sectionFiltered)
   }, [sections, equipmentFilter, machineFilter])
 
@@ -229,7 +221,7 @@ export default function MaintenanceWorkManagementPage() {
   
   const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
     return items.map((item) => {
-        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
+        const matchesSearch = item.plan_name?.toLowerCase().includes(term.toLowerCase())
         const filteredChildren = item.children ? filterBySearch(item.children, term) : []
 
         if (matchesSearch || filteredChildren.length > 0) {
@@ -387,19 +379,25 @@ export default function MaintenanceWorkManagementPage() {
 
   const addSections = (item: any) : Maintenance[] => {
     return maintenanceData.map((children1) => {
-      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
-        const updatedEquipments = children1.children.map((eq) => {
-          if (eq.equip_no === item.equip_no) {
-            const updatedSections = [...eq.children, item];
-            return {...eq, children: updatedSections }
-          }
-        });
-        
-        return {...children1, children: updatedEquipments }
-      }
-      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
-        const updatedSections = [...children1.children, item];
-        return {...children1, children: updatedSections }
+      if (children1.type === "MACHINE")
+      {
+        if (children1.vessel_no === item.vessel_no) {
+          const updatedEquipments = children1.children.map((eq) => {
+            if (eq.equip_no === item.equip_no) {
+              const updatedSections = [...eq.children, item];
+              return {...eq, children: updatedSections }
+            }
+
+            return eq;
+          });
+          
+          return {...children1, children: updatedEquipments }
+        }
+      } else if (children1.type === "EQUIPMENT") {
+        if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
+          const updatedSections = [...children1.children, item];
+          return {...children1, children: updatedSections }
+        }
       }
 
       return children1;
@@ -515,22 +513,47 @@ export default function MaintenanceWorkManagementPage() {
   }
   
   const addMaintenances = (item: any) => {
-    return equipments.map((eq) => {
-      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
-        const updatedSections = eq.children.map((section) => {
-          if (section.section_code === item.section_code) {
-            const updatedMaintenances = [...section.children, item];
+    return maintenanceData.map((children1) => {
+      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+        const updatedEquipments = children1.children.map((eq) => {
+          if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+            const updatedSections = eq.children.map((section) => {
+              if (section.section_code === item.section_code) {
+                const updatedMaintenances = [...section.children, item];
 
-            return {...section, children: updatedMaintenances }
+                return {...section, children: updatedMaintenances }
+              }
+
+              return section;
+            });
+
+            return {...eq, children: updatedSections }
           }
 
-          return section;
+          return eq;
         });
+        
+        return {...children1, children: updatedEquipments }
+      }
+      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
+        if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
+          const updatedSections = children1.children.map((section) => {
+            if (section.section_code === item.section_code) {
+              const updatedMaintenances = [...section.children, item];
 
-        return {...eq, children: updatedSections }
+              return {...section, children: updatedMaintenances }
+            }
+
+            return section;
+          });
+
+          return {...children1, children: updatedSections }
+        }
+
+        return children1;
       }
 
-      return eq;
+      return children1;
     });
   }
 
@@ -621,7 +644,7 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
-      setEquipments(addMaintenances(addMaintenance));
+      setMaintenanceData(addMaintenances(addMaintenance));
       setIsAddMaintenanceDialogOpen(false);
     } else {
       alert(data.message);
@@ -717,7 +740,7 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="space-y-2">
                         <Label htmlFor="equip_no">장비</Label>
                         <Select 
-                          onValueChange={(value) => equipmentChanged(value)}>
+                          onValueChange={(value) => setAddSection((prev: any) => ({ ...prev, equip_no: value }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="장비 선택" />
                           </SelectTrigger>
@@ -745,7 +768,6 @@ export default function MaintenanceWorkManagementPage() {
                         onClick={handleInsertSection}
                         disabled={!addSection?.vessel_no || 
                           !addSection?.equip_no || 
-                          !addSection?.section_code || 
                           !addSection?.section_name}
                         style={{cursor: 'pointer'}}
                         >추가</Button>
@@ -789,7 +811,7 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="space-y-2">
                         <Label htmlFor="equip_no">장비</Label>
                         <Select 
-                          onValueChange={(value) => equipmentChanged(value)}>
+                          onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, equip_no: value }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="장비 선택" />
                           </SelectTrigger>
@@ -1016,7 +1038,7 @@ export default function MaintenanceWorkManagementPage() {
                   <SelectContent>
                     <SelectItem value="ALL">전체 섹션</SelectItem>
                     {sectionFilteredData.map((section) => (
-                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_name}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`} </SelectItem>
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1024,7 +1046,7 @@ export default function MaintenanceWorkManagementPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="장비명, 모델명, 제조사로 검색..."
+                      placeholder="작업명으로 검색..."
                       value={searchFilter}
                       onChange={(e) => setSearchFilter(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}

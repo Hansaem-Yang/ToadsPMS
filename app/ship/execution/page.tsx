@@ -83,7 +83,6 @@ export default function MaintenanceExecutionPage() {
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
   const [searchFilter, setSearchFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [machineFilter, setMachineFilter] = useState("ALL")
   const [equipmentFilter, setEquipmentFilter] = useState("ALL")
   const [sectionFilter, setSectionFilter] = useState("ALL")
@@ -204,12 +203,8 @@ export default function MaintenanceExecutionPage() {
       filtered = filterBySearch(filtered, searchTerm);
     }
 
-    if (categoryFilter !== "ALL") {
-      filtered = filtered.filter((eq) => eq.category === categoryFilter)
-    }
-
     setFilteredEquipment(filtered)
-  }, [equipmentWorks, searchTerm, machineFilter, equipmentFilter, sectionFilter, categoryFilter])
+  }, [equipmentWorks, searchTerm, machineFilter, equipmentFilter, sectionFilter])
 
   useEffect(() => {    
     if (selectedUsedWork) {
@@ -933,7 +928,7 @@ export default function MaintenanceExecutionPage() {
                   <SelectContent>
                     <SelectItem value="ALL">전체 섹션</SelectItem>
                     {sectionFilteredData.map((section) => (
-                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_name}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`} </SelectItem>
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`} </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

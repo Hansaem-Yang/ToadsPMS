@@ -69,8 +69,12 @@ export async function GET(req: Request) {
       ]
     );
 
-    let vessels: Maintenance[] = [];
-    let vessel: Maintenance;
+    let vessel: Maintenance = {
+      id: '',
+      name: '',
+      vessel_no: '',
+      children: [] = []
+    };
     let machine: Maintenance;
     let equipment: Maintenance;
     let maintenance: Maintenance;
@@ -93,7 +97,6 @@ export async function GET(req: Request) {
           children: [] = [],
         }
 
-        vessels.push(vessel);
         vesselNo = item.vessel_no;
         machineName = '';
         equipNo = ''
@@ -216,7 +219,7 @@ export async function GET(req: Request) {
     });
 
     // 성공 시 데쉬보드 정보 반환
-    return NextResponse.json(vessels);
+    return NextResponse.json(vessel.children);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

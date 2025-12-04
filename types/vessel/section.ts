@@ -13,5 +13,5 @@ export interface Section {
     regist_user?: string;
     modify_date?: string;
     modify_user?: string;
-    children?: MaintenancePlan[];
+    children: MaintenancePlan[];
 }

@@ -51,6 +51,7 @@ export default function MaintenanceWorkManagementPage() {
     modify_date: '',
     modify_user: '',
     children: [],
+    machine_name: ""
   }
 
   const initialMaintenancePlan: MaintenancePlan = {
@@ -131,8 +132,8 @@ export default function MaintenanceWorkManagementPage() {
     if (searchTerm) {
       const lowerKeyword = searchTerm.toLowerCase();
 
-      filtered = filtered.map(equipment => {
-        const filteredSections = equipment.children.map(section => {
+      filtered = filtered.map(eq => {
+        const filteredSections = eq.children.map(section => {
             const filteredItems = section.children.filter(plan =>
               plan.plan_name.toLowerCase().includes(lowerKeyword)
             );
@@ -145,8 +146,8 @@ export default function MaintenanceWorkManagementPage() {
             );
           });
 
-        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
-          return { ...equipment, children: filteredSections };
+        if (eq.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
+          return { ...eq, children: filteredSections };
         }
 
         return null;

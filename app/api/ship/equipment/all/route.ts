@@ -12,6 +12,7 @@ export async function GET(req: Request) {
       `select a.vessel_no
             , a.equip_no
             , a.equip_name
+            , a.machine_name
             , a.manufacturer
             , a.category
             , a.model
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
         group by a.vessel_no
             , a.equip_no
             , a.equip_name
+            , a.machine_name
             , a.manufacturer
             , a.category
             , a.model

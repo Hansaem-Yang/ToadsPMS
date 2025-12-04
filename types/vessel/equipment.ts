@@ -18,5 +18,5 @@ export interface Equipment {
     regist_user?: string;
     modify_date?: string;
     modify_user?: string;
-    children?: Section[];
+    children: Section[];
 }

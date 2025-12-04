@@ -162,10 +162,10 @@ export default function ShipEquipmentPage() {
   }
   
   // Function to handle history button click
-  const handleDetailsClick = (vesselNo: string, equipName: string) => {
-    const encodedParam = encodeURIComponent(equipName);
+  const handleDetailsClick = (vesselNo: string, equipNo: string) => {
+    const encodedParam = encodeURIComponent(equipNo);
     
-    window.location.href = `/ship/execution?equipName=${encodedParam}`;
+    window.location.href = `/ship/execution?equipNo=${encodedParam}`;
   }
 
   return (
@@ -386,7 +386,7 @@ export default function ShipEquipmentPage() {
                         size="sm" 
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDetailsClick(item.vessel_no, item.equip_name)
+                          handleDetailsClick(item.vessel_no, item.equip_no)
                         }}
                         style={{cursor: 'pointer'}}
                       >

@@ -34,6 +34,7 @@ export interface Maintenance {
     children: Maintenance[];
     used_parts?: UsedParts[];
     used_partnames?: string;
+    type?: string;
     regist_date?: string;
     regist_user?: string;
     modify_date?: string;

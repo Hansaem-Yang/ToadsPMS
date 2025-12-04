@@ -25,7 +25,7 @@ import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
 
 export default function MaintenanceExecutionPage() {
   const searchParams = useSearchParams()
-  const equipName = searchParams.get("equipName") || ""
+  const equipNo = searchParams.get("equipNo") || ""
   const initialMaintenanceItem: Maintenance = {
     vessel_no: "",
     vessel_name: "",
@@ -38,6 +38,10 @@ export default function MaintenanceExecutionPage() {
     children: []
   };
 
+  interface ComparisonData {
+    name: string;
+    tasks: Maintenance[]; // 여기에 가장 하위 자식 노드들의 원본 데이터가 있음
+  }
   
   const initialMaintenanceExtension: MaintenanceExtension = {
     vessel_no: "",
@@ -78,6 +82,7 @@ export default function MaintenanceExecutionPage() {
   const [equipmentWorks, setEquipmentWorks] = useState<Maintenance[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
+  const [searchFilter, setSearchFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [machineFilter, setMachineFilter] = useState("ALL")
   const [equipmentFilter, setEquipmentFilter] = useState("ALL")
@@ -89,7 +94,7 @@ export default function MaintenanceExecutionPage() {
 
   const [selectedWorks, setSelectedWorks] = useState<string[]>([])
   const [isBulkExecutionDialogOpen, setIsBulkExecutionDialogOpen] = useState(false)
-  const [bulkExecutionData, setBulkExecutionData] = useState({
+  const [bulkExecutionData, setBulkExecutionData] = useState<ComparisonData>({
     name: "",
     tasks: [] as Maintenance[],
   })
@@ -151,8 +156,8 @@ export default function MaintenanceExecutionPage() {
       fetchSections(user.ship_no)
       fetchEquipmentTasks(user.ship_no)
       
-      if (equipName) {
-        setParams(equipName)
+      if (equipNo) {
+        setEquipmentFilter(equipNo)
       }
     } catch (error) {
       // Redirect handled by requireAuth
@@ -160,10 +165,26 @@ export default function MaintenanceExecutionPage() {
   }, [])
 
   useEffect(() => {
+    let equipmentFiltered = equipments
+    let sectionFiltered = sections
+
+    if (machineFilter !== "ALL") {
+      equipmentFiltered = equipmentFiltered.filter((item) => item.machine_name === machineFilter)
+      sectionFiltered = sectionFiltered.filter((item) => item.machine_name === machineFilter)
+    }
+    
+    if (equipmentFilter !== "ALL") {
+      sectionFiltered = sectionFiltered.filter((item) => item.equip_no === equipmentFilter)
+    }
+
+    setEquipmentFilteredData(equipmentFiltered)
+    setSectionFilteredData(sectionFiltered)
+  }, [equipments,  machineFilter, equipmentFilter])
+
+  useEffect(() => {
     let filtered = equipmentWorks
       
     if (params) {
-      setSearchTerm(params);
       setParams('');
     }
 
@@ -180,22 +201,7 @@ export default function MaintenanceExecutionPage() {
     }
 
     if (searchTerm) {
-      const lowerKeyword = searchTerm.toLowerCase();
-
-      filtered = filtered.map(equipment => {
-        const filteredSections = equipment.children.filter(plan => {
-            return (
-              plan.plan_name?.toLowerCase().includes(lowerKeyword)
-            );
-          });
-
-        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
-          return { ...equipment, children: filteredSections };
-        }
-
-        return null;
-      })
-      .filter((e) => e !== null);
+      filtered = filterBySearch(filtered, searchTerm);
     }
 
     if (categoryFilter !== "ALL") {
@@ -203,7 +209,7 @@ export default function MaintenanceExecutionPage() {
     }
 
     setFilteredEquipment(filtered)
-  }, [equipmentWorks, searchTerm, categoryFilter])
+  }, [equipmentWorks, searchTerm, machineFilter, equipmentFilter, sectionFilter, categoryFilter])
 
   useEffect(() => {    
     if (selectedUsedWork) {
@@ -294,8 +300,24 @@ export default function MaintenanceExecutionPage() {
 
   const filterBySection = (items: Maintenance[], term: string): Maintenance[] => {
     return items.map((item) => {
-        const matchesSearch = item.section_code?.toLowerCase().includes(term.toLowerCase())
+        const matchesSearch = `${item.equip_no}-${item.section_code}`?.toLowerCase().includes(term.toLowerCase())
         const filteredChildren = item.children ? filterBySection(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+    
+  const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.plan_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySearch(item.children, term) : []
 
         if (matchesSearch || filteredChildren.length > 0) {
           return {
@@ -429,6 +451,55 @@ export default function MaintenanceExecutionPage() {
     setExecutionResult(task);
     setIsExecutionDialogOpen(true)
   }
+  
+  const updateTaskBySection = (parent: Maintenance, item: any, status: string) => {
+    const updatedTasks = parent.children.map((task) => {
+      if (task.plan_code === item.plan_code) {
+        if (status === "EXTENSION") {
+          return { ...task,  
+            vessel_no: item.vessel_no,
+            equip_no: item.equip_no,
+            section_code: item.section_code,
+            section_name: item.section_name,
+            extension_date: item.extension_date,
+            status: status
+          };
+        } else {
+          return { ...task,  
+            vessel_no: item.vessel_no,
+            equip_no: item.equip_no,
+            section_code: item.section_code,
+            section_name: item.section_name,
+            due_date: item.next_due_date,
+            lastest_date: new Date().toISOString().split("T")[0],
+            status: status
+          };
+        }
+      }
+
+      return task;
+    });
+
+    return {...parent, children: updatedTasks }
+  }
+
+  const updateEquipmentWorks = (item: any, status: string) : Maintenance[] => {
+    return equipmentWorks.map((eq) => {
+      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+        const updatedSections = eq.children.map((section) => {
+          if (section.section_code === item.section_code) {
+            return updateTaskBySection(section, item, status);
+          }
+
+          return section;
+        });
+        
+        return {...eq, children: updatedSections }
+      } 
+
+      return eq;
+    });
+  }
 
   const handleInsertExecution = async () => {
     const insertedData = {
@@ -448,32 +519,38 @@ export default function MaintenanceExecutionPage() {
       alert('작업 실행 등록 중 오류가 발생하였습니다.');
       return;
     }
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
 
-    // 선택된 작업들의 상태를 완료로 업데이트
-    setEquipmentWorks((prev) =>
-      prev.map((eq) => ({
-        ...eq,
-        children: eq.children.map((task) =>
-          executionResult.equip_no === task.equip_no &&
-          executionResult.section_code === task.section_code &&
-          executionResult.plan_code === task.plan_code
-          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
-          : task,
-        ),
-      })),
-    )
+      // 선택된 작업들의 상태를 완료로 업데이트
+      setEquipmentWorks(updateEquipmentWorks(executionResult, "COMPLATE"))
 
-    setUsedItems([])
-    setSelectedWork(null)
-    setIsExecutionDialogOpen(false)
+      setUsedItems([])
+      setSelectedWork(null)
+      setIsExecutionDialogOpen(false)
+    } else {
+      alert(data.message);
+    }
   }
 
   const handleExtension = (task: any) => {
-    setSelectedExtension({ ...task, equipment: task.equip_name });
-    setExtensionResult(task);
+    setSelectedExtension(task);
+    setExtensionResult({
+      vessel_no: task.vessel_no,
+      equip_no: task.equip_no,
+      section_code: task.section_code,
+      plan_code: task.plan_code,
+      plan_name: task.plan_name,
+      manager: task.manager,
+      due_date: task.due_date,
+      extension_date: '',
+      extension_reason: '',
+      applicant: userInfo.account_no
+    });
     setIsExtensionDialogOpen(true);
-
-    setExtensionResult((prev) => ({ ...prev, applicant: userInfo.account_no }))
   }
 
   const handleInsertExtension = async () => {
@@ -495,22 +572,18 @@ export default function MaintenanceExecutionPage() {
       return;
     }
     
-    // 선택된 작업들의 상태를 완료로 업데이트
-    setEquipmentWorks((prev) =>
-      prev.map((eq) => ({
-        ...eq,
-        children: eq.children.map((task) =>
-          extensionResult.equip_no === task.equip_no &&
-          extensionResult.section_code === task.section_code &&
-          extensionResult.plan_code === task.plan_code
-          ? { ...task, status: "EXTENSION", extension_date: extensionResult.extension_date }
-          : task,
-        ),
-      })),
-    )
+    const data = await res.json();
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
 
-    setIsExtensionDialogOpen(false)
-    setSelectedExtension(null)
+      // 선택된 작업들의 상태를 완료로 업데이트
+      setEquipmentWorks(updateEquipmentWorks(extensionResult, "EXTENSION"))
+
+      setIsExtensionDialogOpen(false)
+      setSelectedExtension(null)
+    } else {
+      alert(data.message);
+    }
   }
 
   const getTotalTasks = () => {
@@ -533,10 +606,26 @@ export default function MaintenanceExecutionPage() {
     })
   }
 
+  const findAllMatchingDescendants = (items: Maintenance[]): Maintenance[] =>{
+    let result: Maintenance[] = [];
+
+    for (const item of items) {
+      if (item.type === "TASK" && item.status !== "COMPLATE") {
+        result.push(item);
+      }
+
+      if (item.children && item.children.length > 0) {
+        const deeperMatches = findAllMatchingDescendants(item.children);
+        result = result.concat(deeperMatches);
+      }
+    }
+
+    return result;
+  }
+
   const handleSelectAll = () => {
-    const allTaskIds = filteredEquipment.flatMap((eq) =>
-      eq.children.filter((task) => task.status !== "COMPLATE").map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`),
-    )
+    const allMatchingTasks: Maintenance[] = findAllMatchingDescendants(filteredEquipment);
+    const allTaskIds = allMatchingTasks.map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`);
 
     if (selectedWorks.length === allTaskIds.length) {
       setSelectedWorks([])
@@ -545,18 +634,33 @@ export default function MaintenanceExecutionPage() {
     }
   }
 
+  const findAllBulkExecutions = (items: Maintenance[]): Maintenance[] =>{
+    let result: Maintenance[] = [];
+
+    for (const item of items) {
+      if (item.type === "TASK" && item.equip_no === equipNo && selectedWorks.includes(`${item.equip_no}-${item.section_code}-${item.plan_code}`)) {
+        result.push(item);
+      }
+
+      if (item.children && item.children.length > 0) {
+        const deeperMatches = findAllBulkExecutions(item.children);
+        result = result.concat(deeperMatches);
+      }
+    }
+
+    return result;
+  }
+
   const handleBulkExecution = (equipNo: string, equipName: string) => {
-    const tasksToExecute = filteredEquipment.flatMap((eq) =>
-      eq.children
-        .filter((task) => task.equip_no === equipNo && selectedWorks.includes(`${task.equip_no}-${task.section_code}-${task.plan_code}`))
-        .map((task) => ({
-          ...task,
-          equipmentName: eq.equip_name,
-          actualHours: task.work_hours?.toString(),
-          used_parts: [],
-          regist_user: userInfo.account_no,
-          modify_user: userInfo.account_no,
-        })),
+    const allBulkTasks: Maintenance[] = findAllBulkExecutions(filteredEquipment);
+    const tasksToExecute = allBulkTasks.map((task) => ({
+        ...task,
+        equipmentName: task.equip_name,
+        actualHours: task.work_hours?.toString(),
+        used_parts: [],
+        regist_user: userInfo.account_no,
+        modify_user: userInfo.account_no,
+      })
     )
 
     setBulkExecutionData({
@@ -564,6 +668,57 @@ export default function MaintenanceExecutionPage() {
       tasks: tasksToExecute,
     })
     setIsBulkExecutionDialogOpen(true)
+  }
+  
+  const updateBulkTaskBySection = (parent: Maintenance, executionData: ComparisonData, status: string) => {
+    const updatedTasks = parent.children.map((plan) => {
+      const isMatch = executionData.tasks.some(task => 
+        task.vessel_no === plan.vessel_no &&
+        task.equip_no === plan.equip_no &&
+        task.section_code === plan.section_code &&
+        task.plan_code === plan.plan_code
+      );
+
+      if (isMatch) {
+        return { ...plan, 
+          lastest_date: new Date().toISOString().split("T")[0],
+          status: status
+        };
+      }
+
+      return plan;
+    });
+
+    return {...parent, children: updatedTasks }
+  }
+
+  const updateBulkEquipmentWorks = (executionData: ComparisonData, status: string) : Maintenance[] => {
+    return equipmentWorks.map((eq) => {
+      const isMatch = executionData.tasks.some(task => 
+        task.vessel_no === eq.vessel_no &&
+        task.equip_no === eq.equip_no
+      );
+
+      if (isMatch) {
+        const updatedSections = eq.children.map((section) => {
+          const isSectionMatch = executionData.tasks.some(task => 
+            task.vessel_no === section.vessel_no &&
+            task.equip_no === section.equip_no &&
+            task.section_code === section.section_code
+          )
+
+          if (isSectionMatch) {
+            return updateBulkTaskBySection(section, executionData, status);
+          }
+
+          return section;
+        });
+        
+        return {...eq, children: updatedSections }
+      } 
+
+      return eq;
+    });
   }
 
   const handleInsertExecutions = async () => {
@@ -579,25 +734,17 @@ export default function MaintenanceExecutionPage() {
       return;
     }
 
-    // 선택된 작업들의 상태를 완료로 업데이트
-    setEquipmentWorks((prev) =>
-      prev.map((eq) => ({
-        ...eq,
-        children: eq.children.map((task) =>
-          bulkExecutionData.tasks.some((data) =>
-            data.equip_no === task.equip_no &&
-            data.section_code === task.section_code &&
-            data.plan_code === task.plan_code
-          )
-          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
-          : task,
-        ),
-      })),
-    )
+    const data = await res.json();
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
 
-    setUsedItems([])
-    setSelectedWorks([])
-    setIsBulkExecutionDialogOpen(false)
+      // 선택된 작업들의 상태를 완료로 업데이트
+      setEquipmentWorks(updateBulkEquipmentWorks(bulkExecutionData, "COMPLATE"))
+
+      setUsedItems([])
+      setSelectedWorks([])
+      setIsBulkExecutionDialogOpen(false)
+    }
   }
 
   const updateTaskData = (equip_no: string, section_code: string, plan_code: string, field: string, value: string) => {
@@ -786,7 +933,7 @@ export default function MaintenanceExecutionPage() {
                   <SelectContent>
                     <SelectItem value="ALL">전체 섹션</SelectItem>
                     {sectionFilteredData.map((section) => (
-                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{section.section_name}</SelectItem>
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_name}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`} </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -794,9 +941,10 @@ export default function MaintenanceExecutionPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="장비명, 작업명으로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="작업명으로 검색..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>
@@ -999,7 +1147,7 @@ export default function MaintenanceExecutionPage() {
                     <Textarea
                       id="notes"
                       placeholder="이 작업에 대한 내용을 입력하세요..."
-                      value={selectedWork.work_details}
+                      value={executionResult.work_details}
                       onChange={(e) => setExecutionResult((prev) => ({ ...prev, work_details: e.target.value }))}
                       rows={3}
                     />
@@ -1009,7 +1157,7 @@ export default function MaintenanceExecutionPage() {
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
                         placeholder="이 작업에 대한 지연 사유..."
-                        value={selectedWork.delay_reason}
+                        value={executionResult.delay_reason}
                         onChange={(e) => setExecutionResult((prev) => ({ ...prev, delay_reason: e.target.value }))}
                         rows={2}
                         className="text-sm"
@@ -1156,7 +1304,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="예정일"
-                        value={selectedExtension.due_date}
+                        value={extensionResult.due_date || ''}
                         className='text-sm sm:w-40 md:w-36'
                         disabled
                       />
@@ -1166,7 +1314,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="신청일자"
-                        value={selectedExtension.extension_date}
+                        value={extensionResult.extension_date || ''}
                         className='text-sm sm:w-40 md:w-36'
                         onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_date: e.target.value }))}
                       />
@@ -1176,7 +1324,7 @@ export default function MaintenanceExecutionPage() {
                     <Label className="text-xs">연장 사유</Label>
                     <Textarea
                       placeholder="이 작업에 대한 일정 연장 사유..."
-                      value={selectedExtension.extension_reason}
+                      value={extensionResult.extension_reason || ''}
                       onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_reason: e.target.value }))}
                       rows={2}
                       className="text-sm"
@@ -1190,7 +1338,7 @@ export default function MaintenanceExecutionPage() {
                   <Button 
                     onClick={handleInsertExtension} 
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={!extensionResult.next_due_date || !(new Date(extensionResult.next_due_date) > today) || !extensionResult.extension_reason }
+                    disabled={!extensionResult.extension_date || !(new Date(extensionResult.extension_date) > today) || !extensionResult.extension_reason }
                     style={{cursor: 'pointer'}}
                   >
                     등록 완료

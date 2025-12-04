@@ -106,6 +106,7 @@ export async function GET(req: Request) {
           equip_name: item.equip_name,
           category: item.category,
           machine_name: item.machine_name,
+          type: "EQUIPMENT",
           children: [] = []
         }
 
@@ -124,6 +125,7 @@ export async function GET(req: Request) {
           machine_name: item.machine_name,
           section_code: item.section_code || '',
           section_name: item.section_name || '',
+          type: "SECTION",
           children: [] = []
         }
 
@@ -131,6 +133,7 @@ export async function GET(req: Request) {
         sectionCode = item.section_code || ''
       }
 
+      item.type = "TASK";
       section.children.push(item);
     });
     // 성공 시 정비 계획 정보 반환

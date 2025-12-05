@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { execute } from '@/db'; // 이전에 만든 query 함수
+import { execute, query } from '@/db'; // 이전에 만든 query 함수
 import { MaintenancePlan } from '@/types/vessel/maintenance_plan';
 
 export async function POST(req: Request) {
@@ -9,28 +9,52 @@ export async function POST(req: Request) {
 
     // DB에서 사용자 정보 확인
     const count = await execute(
-      `update [maintenance_plan] 
-          set plan_name = @planName
-            , manufacturer = @manufacturer
-            , model = @model
-            , specifications = @specifications
-            , lastest_date = @lastestDate
-            , workers = @workers
-            , work_hours = @workHours
-            , interval = @interval
-            , interval_term = @intervalTerm
-            , location = @location
-            , self_maintenance = @selfMaintenance
-            , manager = @manager
-            , important_items = @importantItems
-            , instructions = @instructions
-            , critical = @critical
-            , modify_date = getdate()
-            , modify_user = @modifyUser
-        where vessel_no = @vesselNo 
-          and equip_no = @equipNo 
-          and section_code = @sectionCode
-          and plan_code = @planCode;`,
+      `insert into [maintenance_plan] (
+              vessel_no
+            , equip_no
+            , section_code
+            , plan_code
+            , plan_name
+            , manufacturer
+            , model
+            , specifications
+            , lastest_date
+            , workers
+            , work_hours
+            , interval
+            , interval_term
+            , location
+            , self_maintenance
+            , manager
+            , important_items
+            , instructions
+            , critical
+            , regist_date
+            , regist_user
+      )
+      values (
+              @vesselNo
+            , @equipNo
+            , @sectionCode
+            , (select format(isnull(max(plan_code), 0) + 1, '000') from [maintenance_plan] where vessel_no = @vesselNo and equip_no = @equipNo and section_code = @sectionCode)
+            , @planName
+            , @manufacturer
+            , @model
+            , @specifications
+            , @lastestDate
+            , @workers
+            , @workHours
+            , @interval
+            , @intervalTerm
+            , @location
+            , @selfMaintenance
+            , @manager
+            , @importantItems
+            , @instructions
+            , @critical
+            , getdate()
+            , @registUser
+      );`,
       [
         { name: 'vesselNo', value: item.vessel_no },
         { name: 'equipNo', value: item.equip_no },
@@ -51,16 +75,37 @@ export async function POST(req: Request) {
         { name: 'importantItems', value: item.important_items },
         { name: 'instructions', value: item.instructions },
         { name: 'critical', value: item.critical },
-        { name: 'modifyUser', value: item.modify_user }
+        { name: 'registUser', value: item.regist_user }
       ]
     );
 
     if (count === 0) {
       return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
     }
+            
+    const plans: MaintenancePlan[] = await query(
+      `select max(plan_code) as plan_code
+         from [maintenance_plan]
+        where vessel_no = @vesselNo
+          and equip_no = @equipNo
+          and section_code = @sectionCode
+          and regist_user = @registUser`,
+      [
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'sectionCode', value: item.section_code },
+        { name: 'registUser', value: item.regist_user },
+      ]
+    );
 
-    // 성공 정보 반환
-    return NextResponse.json({ success: true });
+    if (plans && plans.length > 0) {
+      const max_plan_code = plans[0].plan_code;
+
+      // 성공 정보 반환
+      return NextResponse.json({ success: true, plan_code: max_plan_code });
+    }
+    
+      return NextResponse.json({ success: false });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

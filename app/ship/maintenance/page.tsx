@@ -157,12 +157,16 @@ export default function MaintenanceWorkManagementPage() {
   useEffect(() => {
     let sectionFiltered = sections
 
-    if (selectedEquipment?.equip_no !== "ALL") {
+    if (selectedEquipment && selectedEquipment?.equip_no && selectedEquipment?.equip_no !== "ALL" && selectedEquipment?.equip_no !== "") {
       sectionFiltered = sectionFiltered.filter((item) => item.equip_no === selectedEquipment?.equip_no)
+      setSelectedSections(sectionFiltered)
     }
-
-    setSelectedSections(sectionFiltered)
-  }, [selectedEquipment])
+    
+    if (addMaintenance && addMaintenance?.equip_no && addMaintenance?.equip_no !== "ALL" && addMaintenance?.equip_no !== "") {
+      sectionFiltered = sectionFiltered.filter((item) => item.equip_no === addMaintenance?.equip_no)
+      setSelectedSections(sectionFiltered)
+    }
+  }, [addMaintenance, selectedEquipment])
 
   if (!userInfo) return null
 
@@ -481,25 +485,32 @@ export default function MaintenanceWorkManagementPage() {
 
   const addSections = (item: any) : Maintenance[] => {
     return maintenanceData.map((children1) => {
-      if (children1.type === "MACHINE")
-      {
-        if (children1.vessel_no === item.vessel_no) {
-          const updatedEquipments = children1.children.map((eq) => {
-            if (eq.equip_no === item.equip_no) {
-              const updatedSections = [...eq.children, item];
-              return {...eq, children: updatedSections }
-            }
+      item.key = `${item.vessel_no}-${item.equip_no}-${item.section_code}`;
+      item.id = item.section_code;
+      item.name = item.section_name;
+      item.type = "SECTION";
 
-            return eq;
-          });
-          
-          return {...children1, children: updatedEquipments }
-        }
-      } else if (children1.type === "EQUIPMENT") {
-        if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
-          const updatedSections = [...children1.children, item];
-          return {...children1, children: updatedSections }
-        }
+      if (children1.type === "MACHINE" && children1.vessel_no === item.vessel_no) {
+        const updatedEquipments = children1.children.map((eq) => {
+          if (eq.equip_no === item.equip_no) {
+            item.machine_name = eq.machine_name;
+            item.equip_name = eq.equip_name;
+
+            const updatedSections = [...eq.children, item];
+            return {...eq, children: updatedSections }
+          }
+
+          return eq;
+        });
+        
+        return {...children1, children: updatedEquipments }
+      }
+
+      if (children1.type === "EQUIPMENT" && children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
+        item.equip_name = children1.equip_name;
+
+        const updatedSections = [...children1.children, item];
+        return {...children1, children: updatedSections }
       }
 
       return children1;
@@ -528,10 +539,10 @@ export default function MaintenanceWorkManagementPage() {
 
   const updateSections = (item: any) : Maintenance[] => {
     return maintenanceData.map((children1) => {
-      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+      if (children1.type === "MACHINE" && children1.vessel_no === item.vessel_no) {
         const updatedEquipments = children1.children.map((eq) => {
           if (eq.equip_no === item.equip_no) {
-            return updateSectionsByEquipment(children1, item);
+            return updateSectionsByEquipment(eq, item);
           }
 
           return eq;
@@ -539,7 +550,8 @@ export default function MaintenanceWorkManagementPage() {
         
         return {...children1, children: updatedEquipments }
       } 
-      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
+      
+      if (children1.type === "EQUIPMENT" && children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
         return updateSectionsByEquipment(children1, item);
       }
 
@@ -548,31 +560,42 @@ export default function MaintenanceWorkManagementPage() {
   }
 
   const handleAddSectionDialogOpen = () => {
+    setAddSection({
+      vessel_no: userInfo.ship_no,
+      children: [] = []
+    });
+
     setIsAddSectionDialogOpen(true);
   }
 
   const handleInsertSection = async () => {
-    const insertedData = {
-      ...addSection,
-      regist_user: userInfo.account_no,
-      modify_user: userInfo.account_no,
-    };
-    
-    const res = await fetch('/api/ship/section/insert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(insertedData),
-    });
+    if (addSection) {
+      const insertedData = {
+        ...addSection,
+        regist_user: userInfo.account_no,
+        modify_user: userInfo.account_no,
+      };
+      
+      const res = await fetch('/api/ship/section/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(insertedData),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      alert("저장이 완료되었습니다.");
+      if (data.success) {
+        alert("저장이 완료되었습니다.");
 
-      setMaintenanceData(addSections(addSection));
-      setIsAddSectionDialogOpen(false);
-    } else {
-      alert(data.message);
+        addSection.section_code = data.section_code;
+
+        setMaintenanceData(addSections(addSection));        
+        setSections([...sections, addSection]);
+        
+        setIsAddSectionDialogOpen(false);
+      } else {
+        alert(data.message);
+      }
     }
   }
 
@@ -599,7 +622,15 @@ export default function MaintenanceWorkManagementPage() {
     if (data.success) {
       alert("저장이 완료되었습니다.");
 
-      setMaintenanceData(updateSections(selectedSection));
+      console.log("업데이트할 데이터:", selectedSection);
+      console.log("업데이트 전 상태:", maintenanceData);
+      
+      const newMaintenanceData = updateSections(selectedSection)
+      setMaintenanceData(newMaintenanceData);
+
+      console.log("업데이트 후 상태:", newMaintenanceData);
+
+      
       setIsEditSectionDialogOpen(false);
     } else {
       alert(data.message);
@@ -615,14 +646,22 @@ export default function MaintenanceWorkManagementPage() {
   }
   
   const addMaintenances = (item: any) => {
+    item.key = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
+    item.id = item.plan_code;
+    item.name = item.plan_name;
+    item.type = "TASK";
+    
     return maintenanceData.map((children1) => {
-      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+      if (children1.type === "MACHINE" && children1.vessel_no === item.vessel_no) {
         const updatedEquipments = children1.children.map((eq) => {
           if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
             const updatedSections = eq.children.map((section) => {
               if (section.section_code === item.section_code) {
-                const updatedMaintenances = [...section.children, item];
+                item.machine_name = eq.machine_name;
+                item.equip_name = eq.equip_name;
+                item.section_name = section.section_name;
 
+                const updatedMaintenances = [...section.children, item];
                 return {...section, children: updatedMaintenances }
               }
 
@@ -634,25 +673,24 @@ export default function MaintenanceWorkManagementPage() {
 
           return eq;
         });
-        
+
         return {...children1, children: updatedEquipments }
       }
-      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
-        if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
-          const updatedSections = children1.children.map((section) => {
-            if (section.section_code === item.section_code) {
-              const updatedMaintenances = [...section.children, item];
+      
+      if (children1.type === "EQUIPMENT" && children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
+        const updatedSections = children1.children.map((section) => {
+          if (section.section_code === item.section_code) {
+            item.equip_name = children1.equip_name;
+            item.section_name = section.section_name;
 
-              return {...section, children: updatedMaintenances }
-            }
+            const updatedMaintenances = [...section.children, item];
+            return {...section, children: updatedMaintenances }
+          }
 
-            return section;
-          });
+          return section;
+        });
 
-          return {...children1, children: updatedSections }
-        }
-
-        return children1;
+        return {...children1, children: updatedSections }
       }
 
       return children1;
@@ -705,7 +743,7 @@ export default function MaintenanceWorkManagementPage() {
 
   const updateMaintenances = (item: any) : Maintenance[] => {
     return maintenanceData.map((children1) => {
-      if (children1.vessel_no === item.vessel_no && children1.machine_name === item.machine_name && children1.type === "MACHINE") {
+      if (children1.type === "MACHINE" && children1.vessel_no === item.vessel_no) {
         const updatedEquipments = children1.children.map((eq) => {
           if (eq.equip_no === item.equip_no) {
             return updateMaintenancesByEquipment(eq, item);
@@ -716,7 +754,8 @@ export default function MaintenanceWorkManagementPage() {
 
         return {...children1, children: updatedEquipments }
       }
-      else if (children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no && children1.type === "EQUIPMENT") {
+      
+      if (children1.type === "EQUIPMENT" && children1.vessel_no === item.vessel_no && children1.equip_no === item.equip_no) {
         return updateMaintenancesByEquipment(children1, item);
       }
 
@@ -725,31 +764,40 @@ export default function MaintenanceWorkManagementPage() {
   }
 
   const handleAddMaintenanceDialogOpen = (item: any) => {
+    setAddMaintenance({
+      vessel_no: userInfo.ship_no,
+      critical: 'NORMAL'
+    });
+
     setIsAddMaintenanceDialogOpen(true);
   }
 
   const handleInsertMaintenance = async () => {
-    const insertedData = {
-      ...addMaintenance,
-      regist_user: userInfo.account_no,
-      modify_user: userInfo.account_no,
-    };
+    if (addMaintenance) {
+      const insertedData = {
+        ...addMaintenance,
+        regist_user: userInfo.account_no,
+        modify_user: userInfo.account_no,
+      };
 
-    const res = await fetch('/api/ship/maintenance/insert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(insertedData),
-    });
+      const res = await fetch('/api/ship/maintenance/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(insertedData),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      alert("저장이 완료되었습니다.");
+      if (data.success) {
+        alert("저장이 완료되었습니다.");
 
-      setMaintenanceData(addMaintenances(addMaintenance));
-      setIsAddMaintenanceDialogOpen(false);
-    } else {
-      alert(data.message);
+        addMaintenance.plan_code = data.plan_code;
+
+        setMaintenanceData(addMaintenances(addMaintenance));
+        setIsAddMaintenanceDialogOpen(false);
+      } else {
+        alert(data.message);
+      }
     }
   }
 
@@ -1038,7 +1086,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {equipments.map(eq => (
-                          <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                          <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1047,7 +1095,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Label htmlFor="description">섹션 설명</Label>
                     <Textarea 
                       id="description" 
-                      value={selectedSection.description} 
+                      value={selectedSection.description || ''} 
                       placeholder="섹션에 대한 상세 설명을 입력하세요" 
                       onChange={(e) => setSelectedSection((prev: any) => ({ ...prev, description: e.target.value }))}
                     />
@@ -1104,7 +1152,7 @@ export default function MaintenanceWorkManagementPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {equipments.map(eq => (
-                        <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                        <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1119,7 +1167,7 @@ export default function MaintenanceWorkManagementPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {selectedSections.map(section => (
-                        <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_code}>{section.section_name}</SelectItem>
+                        <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_code || ''}>{`${section.equip_no}-${section.section_code} ${section.section_name}`}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1202,9 +1250,8 @@ export default function MaintenanceWorkManagementPage() {
                 <div className="space-y-2">
                   <Label htmlFor="critical">정비 구분</Label>
                   <Select 
-                    value="NORMAL"
+                    defaultValue="NORMAL"
                     onValueChange={(value) => setAddMaintenance((prev: any) => ({ ...prev, critical: value }))}
-                    disabled
                   >
                     <SelectTrigger className="w-40">
                       <SelectValue />
@@ -1294,7 +1341,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {equipments.map(eq => (
-                          <SelectItem value={eq.equip_no}>{eq.equip_name}</SelectItem>
+                          <SelectItem key={eq.equip_no} value={eq.equip_no}>{eq.equip_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1311,7 +1358,7 @@ export default function MaintenanceWorkManagementPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {selectedSections?.map(section => (
-                          <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_code}>{section.section_name}</SelectItem>
+                          <SelectItem key={`${section.equip_no}-${section.section_code}`} value={section.section_code || ''}>{`${section.equip_no}-${section.section_code} ${section.section_name}`}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1430,7 +1477,7 @@ export default function MaintenanceWorkManagementPage() {
                     <Textarea 
                       id="instructions" 
                       placeholder="지시사항을 입력하세요" 
-                      value={selectedMaintenance.instructions}
+                      value={selectedMaintenance.instructions || ''}
                       onChange={(e) => setSelectedMaintenance((prev: any) => ({ ...prev, instructions: e.target.value }))}
                     />
                   </div>

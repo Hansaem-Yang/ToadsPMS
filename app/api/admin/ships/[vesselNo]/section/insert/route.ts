@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { execute } from '@/db'; // 이전에 만든 query 함수
+import { execute, query } from '@/db'; // 이전에 만든 query 함수
 import { Section } from '@/types/vessel/section';
 
 export async function POST(req: Request) {
@@ -40,9 +40,27 @@ export async function POST(req: Request) {
     if (count === 0) {
       return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
     }
+    
+    const sections: Section[] = await query(
+      `select max(section_code) as section_code
+          from [section]
+        where vessel_no = @vesselNo
+          and equip_no = @equipNo
+          and regist_user = @registUser`,
+      [
+        { name: 'vesselNo', value: item.vessel_no },
+        { name: 'equipNo', value: item.equip_no },
+        { name: 'registUser', value: item.regist_user },
+      ]
+    );
+    
+    if (sections && sections.length > 0) {
+      const max_section_code = sections[0].section_code
+      // 성공 정보 반환
+      return NextResponse.json({ success: true, section_code: max_section_code });
+    }
 
-    // 성공 정보 반환
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: false });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

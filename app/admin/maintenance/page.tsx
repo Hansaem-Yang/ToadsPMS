@@ -142,12 +142,12 @@ export default function MaintenanceWorkManagementPage() {
       filtered = filterByEquipment(filtered, equipmentFilter)
     }
 
-    if (searchTerm) {
-      filtered = filterBySearch(filtered, searchTerm)
-    }
-
     if (statusFilter !== "ALL") {
       filtered = filterByStatus(filtered, statusFilter)
+    }
+
+    if (searchTerm) {
+      filtered = filterBySearch(filtered, searchTerm)
     }
 
     setFilteredData(filtered)

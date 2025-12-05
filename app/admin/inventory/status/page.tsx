@@ -7,19 +7,48 @@ import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Ship, AlertTriangle } from "lucide-react"
-import { Vessel } from '@/types/inventory/status/vessel'; // ✅ interface import
+import { Input } from "@/components/ui/input"
+import {
+  Search,
+  AlertTriangle,
+  Ship,
+} from "lucide-react"
+import { Vessel } from '@/types/common/vessel'; // ✅ interface import
+import { Machine } from '@/types/common/machine';
+import { Vessel as InventoryVessel } from '@/types/inventory/status/vessel'; // ✅ interface import
 import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface import
 
 
 export default function InventoryStatusPage() {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null);  
-  const [daily, setDaily] = useState<Vessel[]>([]);
-  const [weekly, setWeekly] = useState<Vessel[]>([]);
-  const [monthly, setMonthly] = useState<Vessel[]>([]);
-  const [inventoryData, setInventoryData] = useState<Vessel[]>([]);
+  const [vessels, setVessels] = useState<Vessel[]>([])
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [daily, setDaily] = useState<InventoryVessel[]>([]);
+  const [weekly, setWeekly] = useState<InventoryVessel[]>([]);
+  const [monthly, setMonthly] = useState<InventoryVessel[]>([]);
+  const [inventoryData, setInventoryData] = useState<InventoryVessel[]>([]);
+  const [inventoryFiltered, setInventoryFiltered] = useState<InventoryVessel[]>(inventoryData);
   const [selectedPeriod, setSelectedPeriod] = useState<"daily" | "weekly" | "monthly">("daily")
+  
+  const [searchTerm, setSearchTerm] = useState("")
+  const [searchFilter, setSearchFilter] = useState('');
+  const [shipFilter, setShipFilter] = useState("ALL")
+  const [machineFilter, setMachineFilter] = useState("ALL")
+
+  const fetchVessels = () => {
+    fetch(`/api/common/vessel/code`)
+      .then(res => res.json())
+      .then(data => setVessels(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchMachines = (vesselNo: string) => {
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  };
 
   const fetchInventory = () => {
     fetch(`/api/admin/inventory/status/${selectedPeriod}`)
@@ -46,11 +75,16 @@ export default function InventoryStatusPage() {
       const user = requireAuth();
       setUserInfo(user);
       
+      fetchVessels();
       fetchInventory();
     } catch (error) {
       // Redirect handled by requireAuth
     }
   }, [])
+
+  useEffect(() => {
+    fetchMachines(shipFilter);
+  }, [shipFilter])
 
   useEffect(() => {
     try {
@@ -85,6 +119,48 @@ export default function InventoryStatusPage() {
     }
   }, [selectedPeriod])
 
+  useEffect(() => {
+    let inventoryFiltered = inventoryData
+
+    if (shipFilter !== "ALL") {
+      inventoryFiltered = inventoryFiltered.filter((item) => item.vessel_no === shipFilter)
+    }
+
+    if (machineFilter !== "ALL") {
+      inventoryFiltered = inventoryFiltered.reduce((acc, inventory) => {
+        const filteredChildren = inventory.children.filter((material) => material.machine_name === machineFilter)
+
+        if (filteredChildren.length > 0) {
+          acc.push({
+            ...inventory,
+            children: filteredChildren,
+          })
+        }
+
+        return acc
+      }, [] as InventoryVessel[])
+    }
+
+    if (searchTerm) {
+      inventoryFiltered = inventoryFiltered.reduce((acc, inventory) => {
+        const filteredChildren = inventory.children.filter((material) => 
+          material.material_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          material.material_name.toLowerCase().includes(searchTerm.toLowerCase()))
+
+        if (filteredChildren.length > 0) {
+          acc.push({
+            ...inventory,
+            children: filteredChildren,
+          })
+        }
+
+        return acc
+      }, [] as InventoryVessel[])
+    }
+
+    setInventoryFiltered(inventoryFiltered)
+  }, [inventoryData, searchTerm, shipFilter, machineFilter])
+
   if (!userInfo) return null
 
   const handleShortageClick = () => {
@@ -113,9 +189,9 @@ export default function InventoryStatusPage() {
   
   let shortageCount = 0;
   let lossCount = 0;
-  if(inventoryData.length > 0) {
-    shortageCount = inventoryData.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
-    lossCount = inventoryData.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
+  if(inventoryFiltered.length > 0) {
+    shortageCount = inventoryFiltered.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
+    lossCount = inventoryFiltered.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
   }
 
   const getTableHeaders = () => {
@@ -123,6 +199,7 @@ export default function InventoryStatusPage() {
     headers.push(
       { key: "machine_name", label: "장비", align: "text-left" },
       { key: "material_code", label: "부품코드", align: "text-left" },
+      { key: "material_name", label: "부품명", align: "text-left" },
       { key: "receive_qty", label: "입고", align: "text-center" },
       { key: "release_qty", label: "출고", align: "text-center" },
       { key: "loss_qty", label: "손망실", align: "text-center" },
@@ -142,6 +219,9 @@ export default function InventoryStatusPage() {
       </td>,
       <td key="material_code" className="py-3 text-gray-600">
         {item.material_code}
+      </td>,
+      <td key="material_name" className="py-3 text-gray-600">
+        {item.material_name}
       </td>,
       <td key="receive_qty" className="py-3 text-center font-bold text-green-600">
         +{item.receive_qty}
@@ -230,8 +310,53 @@ export default function InventoryStatusPage() {
                 </Card>
               </div>
 
+              {/* 필터 및 검색 */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">필터 및 검색</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <Select value={shipFilter} onValueChange={setShipFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">전체 선박</SelectItem>
+                        {vessels.map((vessel) => (
+                          <SelectItem key={vessel.vessel_no} value={vessel.vessel_no}>{vessel.vessel_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={machineFilter} onValueChange={setMachineFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">전체 기계</SelectItem>
+                        {machines.map((machine) => (
+                          <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="부품코드로 검색..."
+                          value={searchFilter}
+                          onChange={(e) => setSearchFilter(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="space-y-4">
-                {inventoryData.length > 0 && inventoryData.map(item => (
+                {inventoryFiltered.length > 0 && inventoryFiltered.map(item => (
                   <Card key={item.vessel_name}>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">

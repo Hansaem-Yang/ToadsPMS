@@ -25,6 +25,9 @@ export async function GET(req: Request) {
          from vessel as a
          left outer join material as b
            on a.vessel_no = b.vessel_no
+         left outer join [machine] as c
+           on b.vessel_no = c.vessel_no
+          and b.machine_name = c.machine_name
          left outer join (select a1.vessel_no
                                , a1.material_code
                                , a1.location
@@ -68,7 +71,7 @@ export async function GET(req: Request) {
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
           and d.stock_qty > 0
-        order by a.vessel_no, c.sort_no, b.material_code;`,
+        order by a.vessel_no, isnull(c.sort_no, 999), b.material_code;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

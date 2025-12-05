@@ -51,8 +51,8 @@ export default function ShipInventoryStatusPage() {
       const filteredMaterials =
         selectedMachineData?.children.filter(
           (stock) =>
-            stock.material_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            stock.material_name.toLowerCase().includes(searchTerm.toLowerCase()),
+            stock.material_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            stock.material_name?.toLowerCase().includes(searchTerm.toLowerCase()),
         ) || []
 
       setSelectedMachineData(selectedMachineData)
@@ -168,7 +168,7 @@ export default function ShipInventoryStatusPage() {
                               <td className="py-3 px-2 text-center text-gray-600">{material.standard_qty}</td>
                               <td className="py-3 px-2 text-center">{material.material_unit}</td>
                               <td className="py-3 px-2">{material.warehouse_name}</td>
-                              <td className="py-3 px-2  text-center">{getStatusBadge(material.stock_qty, material.standard_qty)}</td>
+                              <td className="py-3 px-2  text-center">{getStatusBadge(material.stock_qty || 0, material.standard_qty || 0)}</td>
                             </tr>
                           ))}
                         </tbody>

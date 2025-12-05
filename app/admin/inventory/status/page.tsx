@@ -6,16 +6,21 @@ import { requireAuth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/inventory/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import {
   Search,
+  ChevronDown,
+  ChevronRight,
+  Wrench,
   AlertTriangle,
   Ship,
+  FolderTree,
 } from "lucide-react"
 import { Vessel } from '@/types/common/vessel'; // ✅ interface import
 import { Machine } from '@/types/common/machine';
-import { Vessel as InventoryVessel } from '@/types/inventory/status/vessel'; // ✅ interface import
 import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface import
 
 
@@ -24,17 +29,18 @@ export default function InventoryStatusPage() {
   const [userInfo, setUserInfo] = useState<any>(null);  
   const [vessels, setVessels] = useState<Vessel[]>([])
   const [machines, setMachines] = useState<Machine[]>([])
-  const [daily, setDaily] = useState<InventoryVessel[]>([]);
-  const [weekly, setWeekly] = useState<InventoryVessel[]>([]);
-  const [monthly, setMonthly] = useState<InventoryVessel[]>([]);
-  const [inventoryData, setInventoryData] = useState<InventoryVessel[]>([]);
-  const [inventoryFiltered, setInventoryFiltered] = useState<InventoryVessel[]>(inventoryData);
+  const [daily, setDaily] = useState<Inventory[]>([]);
+  const [weekly, setWeekly] = useState<Inventory[]>([]);
+  const [monthly, setMonthly] = useState<Inventory[]>([]);
+  const [inventoryData, setInventoryData] = useState<Inventory[]>([]);
+  const [inventoryFilteredData, setInventoryFilteredData] = useState<Inventory[]>(inventoryData);
   const [selectedPeriod, setSelectedPeriod] = useState<"daily" | "weekly" | "monthly">("daily")
   
   const [searchTerm, setSearchTerm] = useState("")
   const [searchFilter, setSearchFilter] = useState('');
   const [shipFilter, setShipFilter] = useState("ALL")
   const [machineFilter, setMachineFilter] = useState("ALL")
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   const fetchVessels = () => {
     fetch(`/api/common/vessel/code`)
@@ -138,14 +144,14 @@ export default function InventoryStatusPage() {
         }
 
         return acc
-      }, [] as InventoryVessel[])
+      }, [] as Inventory[])
     }
 
     if (searchTerm) {
       inventoryFiltered = inventoryFiltered.reduce((acc, inventory) => {
         const filteredChildren = inventory.children.filter((material) => 
-          material.material_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          material.material_name.toLowerCase().includes(searchTerm.toLowerCase()))
+          material.material_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          material.material_name?.toLowerCase().includes(searchTerm.toLowerCase()))
 
         if (filteredChildren.length > 0) {
           acc.push({
@@ -155,10 +161,10 @@ export default function InventoryStatusPage() {
         }
 
         return acc
-      }, [] as InventoryVessel[])
+      }, [] as Inventory[])
     }
 
-    setInventoryFiltered(inventoryFiltered)
+    setInventoryFilteredData(inventoryFiltered)
   }, [inventoryData, searchTerm, shipFilter, machineFilter])
 
   if (!userInfo) return null
@@ -173,7 +179,9 @@ export default function InventoryStatusPage() {
 
   const totalShortage = (items: Inventory[]): number => {
     return items.reduce((total, item) => {
-      total += item.stock_qty < item.standard_qty ? item.standard_qty - item.stock_qty : 0;
+      const stockQty = item.stock_qty || 0;
+      const standardQty = item.standard_qty || 0;
+      total += stockQty < standardQty ? standardQty - stockQty : 0;
 
       return total;
     }, 0)
@@ -181,7 +189,7 @@ export default function InventoryStatusPage() {
   
   const totalLoss = (items: Inventory[]): number => {
     return items.reduce((total, item) => {
-      total += item.loss_qty;
+      total += item.loss_qty || 0;
 
       return total;
     }, 0)
@@ -189,9 +197,9 @@ export default function InventoryStatusPage() {
   
   let shortageCount = 0;
   let lossCount = 0;
-  if(inventoryFiltered.length > 0) {
-    shortageCount = inventoryFiltered.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
-    lossCount = inventoryFiltered.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
+  if(inventoryFilteredData.length > 0) {
+    shortageCount = inventoryFilteredData.reduce((sum, vessel) => sum + totalShortage(vessel.children), 0)
+    lossCount = inventoryFilteredData.reduce((sum, vessel) => sum + totalLoss(vessel.children), 0)
   }
 
   const getTableHeaders = () => {
@@ -244,6 +252,90 @@ export default function InventoryStatusPage() {
     )
 
     return cells
+  }
+
+  const toggleExpanded = (id: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id)
+    } else {
+      newExpanded.add(id)
+    }
+    setExpandedItems(newExpanded)
+  }
+
+  const renderInventoryTree = (items: Inventory[], level = 0) => {
+    return items.map((item) => (
+      <div key={item.key} className={`${level > 0 ? "ml-6" : ""}`}>
+        <Collapsible open={expandedItems.has(item.key || '')} onOpenChange={() => toggleExpanded(item.key || '')}>
+          <div className="flex items-center gap-2 p-3 border rounded-lg mb-2 bg-white hover:bg-gray-50">
+            {item.children && item.children.length > 0 && (
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-0 h-auto" style={{cursor: 'pointer'}}>
+                  {expandedItems.has(item.key || '') ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            )}
+
+            <div className="flex-1 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {item.type === 'VESSEL' ? (
+                    <Ship className="w-5 h-5" />
+                  ) : (
+                    <Wrench className="w-5 h-5 text-orange-600" />
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{`${item.name}`}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {item.children && item.children.length > 0 && item.type !== "MACHINE" && (
+            <CollapsibleContent>
+              <div className="ml-4 border-l-2 border-gray-200 pl-4">
+                {renderInventoryTree(item.children, level + 1)}
+              </div>
+            </CollapsibleContent>
+          )}
+
+          {item.children && item.children.length > 0 && item.type === "MACHINE" && (
+            <CollapsibleContent>
+              <div className="ml-4 border-l-2 border-gray-200 pl-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        {getTableHeaders().map((header) => (
+                          <th key={header.key} className={`${header.align} py-2`}>
+                            {header.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {item.children.map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          {getTableCells(item, index)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </CollapsibleContent>
+          )}
+        </Collapsible>
+      </div>
+    ))
   }
 
   return (
@@ -355,44 +447,14 @@ export default function InventoryStatusPage() {
                 </CardContent>
               </Card>
 
-              <div className="space-y-4">
-                {inventoryFiltered.length > 0 && inventoryFiltered.map(item => (
-                  <Card key={item.vessel_name}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Ship className="w-5 h-5" />{item.vessel_name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              {getTableHeaders().map((header) => (
-                                <th key={header.key} className={`${header.align} py-2`}>
-                                  {header.label}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {item.children.map((item, index) => (
-                              <tr key={index} className="border-b hover:bg-gray-50">
-                                {getTableCells(item, index)}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      {item.children.length  === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <p>검색 조건에 맞는 부품이 없습니다</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <div className="space-y-2">{renderInventoryTree(inventoryFilteredData)}</div>
+              
+              {inventoryFilteredData.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <FolderTree className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>조건에 맞는 재고가 없습니다.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

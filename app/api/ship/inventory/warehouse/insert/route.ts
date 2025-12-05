@@ -62,8 +62,6 @@ export async function POST(req: Request) {
         { name: 'registUser', value: item.regist_user },
       ]
     );
-
-    console.log(sendData);
     
     // 선박에서 저장된 창고 정보 전송
     if (sendData[0]) {

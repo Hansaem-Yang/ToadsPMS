@@ -621,14 +621,9 @@ export default function MaintenanceWorkManagementPage() {
 
     if (data.success) {
       alert("저장이 완료되었습니다.");
-
-      console.log("업데이트할 데이터:", selectedSection);
-      console.log("업데이트 전 상태:", maintenanceData);
       
       const newMaintenanceData = updateSections(selectedSection)
       setMaintenanceData(newMaintenanceData);
-
-      console.log("업데이트 후 상태:", newMaintenanceData);
 
       
       setIsEditSectionDialogOpen(false);

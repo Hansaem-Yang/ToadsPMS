@@ -139,7 +139,6 @@ export default function MaintenanceExecutionPage() {
     fetch(`/api/ship/execution/inventory?vesselNo=${vesselNo}&machineName=${machineName}`)
       .then(res => res.json())
       .then(data => {
-        console.log(data)
         setInventorys(data)
       })
       .catch(err => console.error(err));

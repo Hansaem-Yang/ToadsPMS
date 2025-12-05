@@ -74,6 +74,21 @@ export default function ShipCalendarPage() {
     };
   }, [calendarEquipments]);
 
+  useEffect(() => {
+  if (selectedTasks.length > 0) {
+    const element = findElementById("main_task");
+
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } else {
+      console.log("경고: main_task 요소를 찾을 수 없습니다.");
+    }
+  }
+}, [selectedTasks]);
+
   if (!userInfo) return null
 
   interface MonthHeader {
@@ -126,17 +141,6 @@ export default function ShipCalendarPage() {
     })
 
     setSelectedTasks(items);
-    
-    if (items.length > 0) {
-      const element = findElementById("main_task");
-      
-      if (element) {
-        element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }
-    }
   }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -393,7 +397,7 @@ export default function ShipCalendarPage() {
                               
                               return (
                                 <div
-                                  key={calendar.calendar_date}
+                                  key={`${equipment.equip_no}-${calendar.calendar_date}-${taskIndex}`}
                                   className={`absolute h-6 rounded cursor-pointer transition-all text-center hover:opacity-80 ${getPriorityColor(calendar.calendar_date)}`}
                                   style={{
                                     ...position.position,
@@ -465,10 +469,10 @@ export default function ShipCalendarPage() {
                                 <div className="font-medium">{task.due_date}</div>
                               </div>
                               {task.extension_date && (
-                              <div className="flex gap-2">
-                                <span className="text-gray-600">연장일</span>
-                                <div className="font-medium">{task.extension_date}</div>
-                              </div>
+                                <div className="flex gap-2">
+                                  <span className="text-gray-600">연장일</span>
+                                  <div className="font-medium">{task.extension_date}</div>
+                                </div>
                               )}
                             </div>
                           </div>

@@ -6,7 +6,6 @@ export interface Transactions {
     no: string;
     material_code: string;
     material_name: string;
-    machine_id: string;
     machine_name: string;
     location: string;
     unit: string;

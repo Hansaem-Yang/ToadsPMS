@@ -12,8 +12,7 @@ export async function GET(req: Request) {
     const items: Material[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , b.machine_id
-            , c.machine_name
+            , b.machine_name
             , b.material_code
             , b.material_name
             , b.material_group
@@ -30,7 +29,7 @@ export async function GET(req: Request) {
            on a.vessel_no = b.vessel_no
          left outer join [machine] as c
            on b.vessel_no = c.vessel_no
-          and b.machine_id = c.machine_id
+          and b.machine_name = c.machine_name
          left outer join [receive] as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
@@ -40,7 +39,7 @@ export async function GET(req: Request) {
           and b.warehouse_no = e.warehouse_no
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
-        order by a.vessel_no, c.sort_no, b.material_code;`,
+        order by a.vessel_no, isnull(c.sort_no, 999), b.material_code;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]
@@ -49,20 +48,19 @@ export async function GET(req: Request) {
     let machines: Machine[] = []
     let machine: Machine
 
-    let machineId: string = '';
+    let machineName: string = '';
 
     items.map(item => {
-      if (machineId !== item.machine_id) {
+      if (machineName !== item.machine_name) {
         machine = {
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
-          machine_id: item.machine_id,
           machine_name: item.machine_name,
           children: []
         }
 
         machines.push(machine);
-        machineId = item.machine_id;
+        machineName = item.machine_name;
       }
       
       if (item.material_code) {

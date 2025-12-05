@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     try {
       let count = 0;
       let equipNo: string = '';
+      let machineName: string = '';
       let equipName: string = '';
       let sectionCode: string = '';
       let sectionName: string = '';
@@ -25,6 +26,54 @@ export async function POST(req: Request) {
       for (const rows of excelData) {
         if (vesselNo !== rows.CallSign) {
           continue;
+        }
+
+        if (rows.Machine && machineName !== rows.Machine) {
+          let queryString = 
+            `merge [machine] as a
+             using (select @vesselNo as vessel_no
+                         , @machine as machine_name
+                         , @manufacturer as manufacturer
+                         , @registUser as regist_user
+                         , @modifyUser as modify_user) as b
+                on (a.vessel_no = b.vessel_no 
+               and  a.machine_name = b.machine_name)
+              when matched then
+                   update
+                      set a.manufacturer = b.manufacturer
+                        , a.modify_date = getdate()
+                        , a.modify_user = b.modify_user
+              when not matched then
+                   insert (
+                           vessel_no
+                         , machine_name
+                         , manufacturer
+                         , sort_no
+                         , regist_date
+                         , regist_user
+                   )
+                   values (
+                           b.vessel_no
+                         , b.machine_name
+                         , b.manufacturer
+                         , (select isnull(max(sort_no), 0) + 1 from [machine] where vessel_no = b.vessel_no)
+                         , getdate()
+                         , b.regist_user
+                   );`
+
+          let params = [
+            { name: 'vesselNo', value: vesselNo },
+            { name: 'machine', value: rows.Machine ? rows.Machine : '' },
+            { name: 'manufacturer', value: rows.Maker ? rows.Maker : '' },
+            { name: 'registUser', value: registUser },
+            { name: 'modifyUser', value: modifyUser }
+          ];
+          
+          const request = new sql.Request(transantion);
+          params?.forEach(p => request.input(p.name, p.value));
+          let result = await request.query(queryString);
+
+          machineName = rows.Machine;
         }
 
         if (equipName !== rows.Equipment) {
@@ -38,18 +87,17 @@ export async function POST(req: Request) {
                          , @category as category
                          , @manufacturer as manufacturer
                          , @model as model
-                         , @machine as machine_id
+                         , @machine as machine_name
                          , @registUser as regist_user
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
                and  a.equip_name = b.equip_name)
               when matched then
                    update
-                      set a.equip_name = b.equip_name
-                        , a.category = lower(b.category)
+                      set a.category = lower(b.category)
                         , a.manufacturer = b.manufacturer
                         , a.model = b.model
-                        , a.machine_id = b.machine_id
+                        , a.machine_name = b.machine_name
                         , a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
@@ -60,7 +108,7 @@ export async function POST(req: Request) {
                          , category
                          , manufacturer
                          , model
-                         , machine_id
+                         , machine_name
                          , regist_date
                          , regist_user
                    )
@@ -71,7 +119,7 @@ export async function POST(req: Request) {
                          , lower(b.category)
                          , b.manufacturer
                          , b.model
-                         , b.machine_id
+                         , b.machine_name
                          , getdate()
                          , b.regist_user
                    );`
@@ -86,7 +134,7 @@ export async function POST(req: Request) {
             { name: 'registUser', value: registUser },
             { name: 'modifyUser', value: modifyUser }
           ];
-
+          
           const request = new sql.Request(transantion);
           params?.forEach(p => request.input(p.name, p.value));
           let result = await request.query(queryString);
@@ -95,9 +143,10 @@ export async function POST(req: Request) {
 
           if (result.rowsAffected[0] > 0) {
             queryString = 
-              `select max(equip_no) as equip_no
+              `select equip_no
                  from [equipment] 
-                where vessel_no = @vesselNo;`
+                where vessel_no = @vesselNo
+                  and equip_name = @equipName;`
 
             result = await request.query(queryString);
 
@@ -108,7 +157,7 @@ export async function POST(req: Request) {
           }
         }
 
-        if (sectionName !== rows.Section) {          
+        if (sectionName !== rows.Section) {
           let queryString = 
             `merge [section] as a
              using (select @vesselNo as vessel_no
@@ -121,8 +170,7 @@ export async function POST(req: Request) {
                and  a.section_name = b.section_name)
               when matched then
                    update
-                      set a.section_name = b.section_name
-                        , a.modify_date = getdate()
+                      set a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
                    insert (
@@ -158,10 +206,11 @@ export async function POST(req: Request) {
 
           if (result.rowsAffected[0] > 0) {
             queryString = 
-              `select max(section_code) as section_code
+              `select section_code
                  from [section] 
                 where vessel_no = @vesselNo
-                  and equip_no = @equipNo;`
+                  and equip_no = @equipNo
+                  and section_name = @sectionName;`
 
             result = await request.query(queryString);
 
@@ -193,15 +242,16 @@ export async function POST(req: Request) {
                          , @critical as critical 
                          , @lastestDate as lastest_date 
                          , @instructions as instructions
+                         , @prevPmsCode as prev_pms_code
                          , @registUser as regist_user
                          , @modifyUser as modify_user) as b
                 on (a.vessel_no = b.vessel_no 
                and  a.equip_no = b.equip_no
-               and  a.section_code = b.section_code)
+               and  a.section_code = b.section_code
+               and  a.plan_name = b.plan_name)
               when matched then
                    update 
-                      set a.plan_name = b.plan_name
-                        , a.manufacturer = b.manufacturer
+                      set a.manufacturer = b.manufacturer
                         , a.model = b.model
                         , a.specifications = b.specifications
                         , a.workers = b.workers
@@ -214,6 +264,7 @@ export async function POST(req: Request) {
                         , a.critical = b.critical
                         , a.lastest_date = b.lastest_date
                         , a.instructions = b.instructions
+                        , a.prev_pms_code = b.prev_pms_code
                         , a.modify_date = getdate()
                         , a.modify_user = b.modify_user
               when not matched then
@@ -236,6 +287,7 @@ export async function POST(req: Request) {
                          , critical
                          , lastest_date
                          , instructions
+                         , prev_pms_code
                          , regist_date
                          , regist_user
                    )
@@ -258,9 +310,15 @@ export async function POST(req: Request) {
                          , b.critical
                          , b.lastest_date
                          , b.instructions
+                         , b.prev_pms_code
                          , getdate()
                          , b.regist_user
                    );`
+        
+        let lastestDate = rows.LastestDate == 'N/A' ? null : rows.LastestDate;
+        if (typeof lastestDate === 'number') {
+          lastestDate = ConvertExcelSerialToData(lastestDate);
+        }
 
         let params = [
           { name: 'vesselNo', value: vesselNo },
@@ -278,8 +336,9 @@ export async function POST(req: Request) {
           { name: 'manager', value: rows.Manager? rows.Manager : 0 },
           { name: 'selfMaintenance', value: rows.SelfMaintenance? rows.SelfMaintenance : '' },
           { name: 'critical', value: rows.Critical? rows.Critical : '' },
-          { name: 'lastestDate', value: rows.LastestDate},
+          { name: 'lastestDate', value: lastestDate },
           { name: 'instructions', value: rows.Instructions? rows.Instructions : '' },
+          { name: 'prevPmsCode', value: rows.PrevPMSCode? rows.PrevPMSCode : '' },
           { name: 'registUser', value: registUser },
           { name: 'modifyUser', value: modifyUser }
         ];
@@ -308,4 +367,25 @@ export async function POST(req: Request) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
   }
+}
+
+function ConvertExcelSerialToData(serial: number): String {
+  let daysToSubtract = 1;
+  if (serial > 60) {
+    daysToSubtract = 2; 
+  }
+  
+  const excelEpoch = new Date(Date.UTC(1900, 0, 1));
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const dateInMilliseconds = excelEpoch.getTime() + (serial - daysToSubtract) * millisecondsPerDay;
+  const convertedDate = new Date(dateInMilliseconds);
+
+  const year = convertedDate.getUTCFullYear();
+  const month = convertedDate.getUTCMonth() + 1; // getUTCMonth()는 0부터 시작하므로 +1
+  const day = convertedDate.getUTCDate();
+
+  const formattedMonth = String(month).padStart(2, '0');
+  const formattedDay = String(day).padStart(2, '0');
+
+  return `${year}-${formattedMonth}-${formattedDay}`;
 }

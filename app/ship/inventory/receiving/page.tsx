@@ -36,7 +36,8 @@ export default function PartsReceivingPage() {
     regist_date: "",
     regist_user: "",
     modify_date: "",
-    modify_user: ""
+    modify_user: "",
+    receive_location: ""
   }
 
   const [userInfo, setUserInfo] = useState<any>(null)
@@ -53,7 +54,7 @@ export default function PartsReceivingPage() {
   })
   
   const fetchWarehouses = (vesselNo: string) => {
-    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+    fetch(`/api/common/warehouse/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setWarehouses(data))
       .catch(err => console.error(err));
@@ -106,8 +107,8 @@ export default function PartsReceivingPage() {
     }))
   }
 
-  const getAvailablePartsForMachine = (machineId: string) => {
-    const machine = machines.find((e) => e.machine_id === machineId)
+  const getAvailablePartsForMachine = (machineName: string) => {
+    const machine = machines.find((e) => e.machine_name === machineName)
     return machine ? machine.materials : []
   }
 
@@ -147,12 +148,12 @@ export default function PartsReceivingPage() {
 
     todayReceivings.forEach((receiving) => {
       receiving.materials.forEach((material: any) => {
-        const machine = machines.find((e) => e.machine_id === material.machine_id)
+        const machine = machines.find((e) => e.machine_name === material.machine_name)
         const materialInfo = machine?.materials.find((p) => p.material_code === material.material_code)
 
         if (machine && materialInfo) {
-          if (!summary[material.machine_id]) {
-            summary[material.machine_id] = {
+          if (!summary[material.machine_name]) {
+            summary[material.machine_name] = {
               machine_name: machine.machine_name,
               totalMaterials: 0,
               totalQuantity: 0,
@@ -160,9 +161,9 @@ export default function PartsReceivingPage() {
             }
           }
 
-          summary[material.machine_id].totalMaterials += 1
-          summary[material.machine_id].totalQuantity += Number.parseInt(material.receive_qty || "0")
-          summary[material.machine_id].materials.push({
+          summary[material.machine_name].totalMaterials += 1
+          summary[material.machine_name].totalQuantity += Number.parseInt(material.receive_qty || "0")
+          summary[material.machine_name].materials.push({
             material_name: materialInfo.material_name,
             material_code: materialInfo.material_code,
             receive_qty: material.receive_qty,
@@ -178,13 +179,13 @@ export default function PartsReceivingPage() {
   const isReceivingDataValid = () => {
     if (!receivingData.delivery_location.trim()) return false
 
-    const partsWithData = receivingData.materials.filter((material) => material.machine_id || material.material_code || material.receive_qty)
+    const partsWithData = receivingData.materials.filter((material) => material.machine_name || material.material_code || material.receive_qty)
 
     if (partsWithData.length === 0) return false
 
     return partsWithData.every(
       (material) =>
-        material.machine_id || material.material_code || material.receive_qty && material.receive_location && Number.parseInt(material.receive_qty) > 0,
+        material.machine_name || material.material_code || material.receive_qty && material.receive_location && Number.parseInt(material.receive_qty) > 0,
     )
   }
 
@@ -265,14 +266,14 @@ export default function PartsReceivingPage() {
                               <Label className="text-sm">장비</Label>
                               <Select
                                 value={material.equipmentId}
-                                onValueChange={(value) => updateReceivingMaterial(index, "machine_id", value)}
+                                onValueChange={(value) => updateReceivingMaterial(index, "machine_name", value)}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="장비 선택" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {machines.map((machine) => (
-                                    <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                                    <SelectItem key={machine.machine_name} value={machine.machine_name}>
                                       {machine.machine_name}
                                     </SelectItem>
                                   ))}
@@ -284,13 +285,13 @@ export default function PartsReceivingPage() {
                               <Select
                                 value={material.material_code}
                                 onValueChange={(value) => updateReceivingMaterial(index, "material_code", value)}
-                                disabled={!material.machine_id}
+                                disabled={!material.machine_name}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="부품 선택" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {getAvailablePartsForMachine(material.machine_id).map((availablePart) => (
+                                  {getAvailablePartsForMachine(material.machine_name).map((availablePart) => (
                                     <SelectItem key={availablePart.material_code} value={availablePart.material_code}>
                                       {availablePart.material_name}
                                     </SelectItem>
@@ -337,7 +338,7 @@ export default function PartsReceivingPage() {
                               <Input
                                 value={
                                   material.material_code
-                                    ? getAvailablePartsForMachine(material.machine_id).find(
+                                    ? getAvailablePartsForMachine(material.machine_name).find(
                                         (p) => p.material_code === material.material_code,
                                       )?.material_unit || ""
                                     : ""
@@ -351,7 +352,7 @@ export default function PartsReceivingPage() {
                               <Input
                                 value={
                                   material.material_code
-                                    ? getAvailablePartsForMachine(material.machine_id).find(
+                                    ? getAvailablePartsForMachine(material.machine_name).find(
                                         (p) => p.material_code === material.material_code,
                                       )?.stock_qty || 0
                                     : 0
@@ -407,8 +408,8 @@ export default function PartsReceivingPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Object.entries(getTodayReceivingSummary()).map(([machine_id, summary]) => (
-                        <Card key={machine_id} className="border-l-4 border-l-green-500">
+                      {Object.entries(getTodayReceivingSummary()).map(([machine_name, summary]) => (
+                        <Card key={machine_name} className="border-l-4 border-l-green-500">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg">{summary.machine_name}</CardTitle>
                           </CardHeader>

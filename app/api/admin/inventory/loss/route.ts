@@ -9,8 +9,7 @@ export async function GET(req: Request) {
       `select a.vessel_no
             , b.vessel_name
             , a.loss_no
-            , c.machine_id
-            , d.machine_name
+            , c.machine_name
             , a.material_code
             , c.material_name
             , convert(varchar(10), a.loss_date, 121) as loss_date
@@ -26,9 +25,6 @@ export async function GET(req: Request) {
         inner join [material] as c
            on a.vessel_no = c.vessel_no
           and a.material_code = c.material_code
-        inner join [machine] as d
-           on c.vessel_no = d.vessel_no
-          and c.machine_id = d.machine_id
         order by a.vessel_no, a.loss_date`);
 
     // 성공 시 데쉬보드 정보 반환

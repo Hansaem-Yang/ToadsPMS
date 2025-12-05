@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       insert into [material] (
               vessel_no
             , material_code
-            , machine_id
+            , machine_name
             , material_name
             , material_group
             , material_spec
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
                  from [material]
                 where vessel_no = @vesselNo
                   and material_type = @materialType)
-            , @machineId
+            , @machineName
             , @materialName
             , @materialGroup
             , @materialSpec
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
       let params = [
         { name: 'vesselNo', value: item.vessel_no }, 
-        { name: 'machineId', value: item.machine_id }, 
+        { name: 'machineName', value: item.machine_name }, 
         { name: 'materialName', value: item.material_name }, 
         { name: 'materialGroup', value: item.material_group }, 
         { name: 'materialSpec', value: item.material_spec }, 
@@ -83,11 +83,11 @@ export async function POST(req: Request) {
                   , @modifyUser as modify_user
               from [material] as a1
               where a1.vessel_no = @vesselNo
-                and a1.machine_id = @machineId
+                and a1.machine_name = @machineName
                 and a1.material_code = (select max(material_code) 
                                           from [material]
                                         where vessel_no = @vesselNo
-                                          and machine_id = @machineId
+                                          and machine_name = @machineName
                                           and regist_user = @registUser)) as b
         on (a.vessel_no = b.vessel_no 
             and a.material_code = b.material_code
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
                   , b.regist_user);`;
       params = [
         { name: 'vesselNo', value: item.vessel_no }, 
-        { name: 'machineId', value: item.machine_id }, 
+        { name: 'machineName', value: item.machine_name }, 
         { name: 'initialStock', value: item.initial_stock }, 
         { name: 'registUser', value: item.regist_user }, 
         { name: 'modifyUser', value: item.modify_user }, 
@@ -145,7 +145,7 @@ export async function POST(req: Request) {
       const sendData: Material[] = await query(
         `select vessel_no
               , material_code
-              , machine_id
+              , machine_name
               , material_name
               , material_group
               , material_spec
@@ -161,11 +161,11 @@ export async function POST(req: Request) {
             and material_code = (select max(material_code) 
                                    from [material]
                                   where vessel_no = @vesselNo
-                                    and machine_id = @machineId
+                                    and machine_name = @machineName
                                     and regist_user = @registUser);`,
         [
           { name: 'vesselNo', value: item.vessel_no },
-          { name: 'machineId', value: item.machine_id },
+          { name: 'machineName', value: item.machine_name },
           { name: 'registUser', value: item.regist_user },
         ]
       );

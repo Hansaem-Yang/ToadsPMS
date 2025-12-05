@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       `merge [material] as a
       using (select @vesselNo as vessel_no
                   , @materialCode as material_code
-                  , @machineId as machine_id
+                  , @machineName as machine_name
                   , @materialName as material_name
                   , @materialGroup as material_group
                   , @materialSpec as material_spec
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
           and a.material_code = b.material_code)
         when matched then
             update
-                set a.machine_id = b.machine_id
+                set a.machine_name = b.machine_name
                   , a.material_name = b.material_name
                   , a.material_group = b.material_group
                   , a.material_spec = b.material_spec
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         when not matched then
             insert (vessel_no
                   , material_code
-                  , machine_id
+                  , machine_name
                   , material_name
                   , material_group
                   , material_spec
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
                   , regist_user)
             values (b.vessel_no
                   , b.material_code
-                  , b.machine_id
+                  , b.machine_name
                   , b.material_name
                   , b.material_group
                   , b.material_spec
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       let params = [
         { name: 'vesselNo', value: item.vessel_no }, 
         { name: 'materialCode', value: item.material_code }, 
-        { name: 'machineId', value: item.machine_id }, 
+        { name: 'machineName', value: item.machine_name }, 
         { name: 'materialName', value: item.material_name }, 
         { name: 'materialGroup', value: item.material_group }, 
         { name: 'materialSpec', value: item.material_spec }, 
@@ -108,11 +108,11 @@ export async function POST(req: Request) {
                   , @modifyUser as modify_user
                from [material] as a1
               where a1.vessel_no = @vesselNo
-                and a1.machine_id = @machineId
+                and a1.machine_name = @machineName
                 and a1.material_code = (select max(material_code) 
                                           from [material]
                                         where vessel_no = @vesselNo
-                                          and machine_id = @machineId
+                                          and machine_name = @machineName
                                           and regist_user = @registUser)) as b
         on (a.vessel_no = b.vessel_no 
             and a.material_code = b.material_code
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
                   , b.regist_user);`;
       params = [
         { name: 'vesselNo', value: item.vessel_no }, 
-        { name: 'machineId', value: item.machine_id }, 
+        { name: 'machineName', value: item.machine_name }, 
         { name: 'initialStock', value: item.initial_stock }, 
         { name: 'registDate', value: item.regist_date }, 
         { name: 'registUser', value: item.regist_user }, 

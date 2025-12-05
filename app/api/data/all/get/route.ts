@@ -47,7 +47,7 @@ export async function POST(req: Request) {
             , description
             , category
             , lastest_date
-            , machine_id
+            , machine_name
             , regist_date
             , regist_user
             , modify_date
@@ -142,7 +142,7 @@ export async function POST(req: Request) {
     const materials: Material[] = await query(
       `select vessel_no
             , material_code
-            , machine_id
+            , machine_name
             , material_name
             , material_group
             , material_spec

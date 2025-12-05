@@ -8,7 +8,6 @@ export async function GET(req: Request) {
     const items: Inventory[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , a.machine_id
             , a.machine_name
             , a.material_code
             , a.material_name
@@ -19,8 +18,7 @@ export async function GET(req: Request) {
             , isnull(a.last_used, '') as last_used
          from (select a.vessel_no
                     , a.vessel_name
-                    , b.machine_id
-                    , c.machine_name
+                    , b.machine_name
                     , c.sort_no
                     , b.material_code
                     , b.material_name
@@ -47,7 +45,7 @@ export async function GET(req: Request) {
                    on a.vessel_no = b.vessel_no
                  left outer join [machine] as c
                    on b.vessel_no = c.vessel_no
-                  and b.machine_id = c.machine_id
+                  and b.machine_name = c.machine_name
                  left outer join [warehouse] as d
                    on b.vessel_no = d.vessel_no
                   and b.warehouse_no = d.warehouse_no

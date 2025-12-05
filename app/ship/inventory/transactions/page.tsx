@@ -43,7 +43,6 @@ export default function InventoryTransactionsPage() {
     no: "",
     material_code: "",
     material_name: "",
-    machine_id: "",
     machine_name: "",
     location: "",
     unit: "",
@@ -70,14 +69,14 @@ export default function InventoryTransactionsPage() {
   const [warehouseFilter, setWarehouseFilter] = useState("")
 
   const fetchMachines = (vesselNo: string) => {
-    fetch(`/api/admin/common/machine?vesselNo=${vesselNo}`)
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setMachines(data))
       .catch(err => console.error(err));
   }
 
   const fetchWarehouses = (vesselNo: string) => {
-    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+    fetch(`/api/common/warehouse/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setWarehouses(data))
       .catch(err => console.error(err));
@@ -274,8 +273,8 @@ export default function InventoryTransactionsPage() {
                       <div className="space-y-2">
                         <Label>장비</Label>
                         <Select 
-                          value={searchData.machine_id} 
-                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, machine_id: value }))}
+                          value={searchData.machine_name} 
+                          onValueChange={(value) => setSearchData((prev: any) => ({ ...prev, machine_name: value }))}
                         >
                           <SelectTrigger className="w-48">
                             <SelectValue placeholder="전체" />
@@ -283,7 +282,7 @@ export default function InventoryTransactionsPage() {
                           <SelectContent>
                             <SelectItem value="all">전체</SelectItem>
                             {machines.map((machine) => (
-                              <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                              <SelectItem key={machine.machine_name} value={machine.machine_name}>
                                 {machine.machine_name}
                               </SelectItem>
                             ))}

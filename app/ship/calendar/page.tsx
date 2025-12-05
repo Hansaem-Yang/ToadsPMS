@@ -11,6 +11,7 @@ import { Settings } from "lucide-react"
 import { addDays, format } from 'date-fns';
 import { Equipment } from '@/types/calendar/equipment';
 import { Maintenance } from '@/types/calendar/maintenance';
+import { Tooltip } from 'react-tooltip';
 import '@/styles/styles.css'
 
 export default function ShipCalendarPage() {
@@ -73,6 +74,21 @@ export default function ShipCalendarPage() {
     };
   }, [calendarEquipments]);
 
+  useEffect(() => {
+  if (selectedTasks.length > 0) {
+    const element = findElementById("main_task");
+
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } else {
+      console.log("경고: main_task 요소를 찾을 수 없습니다.");
+    }
+  }
+}, [selectedTasks]);
+
   if (!userInfo) return null
 
   interface MonthHeader {
@@ -110,13 +126,21 @@ export default function ShipCalendarPage() {
     }
   }
 
+  function findElementById(id: string): HTMLElement | null {
+    // id를 사용하여 요소를 찾습니다.
+    const element = document.getElementById(id); 
+    
+    // HTML 요소이거나 null일 수 있습니다.
+    return element;
+  }
+
   const handleCalendarClick = (calendar: any) => {
     let items: Maintenance[] = []
     calendar.children.map((task: Maintenance) => {
       items = [...items, task];
     })
 
-    setSelectedTasks(items)
+    setSelectedTasks(items);
   }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -373,7 +397,7 @@ export default function ShipCalendarPage() {
                               
                               return (
                                 <div
-                                  key={calendar.calendar_date}
+                                  key={`${equipment.equip_no}-${calendar.calendar_date}-${taskIndex}`}
                                   className={`absolute h-6 rounded cursor-pointer transition-all text-center hover:opacity-80 ${getPriorityColor(calendar.calendar_date)}`}
                                   style={{
                                     ...position.position,
@@ -381,6 +405,9 @@ export default function ShipCalendarPage() {
                                     zIndex: 10,
                                   }}
                                   onClick={() => handleCalendarClick(calendar)}
+                                  data-tooltip-id="calendar-tooltip"
+                                  data-tooltip-content={`${calendar.children.length} 건`} // 툴팁에 표시할 내용
+                                  data-tooltip-place="top"
                                 >
                                   <div className="px-2 py-1 text-xs text-white font-medium truncate">{calendar.children.length} 건</div>
                                 </div>
@@ -390,12 +417,13 @@ export default function ShipCalendarPage() {
                         </div>
                       </div>
                     )})}
+                    <Tooltip id="calendar-tooltip" />
                   </div>
                 </div>                
               </CardContent>
             </Card>
             {selectedTasks.length > 0 && (
-              <Card>
+              <Card id="main_task">
                 <CardContent>
                   <div className="p-2">
                     <div className="flex items-center gap-3 text-xl">
@@ -403,7 +431,7 @@ export default function ShipCalendarPage() {
                     </div>
                   </div>
                   {selectedTasks.map((task) => (
-                    <div className="p-2">
+                    <div key={`${task.equip_no}-${task.section_code}-${task.plan_code}`} className="p-2">
                       <Card>
                         <CardContent>
                           <div className="space-y-4">
@@ -441,10 +469,10 @@ export default function ShipCalendarPage() {
                                 <div className="font-medium">{task.due_date}</div>
                               </div>
                               {task.extension_date && (
-                              <div className="flex gap-2">
-                                <span className="text-gray-600">연장일</span>
-                                <div className="font-medium">{task.extension_date}</div>
-                              </div>
+                                <div className="flex gap-2">
+                                  <span className="text-gray-600">연장일</span>
+                                  <div className="font-medium">{task.extension_date}</div>
+                                </div>
                               )}
                             </div>
                           </div>

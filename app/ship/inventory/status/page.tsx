@@ -42,17 +42,17 @@ export default function ShipInventoryStatusPage() {
     let filtered = machines
 
     if (!selectedMachine) {
-      setSelectedMachine(machines[0]?.machine_id)
+      setSelectedMachine(machines[0]?.machine_name)
       return;
     }
 
     if (searchTerm || selectedMachine) {
-      const selectedMachineData = filtered.find((machine) => machine.machine_id === selectedMachine)
+      const selectedMachineData = filtered.find((machine) => machine.machine_name === selectedMachine)
       const filteredMaterials =
         selectedMachineData?.children.filter(
           (stock) =>
-            stock.material_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            stock.material_name.toLowerCase().includes(searchTerm.toLowerCase()),
+            stock.material_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            stock.material_name?.toLowerCase().includes(searchTerm.toLowerCase()),
         ) || []
 
       setSelectedMachineData(selectedMachineData)
@@ -107,10 +107,10 @@ export default function ShipInventoryStatusPage() {
                   <div className="space-y-1">
                     {machines.map((machine) => (
                       <button
-                        key={machine.machine_id}
-                        onClick={() => setSelectedMachine(machine.machine_id)}
+                        key={machine.machine_name}
+                        onClick={() => setSelectedMachine(machine.machine_name)}
                         className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-l-4 ${
-                          selectedMachine === machine.machine_id
+                          selectedMachine === machine.machine_name
                             ? "border-blue-500 bg-blue-50 text-blue-700"
                             : "border-transparent"
                         }`}
@@ -168,7 +168,7 @@ export default function ShipInventoryStatusPage() {
                               <td className="py-3 px-2 text-center text-gray-600">{material.standard_qty}</td>
                               <td className="py-3 px-2 text-center">{material.material_unit}</td>
                               <td className="py-3 px-2">{material.warehouse_name}</td>
-                              <td className="py-3 px-2  text-center">{getStatusBadge(material.stock_qty, material.standard_qty)}</td>
+                              <td className="py-3 px-2  text-center">{getStatusBadge(material.stock_qty || 0, material.standard_qty || 0)}</td>
                             </tr>
                           ))}
                         </tbody>

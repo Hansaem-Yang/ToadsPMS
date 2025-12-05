@@ -30,7 +30,6 @@ export default function InitialStockPage() {
   const initialMaterial: Material = {
     vessel_no: "",
     vessel_name: "",
-    machine_id: "",
     machine_name: "",
     material_code: "",
     material_name: "",
@@ -73,21 +72,21 @@ export default function InitialStockPage() {
   const [excelData, setExcelData] = useState<ExcelData[]>([]);
 
   const fetchMaterialTypes = () => {
-    fetch(`/api/admin/common/material_type`)
+    fetch(`/api/common/material_type/code`)
       .then(res => res.json())
       .then(data => setMaterialTypes(data))
       .catch(err => console.error(err));
   };
   
   const fetchMaterialUnits = () => {
-    fetch(`/api/admin/common/material_unit`)
+    fetch(`/api/common/material_unit/code`)
       .then(res => res.json())
       .then(data => setMaterialUnits(data))
       .catch(err => console.error(err));
   };
   
   const fetchWarehouses = (vesselNo: string) => {
-    fetch(`/api/admin/common/warehouse?vesselNo=${vesselNo}`)
+    fetch(`/api/common/warehouse/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setWarehouses(data))
       .catch(err => console.error(err));
@@ -118,12 +117,12 @@ export default function InitialStockPage() {
     let filtered = machines
 
     if (!selectedMachine) {
-      setSelectedMachine(machines[0]?.machine_id)
+      setSelectedMachine(machines[0]?.machine_name)
       return;
     }
 
     if (selectedMachine) {
-      const selectedMachineData = filtered.find((machine) => machine.machine_id === selectedMachine)
+      const selectedMachineData = filtered.find((machine) => machine.machine_name === selectedMachine)
       const filteredMaterials =
         selectedMachineData?.children.filter(
           (stock) =>
@@ -155,7 +154,6 @@ export default function InitialStockPage() {
         ...initialMaterial,
         vessel_no: selectedMachineData.vessel_no,
         vessel_name: selectedMachineData.vessel_name,
-        machine_id: selectedMachineData.machine_id,
         machine_name: selectedMachineData.machine_name,
         regist_user: userInfo.account_no,
         modify_user: userInfo.account_no,
@@ -170,7 +168,7 @@ export default function InitialStockPage() {
     const insertedData = {
       ...addMaterial,
       vessel_no: selectedMachineData?.vessel_no,
-      machine_id: selectedMachineData?.machine_id,
+      machine_name: selectedMachineData?.machine_name,
       regist_user: userInfo.account_no,
       modify_user: userInfo.account_no,
     };
@@ -198,12 +196,12 @@ export default function InitialStockPage() {
 
   const updateMaterials = (item: any) => {
     return machines.map((machine) => {
-      if (machine.machine_id === item.machine_id) {
+      if (machine.machine_name === item.machine_name) {
         const updatedMaterials = machine.children.map((material) => {
           if (material.material_code === item.material_code) {
             return { ...material,  
               vessel_no: item.vessel_no,
-              machine_id: item.machine_id,
+              machine_name: item.machine_name,
               material_code: item.material_code,
               material_name: item.material_name,
               material_unit: item.material_unit,
@@ -392,10 +390,10 @@ export default function InitialStockPage() {
                   <div className="space-y-1">
                     {machines.map((machine) => (
                       <button
-                        key={machine.machine_id}
-                        onClick={() => setSelectedMachine(machine.machine_id)}
+                        key={machine.machine_name}
+                        onClick={() => setSelectedMachine(machine.machine_name)}
                         className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-l-4 ${
-                          selectedMachine === machine.machine_id
+                          selectedMachine === machine.machine_name
                             ? "border-blue-500 bg-blue-50 text-blue-700"
                             : "border-transparent"
                         }`}
@@ -592,7 +590,7 @@ export default function InitialStockPage() {
                   <Button 
                     onClick={handleInsertMaterial}
                     style={{cursor:'pointer'}}
-                    disabled={!addMaterial?.machine_id || 
+                    disabled={!addMaterial?.machine_name || 
                       !addMaterial?.material_name || 
                       !addMaterial?.material_type || 
                       !addMaterial?.warehouse_no ||
@@ -612,7 +610,7 @@ export default function InitialStockPage() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="edit_machine_id">장비</Label>
+                    <Label htmlFor="edit_machine_name">장비</Label>
                     <Input value={selectedMachineData?.machine_name || ""} disabled className="bg-gray-50" />
                   </div>
                   <div>
@@ -737,7 +735,7 @@ export default function InitialStockPage() {
                   <Button 
                     onClick={handleUpdateMaterial}
                     disabled={!editMaterial?.vessel_no || 
-                      !editMaterial?.machine_id || 
+                      !editMaterial?.machine_name || 
                       !editMaterial?.material_name || 
                       !editMaterial?.material_type || 
                       !editMaterial?.warehouse_no ||

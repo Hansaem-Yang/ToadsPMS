@@ -16,54 +16,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label"
 import { Search, Settings, Wrench, Calendar, AlertTriangle, CheckCircle, Plus, PlusCircle } from "lucide-react"
 import { Machine } from '@/types/common/machine'; // ✅ interface import
+import { Equipment } from '@/types/common/equipment'; // ✅ interface import
+import { Section } from '@/types/common/section'; // ✅ interface import
 import { Inventory } from '@/types/vessel/inventory'; // ✅ interface import
 import { UsedParts } from '@/types/vessel/used_parts'; // ✅ interface import
-import { Equipment } from '@/types/dashboard/equipment';
 import { Maintenance } from '@/types/dashboard/maintenance';
 import { MaintenanceExtension } from '@/types/vessel/maintenance_extension';
 
 export default function MaintenanceExecutionPage() {
   const searchParams = useSearchParams()
-  const equipName = searchParams.get("equipName") || ""
+  const equipNo = searchParams.get("equipNo") || ""
   const initialMaintenanceItem: Maintenance = {
     vessel_no: "",
     vessel_name: "",
     equip_no: "",
     equip_name: "",
-    machine_id: "",
+    machine_name: "",
+    category: "",
     section_code: "",
     section_name: "",
-    plan_code: "",
-    plan_name: "",
-    category: "",
-    manufacturer: "",
-    model: "",
-    specifications: "",
-    lastest_date: "",
-    workers: 0,
-    work_hours: 0,
-    interval: 0,
-    interval_term: "",
-    location: "",
-    self_maintenance: "",
-    manager: "",
-    critical: "",
-    due_date: "",
-    next_due_date: "",
-    status: "",
-    days_until: 0,
-    extension_date: "",
-    extension_days_until: 0,
-    work_details: "",
-    delay_reason: "",
-    used_parts: [],
-    used_partnames: "",
-    regist_date: "",
-    regist_user: '',
-    modify_date: "",
-    modify_user: '',
+    children: []
   };
 
+  interface ComparisonData {
+    name: string;
+    tasks: Maintenance[]; // 여기에 가장 하위 자식 노드들의 원본 데이터가 있음
+  }
   
   const initialMaintenanceExtension: MaintenanceExtension = {
     vessel_no: "",
@@ -92,15 +70,22 @@ export default function MaintenanceExecutionPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
   const [params, setParams] = useState<any>(null)
   const [machines, setMachines] = useState<Machine[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [equipmentFilteredData, setEquipmentFilteredData] = useState<Equipment[]>([])
+  const [sections, setSections] = useState<Section[]>([])
+  const [sectionFilteredData, setSectionFilteredData] = useState<Section[]>([])
   const [inventorys, setInventorys] = useState<Inventory[]>([])
   const [filteredInventorys, setFilteredInventorys] = useState(inventorys)
   const [selectedUsedWork, setSelectedUsedWork] = useState<any>(null)
   const [isSingle, setIsSingle] = useState<boolean>(false)
 
-  const [equipmentWorks, setEquipmentWorks] = useState<Equipment[]>([]);
+  const [equipmentWorks, setEquipmentWorks] = useState<Maintenance[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("ALL")
+  const [searchFilter, setSearchFilter] = useState('');
+  const [machineFilter, setMachineFilter] = useState("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState("ALL")
+  const [sectionFilter, setSectionFilter] = useState("ALL")
   const [selectedWork, setSelectedWork] = useState<any>(null)
   const [isExecutionDialogOpen, setIsExecutionDialogOpen] = useState(false)
   const [executionResult, setExecutionResult] = useState<Maintenance>(initialMaintenanceItem)
@@ -108,7 +93,7 @@ export default function MaintenanceExecutionPage() {
 
   const [selectedWorks, setSelectedWorks] = useState<string[]>([])
   const [isBulkExecutionDialogOpen, setIsBulkExecutionDialogOpen] = useState(false)
-  const [bulkExecutionData, setBulkExecutionData] = useState({
+  const [bulkExecutionData, setBulkExecutionData] = useState<ComparisonData>({
     name: "",
     tasks: [] as Maintenance[],
   })
@@ -123,11 +108,25 @@ export default function MaintenanceExecutionPage() {
   const today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
 
   const fetchMachines = (vesselNo: string) => {
-    fetch(`/api/admin/common/machine?vesselNo=${vesselNo}`)
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
       .then(res => res.json())
       .then(data => setMachines(data))
       .catch(err => console.error(err));
   }
+
+  const fetchEquipments = (vesselNo: string) => {
+    fetch(`/api/common/equipment/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setEquipments(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchSections = (vesselNo: string) => {
+    fetch(`/api/common/section/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setSections(data))
+      .catch(err => console.error(err));
+  };
   
   const fetchEquipmentTasks = (vesselNo: string) => {
     fetch(`/api/ship/execution/all?vesselNo=${vesselNo}`)
@@ -136,11 +135,10 @@ export default function MaintenanceExecutionPage() {
       .catch(err => console.error(err));
   }
   
-  const fetchInventorys = (vesselNo: string, machineId: string) => {
-    fetch(`/api/ship/execution/inventory?vesselNo=${vesselNo}&machineId=${machineId}`)
+  const fetchInventorys = (vesselNo: string, machineName: string) => {
+    fetch(`/api/ship/execution/inventory?vesselNo=${vesselNo}&machineName=${machineName}`)
       .then(res => res.json())
       .then(data => {
-        console.log(data)
         setInventorys(data)
       })
       .catch(err => console.error(err));
@@ -152,10 +150,12 @@ export default function MaintenanceExecutionPage() {
       setUserInfo(user)
 
       fetchMachines(user.ship_no)
+      fetchEquipments(user.ship_no)
+      fetchSections(user.ship_no)
       fetchEquipmentTasks(user.ship_no)
       
-      if (equipName) {
-        setParams(equipName)
+      if (equipNo) {
+        setEquipmentFilter(equipNo)
       }
     } catch (error) {
       // Redirect handled by requireAuth
@@ -163,48 +163,56 @@ export default function MaintenanceExecutionPage() {
   }, [])
 
   useEffect(() => {
+    let equipmentFiltered = equipments
+    let sectionFiltered = sections
+
+    if (machineFilter !== "ALL") {
+      equipmentFiltered = equipmentFiltered.filter((item) => item.machine_name === machineFilter)
+      sectionFiltered = sectionFiltered.filter((item) => item.machine_name === machineFilter)
+    }
+    
+    if (equipmentFilter !== "ALL" || equipNo !== '') {
+      sectionFiltered = sectionFiltered.filter((item) => item.equip_no === equipmentFilter)
+    }
+
+    setEquipmentFilteredData(equipmentFiltered)
+    setSectionFilteredData(sectionFiltered)
+  }, [equipments,  machineFilter, equipmentFilter, equipNo])
+
+  useEffect(() => {
     let filtered = equipmentWorks
       
     if (params) {
-      setSearchTerm(params);
-
       setParams('');
     }
 
-    if (searchTerm) {
-      const lowerKeyword = searchTerm.toLowerCase();
-
-      filtered = filtered.map(equipment => {
-        const filteredSections = equipment.children.filter(plan => {
-            return (
-              plan.plan_name.toLowerCase().includes(lowerKeyword)
-            );
-          });
-
-        if (equipment.equip_name.toLowerCase().includes(lowerKeyword) || filteredSections.length > 0) {
-          return { ...equipment, children: filteredSections };
-        }
-
-        return null;
-      })
-      .filter((e) => e !== null);
+    if (machineFilter !== "ALL") {
+      filtered = filterByMachine(filtered, machineFilter)
     }
 
-    if (categoryFilter !== "ALL") {
-      filtered = filtered.filter((eq) => eq.category === categoryFilter)
+    if (equipmentFilter !== "ALL") {
+      filtered = filterByEquipment(filtered, equipmentFilter)
+    }
+
+    if (sectionFilter !== "ALL") {
+      filtered = filterBySection(filtered, sectionFilter)
+    }
+
+    if (searchTerm) {
+      filtered = filterBySearch(filtered, searchTerm);
     }
 
     setFilteredEquipment(filtered)
-  }, [equipmentWorks, searchTerm, categoryFilter])
+  }, [equipmentWorks, searchTerm, machineFilter, equipmentFilter, sectionFilter])
 
   useEffect(() => {    
     if (selectedUsedWork) {
       if (filteredInventorys && filteredInventorys.length > 0) {
-        if (filteredInventorys.filter(inventory => (inventory.vessel_no == selectedUsedWork.vessel_no && inventory.machine_id === selectedUsedWork.machine_id)).length < 0) {
-          fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_id)
+        if (filteredInventorys.filter(inventory => (inventory.vessel_no == selectedUsedWork.vessel_no && inventory.machine_name === selectedUsedWork.machine_name)).length < 0) {
+          fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_name)
         }
       } else {
-        fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_id)
+        fetchInventorys(selectedUsedWork.vessel_no, selectedUsedWork.machine_name)
       }
       
       if (usedItems && usedItems.length > 0 && filteredInventorys && filteredInventorys.length > 0) {
@@ -212,7 +220,7 @@ export default function MaintenanceExecutionPage() {
         const filterdUsedItems = usedItems.filter(used => (used.equip_no === selectedUsedWork.equip_no && used.section_code === selectedUsedWork.section_code && used.plan_code === selectedUsedWork.plan_code))
         if (filterdUsedItems && filterdUsedItems.length > 0) {
           filtered = filtered.map(inventory => {
-            const usedItem = filterdUsedItems.filter(used => (used.machine_id === inventory.machine_id && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
+            const usedItem = filterdUsedItems.filter(used => (used.machine_name === inventory.machine_name && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
             if (usedItem && usedItem.length > 0) {
               return { ...inventory, use_qty: usedItem[0]?.use_qty }
             }
@@ -221,7 +229,7 @@ export default function MaintenanceExecutionPage() {
           })
         } else {
           filtered = filtered.map(inventory => {
-            const usedItem = usedItems.filter(used => (used.machine_id === inventory.machine_id && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
+            const usedItem = usedItems.filter(used => (used.machine_name === inventory.machine_name && used.material_code === inventory.material_code && used.warehouse_no === inventory.warehouse_no))
             if (usedItem && usedItem.length > 0) {
               return { ...inventory, stock_qty: inventory.stock_qty - usedItem[0]?.use_qty, use_qty: 0 }
             }
@@ -251,8 +259,72 @@ export default function MaintenanceExecutionPage() {
   }, [isBulkExecutionDialogOpen, isExecutionDialogOpen])
 
   if (!userInfo) return null
+  
+  const filterByMachine = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.machine_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByMachine(item.children, term) : []
 
-  const getStatusBadge = (status: string) => {
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterByEquipment = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.equip_no?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByEquipment(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterBySection = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = `${item.equip_no}-${item.section_code}`?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySection(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+    
+  const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.plan_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySearch(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
@@ -282,7 +354,7 @@ export default function MaintenanceExecutionPage() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status?: string) => {
     switch (status) {
       case "DELAYED":
         return <AlertTriangle className="w-4 h-4 text-red-600" />
@@ -297,10 +369,130 @@ export default function MaintenanceExecutionPage() {
     }
   }
 
-  const handleExecuteTask = (equipment: any, task: any) => {
-    setSelectedWork({ ...task, equipment: equipment.name })
+  const renderMaintenance = (items: Maintenance[]) => {
+    return items.map((item) => (
+      <div key={`${item.equip_no}-${item.section_code}`} className="border rounded-lg p-4 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-semibold">{item.section_name}</h4>
+                  <span className="text-sm text-gray-500">({item.section_code})</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4">
+          {renderMaintenancePlan(item.children)}
+        </div>
+      </div>
+    ))
+  }
+
+  const renderMaintenancePlan = (items: Maintenance[]) => {
+    return items.map((item) => (
+      <div key={`${item.equip_no}-${item.section_code}-${item.plan_code}`} className="border rounded-lg p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <Checkbox
+              id={`${item.equip_no}-${item.section_code}-${item.plan_code}`}
+              checked={selectedWorks.includes(`${item.equip_no}-${item.section_code}-${item.plan_code}`)}
+              onCheckedChange={() => handleTaskSelection(`${item.equip_no}-${item.section_code}-${item.plan_code}`, item.equip_name, item)}
+              disabled={item.status === "COMPLATE"}
+              className="mt-1"
+            />
+            <div className="flex items-center gap-2">
+              {getStatusIcon(item.status)}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-semibold">{item.plan_name}</h4>
+                  <span className="text-sm text-gray-500">({item.plan_code})</span>
+                  {item.critical && getCriticalBadge(item.critical)}
+                  {getStatusBadge(item.status)}
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{item.specifications}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>예정일: {item.extension_date ? item.extension_date : item.due_date}</span>
+                  <span>담당자: {item.manager}</span>
+                  <span>작업자수: {item.workers}</span>
+                  <span>작업자별 작업시간: {item.work_hours}시간</span>
+                  {item.status === "COMPLATE" && (
+                    <span className="text-green-600">완료일: {item.lastest_date}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          {item.status !== "COMPLATE" && item.status === "DELAYED" && (
+            <Button onClick={() => handleExtension(item)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
+              연장 신청
+            </Button>
+          )}
+          {item.status !== "COMPLATE" && (
+            <Button onClick={() => handleExecuteTask(item)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
+              개별 실행
+            </Button>
+          )}
+        </div>
+      </div>
+    ))
+  }
+
+  const handleExecuteTask = (task: any) => {
+    setSelectedWork({ ...task, equipment: task.equip_name })
     setExecutionResult(task);
     setIsExecutionDialogOpen(true)
+  }
+  
+  const updateTaskBySection = (parent: Maintenance, item: any, status: string) => {
+    const updatedTasks = parent.children.map((task) => {
+      if (task.plan_code === item.plan_code) {
+        if (status === "EXTENSION") {
+          return { ...task,  
+            vessel_no: item.vessel_no,
+            equip_no: item.equip_no,
+            section_code: item.section_code,
+            section_name: item.section_name,
+            extension_date: item.extension_date,
+            status: status
+          };
+        } else {
+          return { ...task,  
+            vessel_no: item.vessel_no,
+            equip_no: item.equip_no,
+            section_code: item.section_code,
+            section_name: item.section_name,
+            due_date: item.next_due_date,
+            lastest_date: new Date().toISOString().split("T")[0],
+            status: status
+          };
+        }
+      }
+
+      return task;
+    });
+
+    return {...parent, children: updatedTasks }
+  }
+
+  const updateEquipmentWorks = (item: any, status: string) : Maintenance[] => {
+    return equipmentWorks.map((eq) => {
+      if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
+        const updatedSections = eq.children.map((section) => {
+          if (section.section_code === item.section_code) {
+            return updateTaskBySection(section, item, status);
+          }
+
+          return section;
+        });
+        
+        return {...eq, children: updatedSections }
+      } 
+
+      return eq;
+    });
   }
 
   const handleInsertExecution = async () => {
@@ -321,32 +513,38 @@ export default function MaintenanceExecutionPage() {
       alert('작업 실행 등록 중 오류가 발생하였습니다.');
       return;
     }
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
 
-    // 선택된 작업들의 상태를 완료로 업데이트
-    setEquipmentWorks((prev) =>
-      prev.map((eq) => ({
-        ...eq,
-        children: eq.children.map((task) =>
-          executionResult.equip_no === task.equip_no &&
-          executionResult.section_code === task.section_code &&
-          executionResult.plan_code === task.plan_code
-          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
-          : task,
-        ),
-      })),
-    )
+      // 선택된 작업들의 상태를 완료로 업데이트
+      setEquipmentWorks(updateEquipmentWorks(executionResult, "COMPLATE"))
 
-    setUsedItems([])
-    setSelectedWork(null)
-    setIsExecutionDialogOpen(false)
+      setUsedItems([])
+      setSelectedWork(null)
+      setIsExecutionDialogOpen(false)
+    } else {
+      alert(data.message);
+    }
   }
 
-  const handleExtension = (equipment: any, task: any) => {
-    setSelectedExtension({ ...task, equipment: equipment.name });
-    setExtensionResult(task);
+  const handleExtension = (task: any) => {
+    setSelectedExtension(task);
+    setExtensionResult({
+      vessel_no: task.vessel_no,
+      equip_no: task.equip_no,
+      section_code: task.section_code,
+      plan_code: task.plan_code,
+      plan_name: task.plan_name,
+      manager: task.manager,
+      due_date: task.due_date,
+      extension_date: '',
+      extension_reason: '',
+      applicant: userInfo.account_no
+    });
     setIsExtensionDialogOpen(true);
-
-    setExtensionResult((prev) => ({ ...prev, applicant: userInfo.account_no }))
   }
 
   const handleInsertExtension = async () => {
@@ -368,22 +566,18 @@ export default function MaintenanceExecutionPage() {
       return;
     }
     
-    // 선택된 작업들의 상태를 완료로 업데이트
-    setEquipmentWorks((prev) =>
-      prev.map((eq) => ({
-        ...eq,
-        children: eq.children.map((task) =>
-          extensionResult.equip_no === task.equip_no &&
-          extensionResult.section_code === task.section_code &&
-          extensionResult.plan_code === task.plan_code
-          ? { ...task, status: "EXTENSION", extension_date: extensionResult.extension_date }
-          : task,
-        ),
-      })),
-    )
+    const data = await res.json();
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
 
-    setIsExtensionDialogOpen(false)
-    setSelectedExtension(null)
+      // 선택된 작업들의 상태를 완료로 업데이트
+      setEquipmentWorks(updateEquipmentWorks(extensionResult, "EXTENSION"))
+
+      setIsExtensionDialogOpen(false)
+      setSelectedExtension(null)
+    } else {
+      alert(data.message);
+    }
   }
 
   const getTotalTasks = () => {
@@ -406,10 +600,26 @@ export default function MaintenanceExecutionPage() {
     })
   }
 
+  const findAllMatchingDescendants = (items: Maintenance[]): Maintenance[] =>{
+    let result: Maintenance[] = [];
+
+    for (const item of items) {
+      if (item.type === "TASK" && item.status !== "COMPLATE") {
+        result.push(item);
+      }
+
+      if (item.children && item.children.length > 0) {
+        const deeperMatches = findAllMatchingDescendants(item.children);
+        result = result.concat(deeperMatches);
+      }
+    }
+
+    return result;
+  }
+
   const handleSelectAll = () => {
-    const allTaskIds = filteredEquipment.flatMap((eq) =>
-      eq.children.filter((task) => task.status !== "COMPLATE").map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`),
-    )
+    const allMatchingTasks: Maintenance[] = findAllMatchingDescendants(filteredEquipment);
+    const allTaskIds = allMatchingTasks.map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`);
 
     if (selectedWorks.length === allTaskIds.length) {
       setSelectedWorks([])
@@ -418,18 +628,33 @@ export default function MaintenanceExecutionPage() {
     }
   }
 
+  const findAllBulkExecutions = (items: Maintenance[]): Maintenance[] =>{
+    let result: Maintenance[] = [];
+
+    for (const item of items) {
+      if (item.type === "TASK" && item.equip_no === equipNo && selectedWorks.includes(`${item.equip_no}-${item.section_code}-${item.plan_code}`)) {
+        result.push(item);
+      }
+
+      if (item.children && item.children.length > 0) {
+        const deeperMatches = findAllBulkExecutions(item.children);
+        result = result.concat(deeperMatches);
+      }
+    }
+
+    return result;
+  }
+
   const handleBulkExecution = (equipNo: string, equipName: string) => {
-    const tasksToExecute = filteredEquipment.flatMap((eq) =>
-      eq.children
-        .filter((task) => task.equip_no === equipNo && selectedWorks.includes(`${task.equip_no}-${task.section_code}-${task.plan_code}`))
-        .map((task) => ({
-          ...task,
-          equipmentName: eq.equip_name,
-          actualHours: task.work_hours.toString(),
-          used_parts: [],
-          regist_user: userInfo.account_no,
-          modify_user: userInfo.account_no,
-        })),
+    const allBulkTasks: Maintenance[] = findAllBulkExecutions(filteredEquipment);
+    const tasksToExecute = allBulkTasks.map((task) => ({
+        ...task,
+        equipmentName: task.equip_name,
+        actualHours: task.work_hours?.toString(),
+        used_parts: [],
+        regist_user: userInfo.account_no,
+        modify_user: userInfo.account_no,
+      })
     )
 
     setBulkExecutionData({
@@ -437,6 +662,57 @@ export default function MaintenanceExecutionPage() {
       tasks: tasksToExecute,
     })
     setIsBulkExecutionDialogOpen(true)
+  }
+  
+  const updateBulkTaskBySection = (parent: Maintenance, executionData: ComparisonData, status: string) => {
+    const updatedTasks = parent.children.map((plan) => {
+      const isMatch = executionData.tasks.some(task => 
+        task.vessel_no === plan.vessel_no &&
+        task.equip_no === plan.equip_no &&
+        task.section_code === plan.section_code &&
+        task.plan_code === plan.plan_code
+      );
+
+      if (isMatch) {
+        return { ...plan, 
+          lastest_date: new Date().toISOString().split("T")[0],
+          status: status
+        };
+      }
+
+      return plan;
+    });
+
+    return {...parent, children: updatedTasks }
+  }
+
+  const updateBulkEquipmentWorks = (executionData: ComparisonData, status: string) : Maintenance[] => {
+    return equipmentWorks.map((eq) => {
+      const isMatch = executionData.tasks.some(task => 
+        task.vessel_no === eq.vessel_no &&
+        task.equip_no === eq.equip_no
+      );
+
+      if (isMatch) {
+        const updatedSections = eq.children.map((section) => {
+          const isSectionMatch = executionData.tasks.some(task => 
+            task.vessel_no === section.vessel_no &&
+            task.equip_no === section.equip_no &&
+            task.section_code === section.section_code
+          )
+
+          if (isSectionMatch) {
+            return updateBulkTaskBySection(section, executionData, status);
+          }
+
+          return section;
+        });
+        
+        return {...eq, children: updatedSections }
+      } 
+
+      return eq;
+    });
   }
 
   const handleInsertExecutions = async () => {
@@ -452,25 +728,17 @@ export default function MaintenanceExecutionPage() {
       return;
     }
 
-    // 선택된 작업들의 상태를 완료로 업데이트
-    setEquipmentWorks((prev) =>
-      prev.map((eq) => ({
-        ...eq,
-        children: eq.children.map((task) =>
-          bulkExecutionData.tasks.some((data) =>
-            data.equip_no === task.equip_no &&
-            data.section_code === task.section_code &&
-            data.plan_code === task.plan_code
-          )
-          ? { ...task, status: "COMPLATE", lastest_date: new Date().toISOString().split("T")[0] }
-          : task,
-        ),
-      })),
-    )
+    const data = await res.json();
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
 
-    setUsedItems([])
-    setSelectedWorks([])
-    setIsBulkExecutionDialogOpen(false)
+      // 선택된 작업들의 상태를 완료로 업데이트
+      setEquipmentWorks(updateBulkEquipmentWorks(bulkExecutionData, "COMPLATE"))
+
+      setUsedItems([])
+      setSelectedWorks([])
+      setIsBulkExecutionDialogOpen(false)
+    }
   }
 
   const updateTaskData = (equip_no: string, section_code: string, plan_code: string, field: string, value: string) => {
@@ -498,7 +766,7 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleChangedMachine = (item: any, value: string) => {
-    setSelectedUsedWork((prev: any) => ({ ...prev, machine_id: value }))
+    setSelectedUsedWork((prev: any) => ({ ...prev, machine_name: value }))
   }
 
   const handleAddUsedParts = () => {
@@ -515,7 +783,7 @@ export default function MaintenanceExecutionPage() {
         plan_code: selectedUsedWork.plan_code,
         work_order: "",
         part_seq: "",
-        machine_id: item.machine_id,
+        machine_name: item.machine_name,
         warehouse_no: item.warehouse_no,
         warehouse_name: item.warehouse_name,
         material_code: item.material_code,
@@ -630,18 +898,52 @@ export default function MaintenanceExecutionPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
+                <Select value={machineFilter} onValueChange={setMachineFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 기계</SelectItem>
+                    {machines.map((machine) => (
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 장비</SelectItem>
+                    {equipmentFilteredData.map((equipment) => (
+                      <SelectItem key={equipment.equip_no} value={equipment.equip_no}>{equipment.equip_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 섹션</SelectItem>
+                    {sectionFilteredData.map((section) => (
+                      <SelectItem key={`${section.equip_no}-${section.section_code}`} value={`${section.equip_no}-${section.section_code}`}>{`(${section.equip_no}-${section.section_code}) ${section.section_name}`} </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="장비명, 작업명으로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="작업명으로 검색..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -651,7 +953,7 @@ export default function MaintenanceExecutionPage() {
                     <SelectItem value="DECK">Deck</SelectItem>
                     <SelectItem value="ETC">Etc</SelectItem>
                   </SelectContent>
-                </Select>
+                </Select> */}
               </div>
             </CardContent>
           </Card>
@@ -667,8 +969,8 @@ export default function MaintenanceExecutionPage() {
                         <Settings className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">{eq.equip_name}</CardTitle>
-                        <p className="text-gray-600">{eq.category}</p>
+                        <CardTitle className="text-xl">{eq.machine_name}</CardTitle>
+                        <p className="text-gray-600">{eq.equip_name}</p>
                       </div>
                     </div>
                     {selectedWorks.length > 0 && (
@@ -686,52 +988,7 @@ export default function MaintenanceExecutionPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {eq.children.map((task) => (
-                      <div key={`${task.equip_no}-${task.section_code}-${task.plan_code}`} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            <Checkbox
-                              id={`${task.equip_no}-${task.section_code}-${task.plan_code}`}
-                              checked={selectedWorks.includes(`${task.equip_no}-${task.section_code}-${task.plan_code}`)}
-                              onCheckedChange={() => handleTaskSelection(`${task.equip_no}-${task.section_code}-${task.plan_code}`, eq.equip_name, task)}
-                              disabled={task.status === "COMPLATE"}
-                              className="mt-1"
-                            />
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(task.status)}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-semibold">{task.plan_name}</h4>
-                                  <span className="text-sm text-gray-500">({task.plan_code})</span>
-                                  {task.critical && getCriticalBadge(task.critical)}
-                                  {getStatusBadge(task.status)}
-                                </div>
-                                <p className="text-sm text-gray-600 mb-2">{task.specifications}</p>
-                                <div className="flex items-center gap-4 text-sm text-gray-500">
-                                  <span>예정일: {task.extension_date ? task.extension_date : task.due_date}</span>
-                                  <span>담당자: {task.manager}</span>
-                                  <span>작업자수: {task.workers}</span>
-                                  <span>작업자별 작업시간: {task.work_hours}시간</span>
-                                  {task.status === "COMPLATE" && (
-                                    <span className="text-green-600">완료일: {task.lastest_date}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          {task.status !== "COMPLATE" && task.status === "DELAYED" && (
-                            <Button onClick={() => handleExtension(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
-                              연장 신청
-                            </Button>
-                          )}
-                          {task.status !== "COMPLATE" && (
-                            <Button onClick={() => handleExecuteTask(eq, task)} size="sm" className="ml-4" style={{cursor: 'pointer'}}>
-                              개별 실행
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    {renderMaintenance(eq.children)}
                   </div>
                 </CardContent>
               </Card>
@@ -762,7 +1019,7 @@ export default function MaintenanceExecutionPage() {
                                 type="number"
                                 placeholder="시간"
                                 value={task.work_hours}
-                                onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_hours", e.target.value)}
+                                onChange={(e) => updateTaskData(task.equip_no, task.section_code || '', task.plan_code || '', "work_hours", e.target.value)}
                                 className="text-sm"
                               />
                             </div>
@@ -796,7 +1053,7 @@ export default function MaintenanceExecutionPage() {
                             <Textarea
                               placeholder="이 작업에 대한 내용..."
                               value={task.work_details}
-                              onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "work_details", e.target.value)}
+                              onChange={(e) => updateTaskData(task.equip_no, task.section_code || '', task.plan_code || '', "work_details", e.target.value)}
                               rows={2}
                               className="text-sm"
                             />
@@ -807,7 +1064,7 @@ export default function MaintenanceExecutionPage() {
                               <Textarea
                                 placeholder="이 작업에 대한 지연 사유..."
                                 value={task.delay_reason}
-                                onChange={(e) => updateTaskData(task.equip_no, task.section_code, task.plan_code, "delay_reason", e.target.value)}
+                                onChange={(e) => updateTaskData(task.equip_no, task.section_code || '', task.plan_code || '', "delay_reason", e.target.value)}
                                 rows={2}
                                 className="text-sm"
                               />
@@ -884,7 +1141,7 @@ export default function MaintenanceExecutionPage() {
                     <Textarea
                       id="notes"
                       placeholder="이 작업에 대한 내용을 입력하세요..."
-                      value={selectedWork.work_details}
+                      value={executionResult.work_details}
                       onChange={(e) => setExecutionResult((prev) => ({ ...prev, work_details: e.target.value }))}
                       rows={3}
                     />
@@ -894,7 +1151,7 @@ export default function MaintenanceExecutionPage() {
                       <Label className="text-xs">지연 사유</Label>
                       <Textarea
                         placeholder="이 작업에 대한 지연 사유..."
-                        value={selectedWork.delay_reason}
+                        value={executionResult.delay_reason}
                         onChange={(e) => setExecutionResult((prev) => ({ ...prev, delay_reason: e.target.value }))}
                         rows={2}
                         className="text-sm"
@@ -931,7 +1188,7 @@ export default function MaintenanceExecutionPage() {
                   <div className="flex items-center gap-2">
                     <Label>장비</Label>
                     <Select 
-                      value={selectedUsedWork.machine_id} 
+                      value={selectedUsedWork.machine_name} 
                       onValueChange={(value) => handleChangedMachine(selectedUsedWork, value)}
                     >
                       <SelectTrigger className="w-48">
@@ -939,7 +1196,7 @@ export default function MaintenanceExecutionPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {machines.map((machine) => (
-                          <SelectItem key={machine.machine_id} value={machine.machine_id}>
+                          <SelectItem key={machine.machine_name} value={machine.machine_name}>
                             {machine.machine_name}
                           </SelectItem>
                         ))}
@@ -961,16 +1218,16 @@ export default function MaintenanceExecutionPage() {
                       </thead>
                       <tbody>
                         {filteredInventorys.map((item) => (
-                          <tr key={`${item.machine_id}-${item.material_code}`} className="border-b hover:bg-gray-50">
+                          <tr key={`${item.machine_name}-${item.material_code}`} className="border-b hover:bg-gray-50">
                             <td className="text-center py-2 px-2">
                               <Checkbox
-                                key={`chk_${item.machine_id}-${item.material_code}`}
+                                key={`chk_${item.machine_name}-${item.material_code}`}
                                 checked={item.use_qty > 0}
                                 onCheckedChange={(value) => {
                                   if (!value) {
                                     setInventorys(prev => 
                                       prev.map(invItem => 
-                                        (invItem.machine_id === item.machine_id && invItem.material_code === item.material_code)
+                                        (invItem.machine_name === item.machine_name && invItem.material_code === item.material_code)
                                           ? { ...invItem, use_qty: 0 }
                                           : invItem 
                                       )
@@ -986,7 +1243,7 @@ export default function MaintenanceExecutionPage() {
                             <td className="py-2 px-2 text-center">{item.stock_qty}</td>
                             <td className="py-2 px-2 text-center">
                               <input
-                                key={`${item.machine_id}-${item.material_code}`}
+                                key={`${item.machine_name}-${item.material_code}`}
                                 value={item.use_qty}
                                 className="w-10 text-center"
                                 onChange={(e) => {
@@ -994,7 +1251,7 @@ export default function MaintenanceExecutionPage() {
 
                                   setInventorys(prevInventorys => 
                                     prevInventorys.map(invItem => 
-                                      (invItem.machine_id === item.machine_id && invItem.material_code === item.material_code)
+                                      (invItem.machine_name === item.machine_name && invItem.material_code === item.material_code)
                                         ? { ...invItem, use_qty: newQty }
                                         : invItem 
                                     )
@@ -1041,7 +1298,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="예정일"
-                        value={selectedExtension.due_date}
+                        value={extensionResult.due_date || ''}
                         className='text-sm sm:w-40 md:w-36'
                         disabled
                       />
@@ -1051,7 +1308,7 @@ export default function MaintenanceExecutionPage() {
                       <Input
                         type="date"
                         placeholder="신청일자"
-                        value={selectedExtension.extension_date}
+                        value={extensionResult.extension_date || ''}
                         className='text-sm sm:w-40 md:w-36'
                         onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_date: e.target.value }))}
                       />
@@ -1061,7 +1318,7 @@ export default function MaintenanceExecutionPage() {
                     <Label className="text-xs">연장 사유</Label>
                     <Textarea
                       placeholder="이 작업에 대한 일정 연장 사유..."
-                      value={selectedExtension.extension_reason}
+                      value={extensionResult.extension_reason || ''}
                       onChange={(e) => setExtensionResult((prev) => ({ ...prev, extension_reason: e.target.value }))}
                       rows={2}
                       className="text-sm"
@@ -1075,7 +1332,7 @@ export default function MaintenanceExecutionPage() {
                   <Button 
                     onClick={handleInsertExtension} 
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={!extensionResult.next_due_date || !(new Date(extensionResult.next_due_date) > today) || !extensionResult.extension_reason }
+                    disabled={!extensionResult.extension_date || !(new Date(extensionResult.extension_date) > today) || !extensionResult.extension_reason }
                     style={{cursor: 'pointer'}}
                   >
                     등록 완료

@@ -13,34 +13,40 @@ export async function GET(req: Request) {
       `select a.vessel_no
             , a.vessel_name
             , b.equip_no
-            , c.equip_name
-            , c.category
-            , c.machine_id
-            , b.section_code
-            , b.plan_code
-            , b.plan_name
-            , b.manufacturer
-            , b.model
-            , b.specifications
-            , convert(varchar(10), b.lastest_date, 121) as lastest_date
-            , b.workers
-            , b.work_hours
-            , b.interval
-            , b.interval_term
-            , b.location
-            , b.self_maintenance
-            , b.manager
-            , b.critical
-            , convert(varchar(10), b.due_date, 121) as due_date 
-            , convert(varchar(10), b.next_due_date, 121) as next_due_date 
-            , convert(varchar(10), b.extension_date, 121) as extension_date 
-            , case when b.due_date < getdate() and b.lastest_date < getdate() and b.extension_date >= getdate() then 'EXTENSION'
-			             when b.due_date < getdate() then 'DELAYED' 
-                   when b.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)) then 'COMPLATE'
+            , b.equip_name
+            , b.category
+            , b.machine_name
+            , c.section_code
+            , c.section_name
+            , d.plan_code
+            , d.plan_name
+            , d.manufacturer
+            , d.model
+            , d.specifications
+            , convert(varchar(10), d.lastest_date, 121) as lastest_date
+            , d.workers
+            , d.work_hours
+            , d.interval
+            , d.interval_term
+            , d.location
+            , d.self_maintenance
+            , d.manager
+            , d.critical
+            , convert(varchar(10), d.due_date, 121) as due_date 
+            , convert(varchar(10), d.next_due_date, 121) as next_due_date 
+            , convert(varchar(10), d.extension_date, 121) as extension_date 
+            , case when d.due_date < getdate() and d.lastest_date < getdate() and d.extension_date >= getdate() then 'EXTENSION'
+			             when d.due_date < getdate() then 'DELAYED' 
+                   when d.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and d.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0)) then 'COMPLATE'
                    else 'NORMAL' end as status
-            , datediff(day, getdate(), b.due_date) as days_until
-            , datediff(day, getdate(), b.extension_date) as extension_days_until
+            , datediff(day, getdate(), d.due_date) as days_until
+            , datediff(day, getdate(), d.extension_date) as extension_days_until
          from [vessel] as a
+         left outer join [equipment] as b
+           on a.vessel_no = b.vessel_no
+		 left outer join [section] as c
+           on b.vessel_no = c.vessel_no
+          and b.equip_no = c.equip_no
          left outer join (select vessel_no
                                , equip_no
                                , section_code
@@ -68,44 +74,67 @@ export async function GET(req: Request) {
                                                     when 'HOUR' then dateadd(day, interval / 24, getdate()) end as next_due_date
                                , dbo.fn_get_maintenance_extension(vessel_no, equip_no, section_code, plan_code) as extension_date
                             from [maintenance_plan]
-                           where vessel_no = @vesselNo) as b
-           on a.vessel_no = b.vessel_no
-         left outer join [equipment] as c
-           on b.vessel_no = c.vessel_no
-          and b.equip_no = c.equip_no
+                           where vessel_no = @vesselNo) as d
+           on c.vessel_no = d.vessel_no
+          and c.equip_no = d.equip_no
+          and c.section_code = d.section_code
         where a.use_yn = 'Y'
           and a.vessel_no = @vesselNo
-          and ((b.due_date < getdate() and (b.extension_date is null or (b.extension_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.extension_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0))))) 
+          and ((d.due_date < getdate() and (d.extension_date is null or (d.extension_date >= dateadd(month, datediff(month, 0, getdate()), 0) and d.extension_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0))))) 
                or 
-               (b.due_date >= getdate() and b.due_date < dateadd(month, 1, getdate()))
+               (d.due_date >= getdate() and d.due_date < dateadd(month, 1, getdate()))
                or
-               (b.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and b.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0))))
-        order by b.equip_no, b.due_date, b.lastest_date`,
+               (d.lastest_date >= dateadd(month, datediff(month, 0, getdate()), 0) and d.lastest_date < dateadd(month, 1, dateadd(month, datediff(month, 0, getdate()), 0))))
+        order by d.equip_no, d.section_code, d.due_date, d.lastest_date`,
       [
         { name: 'vesselNo', value: vessel_no },
       ]
     );
 
-    let equipmentTasks: Equipment[] = [];
-    let equipTask : Equipment;
+    let equipmentTasks: Maintenance[] = [];
+    let section: Maintenance;
+    let equipment : Maintenance;
     let equipNo: string = '';
+    let sectionCode: string = '';
 
     items.map(item => {
       if (equipNo !== item.equip_no) {
-        equipTask = {
+        equipment = {
           vessel_no: item.vessel_no,
+          vessel_name: item.vessel_name,
           equip_no: item.equip_no,
           equip_name: item.equip_name,
           category: item.category,
-          machine_id: item.machine_id,
+          machine_name: item.machine_name,
+          type: "EQUIPMENT",
           children: [] = []
         }
 
-        equipmentTasks.push(equipTask);
+        equipmentTasks.push(equipment);
         equipNo = item.equip_no;
+        sectionCode = '';
       }
 
-      equipTask.children.push(item);
+      if (sectionCode !== item.section_code) {
+        section = {
+          vessel_no: item.vessel_no,
+          vessel_name: item.vessel_name,
+          equip_no: item.equip_no,
+          equip_name: item.equip_name,
+          category: item.category,
+          machine_name: item.machine_name,
+          section_code: item.section_code || '',
+          section_name: item.section_name || '',
+          type: "SECTION",
+          children: [] = []
+        }
+
+        equipment.children.push(section);
+        sectionCode = item.section_code || ''
+      }
+
+      item.type = "TASK";
+      section.children.push(item);
     });
     // 성공 시 정비 계획 정보 반환
     return NextResponse.json(equipmentTasks);

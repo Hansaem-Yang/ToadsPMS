@@ -11,8 +11,7 @@ export async function GET(req: Request) {
     const items: Stock[] = await query(
       `select a.vessel_no
             , a.vessel_name
-            , b.machine_id
-            , c.machine_name
+            , b.machine_name
             , b.material_code
             , b.material_name
             , b.material_unit
@@ -22,9 +21,6 @@ export async function GET(req: Request) {
          from vessel as a
          left outer join material as b
            on a.vessel_no = b.vessel_no
-         left outer join [machine] as c
-           on b.vessel_no = c.vessel_no
-          and b.machine_id = c.machine_id
          left outer join (select a1.vessel_no
                                , a1.material_code
                                , a1.location

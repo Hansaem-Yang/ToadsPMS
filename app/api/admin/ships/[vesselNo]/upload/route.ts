@@ -333,7 +333,7 @@ export async function POST(req: Request) {
           { name: 'intervalTerm', value: rows.IntervalTerm},
           { name: 'interval', value: rows.Interval},
           { name: 'location', value: rows.Location? rows.Location : '' },
-          { name: 'manager', value: rows.Manager? rows.Manager : '' },
+          { name: 'manager', value: rows.PIC? rows.PIC : '' },
           { name: 'selfMaintenance', value: rows.SelfMaintenance? rows.SelfMaintenance : '' },
           { name: 'critical', value: rows.Critical? rows.Critical : '' },
           { name: 'lastestDate', value: lastestDate },

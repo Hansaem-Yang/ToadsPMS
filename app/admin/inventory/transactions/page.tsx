@@ -64,11 +64,14 @@ export default function InventoryTransactionsPage() {
 
   const [typeFilter, setTypeFilter] = useState("all")
   const [machineFilter, setMachineFilter] = useState("")
+  const [machineTerm, setMachineTerm] = useState("")
   const [materialFilter, setMaterialFilter] = useState("")
+  const [materialTerm, setMaterialTerm] = useState("")
   const [warehouseFilter, setWarehouseFilter] = useState("")
+  const [warehouseTerm, setWarehouseTerm] = useState("")
   
   const fetchVesselCodes = () => {
-    fetch(`/api/admin/common/vessel`)
+    fetch(`/api/common/vessel/code`)
       .then(res => res.json())
       .then(data => setVesselCodes(data))
       .catch(err => console.error(err));
@@ -96,25 +99,25 @@ export default function InventoryTransactionsPage() {
       filtered = filtered.filter((txn) => txn.type === typeFilter)
     }
 
-    if (machineFilter) {
-      filtered = filtered.filter((txn) => txn.machine_name.toLowerCase().includes(machineFilter.toLowerCase()))
+    if (machineTerm) {
+      filtered = filtered.filter((txn) => txn.machine_name.toLowerCase().includes(machineTerm.toLowerCase()))
     }
 
-    if (materialFilter) {
+    if (materialTerm) {
       filtered = filtered.filter(
         (txn) =>
-          txn.material_name.toLowerCase().includes(materialFilter.toLowerCase()) ||
-          txn.material_code.toLowerCase().includes(materialFilter.toLowerCase()),
+          txn.material_name.toLowerCase().includes(materialTerm.toLowerCase()) ||
+          txn.material_code.toLowerCase().includes(materialTerm.toLowerCase()),
       )
     }
 
-    if (warehouseFilter) {
-      filtered = filtered.filter((txn) => txn.location.toLowerCase().includes(warehouseFilter.toLowerCase()))
+    if (warehouseTerm) {
+      filtered = filtered.filter((txn) => txn.location.toLowerCase().includes(warehouseTerm.toLowerCase()))
     }
 
     setFilteredData(filtered);
 
-  }, [transactionsData, typeFilter, machineFilter, materialFilter, warehouseFilter])
+  }, [transactionsData, typeFilter, machineTerm, materialTerm, warehouseTerm])
 
   if (!userInfo) return null
 
@@ -373,6 +376,7 @@ export default function InventoryTransactionsPage() {
                               placeholder="장비명 검색"
                               value={machineFilter}
                               onChange={(e) => setMachineFilter(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' ? setMachineTerm(machineFilter) : ""}
                               className="h-8"
                             />
                           </div>
@@ -382,6 +386,7 @@ export default function InventoryTransactionsPage() {
                               placeholder="부품명/코드 검색"
                               value={materialFilter}
                               onChange={(e) => setMaterialFilter(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' ? setMaterialTerm(materialFilter) : ""}
                               className="h-8"
                             />
                           </div>
@@ -391,6 +396,7 @@ export default function InventoryTransactionsPage() {
                               placeholder="창고명 검색"
                               value={warehouseFilter}
                               onChange={(e) => setWarehouseFilter(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' ? setWarehouseTerm(warehouseFilter) : ""}
                               className="h-8"
                             />
                           </div>

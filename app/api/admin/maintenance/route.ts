@@ -101,6 +101,7 @@ export async function GET(req: Request) {
           id: item.vessel_no,
           name: item.vessel_name || '',
           vessel_no: item.vessel_no,
+          vessel_name: item.vessel_name,
           type: "VESSEL",
           children: [] = []
         }
@@ -118,6 +119,7 @@ export async function GET(req: Request) {
             id: item.machine_name || '',
             name: item.machine_name || '',
             vessel_no: item.vessel_no,
+            machine_name: item.machine_name,
             type: "MACHINE",
             children: [] = []
           }
@@ -134,6 +136,8 @@ export async function GET(req: Request) {
               id: item.equip_no || '',
               name: item.equip_name || '',
               vessel_no: item.vessel_no,
+              equip_no: item.equip_no,
+              equip_name: item.equip_name,
               type: "EQUIPMENT",
               children: [] = []
             }

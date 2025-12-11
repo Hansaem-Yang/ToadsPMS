@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Vessel } from '@/types/inventory/status/vessel'; // ✅ interface import
 import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface import
 
 export async function GET(req: Request) {
@@ -22,7 +21,7 @@ export async function GET(req: Request) {
          from (select a.vessel_no
                     , a.vessel_name
                     , b.machine_name
-                    , c.sort_no
+                    , isnull(c.sort_no, 999) as sort_no
                     , b.material_code
                     , b.material_name
                     , b.material_unit
@@ -68,25 +67,56 @@ export async function GET(req: Request) {
                , a.sort_no
                , a.material_code`);
 
-    let vessels: Vessel[] = [];
-    let vessel: Vessel;
+    let vessels: Inventory[] = [];
+    let vessel: Inventory;
+    let machine: Inventory;
 
     let vesselNo: string = '';
+    let machineName: string = '';
 
     items.map(item => {
       if (vesselNo !== item.vessel_no) {
         vessel = {
+          id: item.vessel_no,
+          name: item.vessel_name,
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
+          type: "VESSEL",
+          key: item.vessel_no || '',
           children: [] = []
         }
 
         vessels.push(vessel);
         vesselNo = item.vessel_no;
+        machineName = '';
+      }
+
+      if (item.machine_name && machineName !== item.machine_name) {
+        machine = {
+          id: item.machine_name || '',
+          name: item.machine_name || '',
+          vessel_no: item.vessel_no,
+          vessel_name: item.vessel_name,
+          machine_name: item.machine_name,
+          type: "MACHINE",
+          key: `${item.vessel_no}-${item.machine_name}` || '',
+          children: [] = []
+        }
+
+        vessel.children.push(machine);
+        machineName = item.machine_name || '';
       }
       
-      if (item.material_code)
-        vessel.children.push(item);
+      if (item.material_code) {
+        item = {...item, 
+          id: item.material_code || '',
+          name: item.material_name || '',
+          type: "MATERIAL",
+          key:  `${item.vessel_no}-${item.machine_name}-${item.material_code}` || '',
+        }
+
+        machine.children.push(item);
+      }
     });
 
     // 성공 시 데쉬보드 정보 반환

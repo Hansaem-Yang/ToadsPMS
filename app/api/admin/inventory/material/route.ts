@@ -29,9 +29,12 @@ export async function GET(req: Request) {
                  from [release] 
                 where vessel_no = b.vessel_no
                   and material_code = b.material_code) as release_count
-         from vessel as a
-         left outer join material as b
+         from [vessel] as a
+         left outer join [material] as b
            on a.vessel_no = b.vessel_no
+         left outer join [machine] as c
+           on b.vessel_no = c.vessel_no
+          and b.machine_name = c.machine_name
          left outer join [receive] as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
@@ -40,7 +43,7 @@ export async function GET(req: Request) {
            on b.vessel_no = e.vessel_no
           and b.warehouse_no = e.warehouse_no
         where a.use_yn = 'Y'
-        order by a.vessel_no, c.sort_no, b.material_code;`);
+        order by a.vessel_no, isnull(c.sort_no, 999), b.material_code;`);
 
     let vessels: Vessel[] = [];
     let vessel: Vessel;

@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Plus, Search, Edit, Settings, Wrench, Calendar } from "lucide-react"
+import { Machine } from '@/types/common/machine'; // ✅ interface import
 import { Equipment } from '@/types/vessel/equipment'; // ✅ interface import
 
 export default function ShipEquipmentPage() {
@@ -29,14 +30,23 @@ export default function ShipEquipmentPage() {
   const params = useParams()
   const vesselNo = params.vesselNo as string
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [machines, setMachines] = useState<Machine[]>([])
   const [equipments, setEquipments] = useState<Equipment[]>([])
   const [filteredEquipment, setFilteredEquipment] = useState(equipments)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("ALL")
+  const [searchFilter, setSearchFilter] = useState('');
+  const [machineFilter, setMachineFilter] = useState("ALL")
   const [addEquipment, setAddEquipment] = useState<Equipment>()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedEquipment, setSelectedEquipment] = useState<any>(null)
+
+  const fetchMachines = () => {
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  }
 
   const fetchEquipments = () => {
     fetch(`/api/admin/ships/${vesselNo}/equipment/all?vesselNo=${vesselNo}`)
@@ -50,6 +60,7 @@ export default function ShipEquipmentPage() {
       const user = requireAuth();
       setUserInfo(user);
 
+      fetchMachines();
       fetchEquipments();
       
       setAddEquipment((prev: any) => ({ ...prev, vessel_no: vesselNo }));
@@ -62,20 +73,17 @@ export default function ShipEquipmentPage() {
     let filtered = equipments
 
     if (searchTerm) {
-      filtered = filtered.filter(
-        (eq: { equip_name: string; model: string; manufacturer: string }) =>
-          eq.equip_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eq.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eq.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()),
+      filtered = filtered.filter(eq =>
+          eq.equip_name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
-    if (categoryFilter !== "ALL") {
-      filtered = filtered.filter((eq: { category: string }) => eq.category === categoryFilter)
+    if (machineFilter !== "ALL") {
+      filtered = filtered.filter(eq => eq.machine_name === machineFilter)
     }
 
     setFilteredEquipment(filtered)
-  }, [equipments, searchTerm, categoryFilter])
+  }, [equipments, searchTerm, machineFilter])
 
   if (!userInfo) return null
 
@@ -297,28 +305,29 @@ export default function ShipEquipmentPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
+                <Select value={machineFilter} onValueChange={setMachineFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 기계</SelectItem>
+                    {machines.map((machine) => (
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="장비명, 모델명, 제조사로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="장비명으로 검색..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' ? setSearchTerm(searchFilter) : ""}
                       className="pl-10"
                     />
                   </div>
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">전체 카테고리</SelectItem>
-                    <SelectItem value="ENGINE">Engine</SelectItem>
-                    <SelectItem value="DECK">Deck</SelectItem>
-                    <SelectItem value="ETC">Etc</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
@@ -334,9 +343,9 @@ export default function ShipEquipmentPage() {
                         <Settings className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">{item.equip_name}</CardTitle>
+                        <CardTitle className="text-xl">{item.machine_name}</CardTitle>
                         <CardDescription>
-                          {item.equip_no} • {item.category}
+                          {item.equip_no} • {item.equip_name}
                         </CardDescription>
                       </div>
                     </div>
@@ -379,7 +388,7 @@ export default function ShipEquipmentPage() {
                           <Wrench className="w-4 h-4 text-orange-600" />
                           <span className="text-sm">{item.maintenance_count} 개 작업</span>
                         </div>
-                        {item.maintenance_count > 0 && (
+                        {item.maintenance_count && item.maintenance_count > 0 && (
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-blue-600" />
                             <span className="text-sm">예정일: {item.due_date}</span>

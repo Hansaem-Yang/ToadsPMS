@@ -12,6 +12,7 @@ export async function GET(req: Request) {
       `select a.vessel_no
             , a.equip_no
             , a.equip_name
+            , a.machine_name
             , a.manufacturer
             , a.category
             , a.model
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
         group by a.vessel_no
             , a.equip_no
             , a.equip_name
+            , a.machine_name
             , a.manufacturer
             , a.category
             , a.model
@@ -48,10 +50,6 @@ export async function GET(req: Request) {
         { name: 'vesselNo', value: vesselNo }
       ]
     );
-
-    // if (items.length === 0) {
-    //   return NextResponse.json({ success: false, message: 'The data does not exist.' }, { status: 401 });
-    // }
 
     // 성공 시 데쉬보드 정보 반환
     return NextResponse.json(items);

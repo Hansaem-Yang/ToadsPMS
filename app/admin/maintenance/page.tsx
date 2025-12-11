@@ -33,17 +33,25 @@ import {
   Clock,
   FileText,
 } from "lucide-react"
-import { Maintenance } from '@/types/status/maintenance'; // ✅ interface import
+import { Vessel } from '@/types/vessel/vessel'; // ✅ interface import
+import { Machine } from '@/types/vessel/machine';
+import { Equipment } from '@/types/vessel/equipment';
 import { MaintenanceWork } from '@/types/vessel/maintenance_work'; // ✅ interface import
+import { Maintenance } from '@/types/status/maintenance'; // ✅ interface import
 
 export default function MaintenanceWorkManagementPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
-  const [vessels, setVessels] = useState<Maintenance[]>([])
+  const [vessels, setVessels] = useState<Vessel[]>([])
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [equipmentFilteredData, setEquipmentFilteredData] = useState<Equipment[]>([])
   const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
   const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
   const [searchTerm, setSearchTerm] = useState("")
   const [searchFilter, setSearchFilter] = useState('');
   const [shipFilter, setShipFilter] = useState("ALL")
+  const [machineFilter, setMachineFilter] = useState("ALL")
+  const [equipmentFilter, setEquipmentFilter] = useState("ALL")
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
@@ -58,6 +66,20 @@ export default function MaintenanceWorkManagementPage() {
     fetch(`/api/admin/ships/all`)
       .then(res => res.json())
       .then(data => setVessels(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchMachines = (vesselNo: string) => {
+    fetch(`/api/common/machine/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setMachines(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchEquipments = (vesselNo: string) => {
+    fetch(`/api/common/equipment/code?vesselNo=${vesselNo}`)
+      .then(res => res.json())
+      .then(data => setEquipments(data))
       .catch(err => console.error(err));
   };
 
@@ -91,29 +113,68 @@ export default function MaintenanceWorkManagementPage() {
   }, [])
 
   useEffect(() => {
+    fetchMachines(shipFilter);
+    fetchEquipments(shipFilter);
+  }, [shipFilter])
+  
+  useEffect(() => {
+    let equipmentFiltered = equipments
+
+    if (machineFilter !== "ALL") {
+      equipmentFiltered = equipmentFiltered.filter((item) => item.vessel_no === shipFilter && item.machine_name === machineFilter)
+    }
+
+    setEquipmentFilteredData(equipmentFiltered)
+  }, [equipments,  shipFilter, machineFilter])
+
+  useEffect(() => {
     let filtered = maintenanceData
 
     if (shipFilter !== "ALL") {
       filtered = filtered.filter((item) => item.vessel_no === shipFilter)
     }
 
-    if (searchTerm) {
-      filtered = filterBySearch(filtered, searchTerm)
+    if (machineFilter !== "ALL") {
+      filtered = filterByMachine(filtered, machineFilter)
+    }
+
+    if (equipmentFilter !== "ALL") {
+      filtered = filterByEquipment(filtered, equipmentFilter)
     }
 
     if (statusFilter !== "ALL") {
       filtered = filterByStatus(filtered, statusFilter)
     }
 
+    if (searchTerm) {
+      filtered = filterBySearch(filtered, searchTerm)
+    }
+
     setFilteredData(filtered)
-  }, [maintenanceData, searchTerm, shipFilter, statusFilter])
+  }, [maintenanceData, shipFilter, machineFilter, equipmentFilter, statusFilter, searchTerm])
 
   if (!userInfo) return null
 
-  const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
+  const filterByMachine = (items: Maintenance[], term: string): Maintenance[] => {
     return items.map((item) => {
-        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
-        const filteredChildren = item.children ? filterBySearch(item.children, term) : []
+        const matchesSearch = item.machine_name?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByMachine(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterByEquipment = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.equip_no?.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterByEquipment(item.children, term) : []
 
         if (matchesSearch || filteredChildren.length > 0) {
           return {
@@ -133,6 +194,22 @@ export default function MaintenanceWorkManagementPage() {
         const filteredChildren = item.children ? filterByStatus(item.children, status) : []
 
         if (matchesStatus || filteredChildren.length > 0) {
+          return {
+            ...item,
+            children: filteredChildren,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Maintenance[]
+  }
+
+  const filterBySearch = (items: Maintenance[], term: string): Maintenance[] => {
+    return items.map((item) => {
+        const matchesSearch = item.name.toLowerCase().includes(term.toLowerCase())
+        const filteredChildren = item.children ? filterBySearch(item.children, term) : []
+
+        if (matchesSearch || filteredChildren.length > 0) {
           return {
             ...item,
             children: filteredChildren,
@@ -388,7 +465,7 @@ export default function MaintenanceWorkManagementPage() {
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
                 <Select value={shipFilter} onValueChange={setShipFilter}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -398,8 +475,30 @@ export default function MaintenanceWorkManagementPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Select value={machineFilter} onValueChange={setMachineFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 기계</SelectItem>
+                    {machines.map((machine) => (
+                      <SelectItem key={machine.machine_name} value={machine.machine_name}>{machine.machine_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">전체 장비</SelectItem>
+                    {equipmentFilteredData.map((equipment) => (
+                      <SelectItem key={equipment.equip_no} value={equipment.equip_no}>{equipment.equip_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-30">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -490,8 +589,8 @@ export default function MaintenanceWorkManagementPage() {
                       <p className="text-sm text-gray-600 mb-2">{history.work_details}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>작업시간: {history.work_hours} 시간</span>
-                        {history.used_parts && (
-                          <span>부품: {history.used_parts[0].material_name} {history.used_parts.length > 1 ? `외 ${history.used_parts.length - 1}개` : '' }</span>
+                        {history.used_parts && history.used_parts.length > 0 && (
+                          <span>부품: {history.used_parts[0].material_name} {history.used_parts.length > 1 ? `외 ${history.used_parts.length - 1}건` : '' }</span>
                         )}
                       </div>
                     </div>

@@ -282,8 +282,8 @@ export default function InventoryAdjustmentPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredStocks.map((stock) => (
-                            <tr key={stock.material_code} className="border-b hover:bg-gray-50">
+                          {filteredStocks.map((stock, index) => (
+                            <tr key={`${stock.material_code}-${index}`} className="border-b hover:bg-gray-50">
                               <td className="py-3 px-2 font-medium">{stock.material_name} {getDifferenceBadge(stock.stock_qty, stock.actual_qty)} </td>
                               <td className="py-3 px-2 text-gray-600">{stock.material_code}</td>
                               <td className="py-3 px-2 text-center font-medium">{stock.stock_qty}</td>

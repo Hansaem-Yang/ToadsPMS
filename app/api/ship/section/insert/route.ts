@@ -42,65 +42,80 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
     }
     
-    // 저장된 섹션 정보 조회
-    const sendData: Section[] = await query(
-      `select vessel_no
-            , equip_no
-            , section_code
-            , section_name
-            , description
-            , regist_date
-            , regist_user
-          from [section]
+    const sections: Section[] = await query(
+      `select max(section_code) as section_code
+         from [section]
         where vessel_no = @vesselNo
           and equip_no = @equipNo
-          and section_code = (select max(section_code) 
-                                from [section]
-                               where vessel_no = @vesselNo
-                                 and equip_no = @equipNo
-                                 and registUser = @registUser);`,
+          and regist_user = @registUser`,
       [
         { name: 'vesselNo', value: item.vessel_no },
         { name: 'equipNo', value: item.equip_no },
         { name: 'registUser', value: item.regist_user },
       ]
     );
-    
-    // 선박에서 저장된 섹션 정보 전송
-    if (sendData[0]) {
-      fetch(`${remoteSiteUrl}/api/data/section/set`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sendData[0]),
-      })
-      .then(res => {
-        if (res.ok) {
-          // 섹션 정보의 마지막 전송일자 수정
-          execute(
-            `update [section]
-                set last_send_date = getdate()
-              where vessel_no = @vesselNo
-                and equip_no = @equipNo
-                and section_code = @sectionCode;`,
-            [
-              { name: 'vesselNo', value: sendData[0].vessel_no },
-              { name: 'equipNo', value: sendData[0].equip_no },
-              { name: 'sectionCode', value: sendData[0].section_code },
-            ]
-          );
-        }
-        
-        return res.json();
-      })
-      .catch(err => {
-        console.error('Error triggering cron job:', err);
-      });
+
+    if (sections && sections.length > 0) {
+      const max_section_code = sections[0].section_code
+      
+      // 저장된 섹션 정보 조회
+      const sendData: Section[] = await query(
+        `select vessel_no
+              , equip_no
+              , section_code
+              , section_name
+              , description
+              , regist_date
+              , regist_user
+            from [section]
+          where vessel_no = @vesselNo
+            and equip_no = @equipNo
+            and section_code = @sectionCode;`,
+        [
+          { name: 'vesselNo', value: item.vessel_no },
+          { name: 'equipNo', value: item.equip_no },
+          { name: 'sectionCode', value: max_section_code },
+        ]
+      );
+      
+      // 선박에서 저장된 섹션 정보 전송
+      if (sendData[0]) {
+        fetch(`${remoteSiteUrl}/api/data/section/set`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sendData[0]),
+        })
+        .then(res => {
+          if (res.ok) {
+            // 섹션 정보의 마지막 전송일자 수정
+            execute(
+              `update [section]
+                  set last_send_date = getdate()
+                where vessel_no = @vesselNo
+                  and equip_no = @equipNo
+                  and section_code = @sectionCode;`,
+              [
+                { name: 'vesselNo', value: sendData[0].vessel_no },
+                { name: 'equipNo', value: sendData[0].equip_no },
+                { name: 'sectionCode', value: sendData[0].section_code },
+              ]
+            );
+          }
+          
+          return res.json();
+        })
+        .catch(err => {
+          console.error('Error triggering cron job:', err);
+        });
+      }
+
+      // 성공 정보 반환
+      return NextResponse.json({ success: true, section_code: max_section_code });
     }
 
-    // 성공 정보 반환
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: false });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

@@ -55,16 +55,15 @@ export default function TaskListPage() {
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(
-        (task: { plan_name: string; vessel_name: string; plan_code: string }) =>
-          task.plan_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      filtered = filtered.filter(task =>
           task.vessel_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          task.plan_code.toLowerCase().includes(searchTerm.toLowerCase()),
+          task.plan_code?.toLowerCase().includes(searchTerm.toLowerCase())  ||
+          task.plan_name?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
     if (statusFilter !== "ALL") {
-      filtered = filtered.filter((task: {status: string}) =>
+      filtered = filtered.filter(task =>
         task.status === statusFilter
       )
     }
@@ -73,7 +72,7 @@ export default function TaskListPage() {
 
   if (!userInfo) return null
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case "DELAYED":
         return <Badge variant="destructive">지연</Badge>
@@ -88,7 +87,7 @@ export default function TaskListPage() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status?: string) => {
     switch (status) {
       case "DELAYED":
         return <AlertTriangle className="w-4 h-4 text-red-600" />

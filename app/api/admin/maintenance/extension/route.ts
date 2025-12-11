@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Vessel } from '@/types/extension/vessel';
-import { Equipment } from '@/types/extension/equipment';
 import { MaintenanceExtension } from '@/types/extension/maintenance_extension';
 
 export async function GET(req: Request) {
@@ -10,6 +8,7 @@ export async function GET(req: Request) {
     const items: MaintenanceExtension[] = await query(
       `select a.vessel_no
             , e.vessel_name
+            , d.machine_name
             , a.equip_no
             , d.equip_name
             , a.section_code
@@ -47,46 +46,104 @@ export async function GET(req: Request) {
         inner join [vessel] as e
            on b.vessel_no = e.vessel_no
         where e.use_yn = 'Y'
-        order by a.vessel_no, a.equip_no, a.section_code, a.plan_code, a.extension_seq`
+        order by a.vessel_no, d.machine_name, a.equip_no, a.section_code, a.plan_code, a.extension_seq`
     );
 
-    let vessels: Vessel[] = [];
-    let vessel: Vessel;
-    let equipment: Equipment;
+    let vessels: MaintenanceExtension[] = [];
+    let vessel: MaintenanceExtension;
+    let machine: MaintenanceExtension;
+    let equipment: MaintenanceExtension;
+    let maintenanceExtension: MaintenanceExtension;
 
     let vesselNo: string = '';
+    let machineName: string = '';
     let equipNo: string = '';
     
     items.map(item => {
       if (vesselNo !== item.vessel_no) {
         vessel = {
+          id: item.vessel_no,
+          name: item.vessel_name || '',
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
           imo_no: item.imo_no,
-          type: '',
-          children: [],
+          type: "VESSEL",
+          key: item.vessel_no,
+          children: [] = []
         }
 
         vessels.push(vessel);
         vesselNo = item.vessel_no;
-        equipNo = ''
+        machineName = '';
+        equipNo = '';
       }
+      
+      if (item.machine_name !== null && item.machine_name !== '') {
+        if (machineName !== item.machine_name) {
+          machine = {
+            id: item.machine_name || '',
+            name: item.machine_name || '',
+            vessel_no: item.vessel_no,
+            machine_name: item.machine_name,
+            type: "MACHINE",
+            key: item.machine_name,
+            children: [] = []
+          }
 
-      if (equipNo !== item.equip_no) {
-        equipment = {
-          vessel_no: item.vessel_no,
-          equip_no: item.equip_no,
-          equip_name: item.equip_name,
-          category: item.category,
-          type: '',
-          children: [],
+          vessel?.children.push(machine);
+          machineName = item.machine_name || '';
+          equipNo = '';
+        }
+        
+        if (equipNo !== item.equip_no) {
+          equipment = {
+            id: item.equip_no || '',
+            name: item.equip_name || '',
+            vessel_no: item.vessel_no,
+            equip_no: item.equip_no,
+            equip_name: item.equip_name,
+            type: "EQUIPMENT",
+            key: item.equip_no,
+            children: [] = []
+          }
+
+          machine.children.push(equipment);
+          equipNo = item.equip_no || '';
         }
 
-        vessel.children.push(equipment);
-        equipNo = item.equip_no;
-      }
+        maintenanceExtension = item;
+        maintenanceExtension.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
+        maintenanceExtension.name = item.plan_name || '';
+        maintenanceExtension.type = "TASK";
+        maintenanceExtension.key = `${item.equip_no}-${item.section_code}-${item.plan_code}`,
 
-      equipment.children.push(item);
+        equipment.children.push(item);
+      }
+      else {
+        if (equipNo !== item.equip_no) {
+          equipment = {
+            id: item.equip_no || '',
+            name: item.equip_name || '',
+            vessel_no: item.vessel_no,
+            equip_no: item.equip_no,
+            equip_name: item.equip_name,
+            type: "EQUIPMENT",
+            key: item.equip_no,
+            children: [] = []
+          }
+
+          vessel.children.push(equipment);
+          equipNo = item.equip_no || '';
+        }
+
+        maintenanceExtension = item;
+        maintenanceExtension.id = `${item.equip_no}-${item.section_code}-${item.plan_code}`;
+        maintenanceExtension.name = item.plan_name || '';
+        maintenanceExtension.type = "TASK";
+        maintenanceExtension.key = `${item.equip_no}-${item.section_code}-${item.plan_code}`,
+
+        equipment.children.push(item);
+      }
     });
 
     // 성공 시 데쉬보드 정보 반환

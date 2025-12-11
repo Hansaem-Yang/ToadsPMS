@@ -27,6 +27,9 @@ export async function GET(req: Request) {
          from [vessel] as a
          left outer join [material] as b
            on a.vessel_no = b.vessel_no
+         left outer join [machine] as c
+           on b.vessel_no = c.vessel_no
+          and b.machine_name = c.machine_name
          left outer join [receive] as d
            on b.vessel_no = d.vessel_no
           and b.material_code = d.material_code
@@ -36,7 +39,7 @@ export async function GET(req: Request) {
           and b.warehouse_no = e.warehouse_no
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
-        order by a.vessel_no, c.sort_no, b.material_code;`,
+        order by a.vessel_no, isnull(c.sort_no, 999), b.material_code;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

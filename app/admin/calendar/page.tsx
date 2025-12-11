@@ -46,34 +46,21 @@ export default function AdminCalendarPage() {
       // Redirect handled by requireAuth
     }
   }, [])
+  
+  useEffect(() => {
+    if (selectedTasks.length > 0) {
+      const element = findElementById("main_task");
 
-  // useEffect(() => {
-  //   // 아이템들의 높이를 동기화하는 함수
-  //   const syncHeights = () => {
-  //     leftItemRefs.current.forEach((leftItem, index) => {
-  //       const rightItem = rightItemRefs.current[index];
-
-  //       if (leftItem && rightItem) {
-  //         // 두 아이템 중 더 큰 높이를 계산
-  //         const height = Math.max(leftItem.offsetHeight, rightItem.offsetHeight);
-
-  //         // 높이를 동기화
-  //         leftItem.style.height = `${height}px`;
-  //         rightItem.style.height = `${height}px`;
-  //       }
-  //     });
-  //   };
-
-  //   // 데이터가 변경될 때마다 높이 동기화
-  //   syncHeights();
-
-  //   // 윈도우 리사이즈 시 높이 동기화 (throttle 적용 권장)
-  //   window.addEventListener('resize', syncHeights);
-
-  //   return () => {
-  //     window.removeEventListener('resize', syncHeights);
-  //   };
-  // }, [calendarVvessels]);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      } else {
+        console.log("경고: main_task 요소를 찾을 수 없습니다.");
+      }
+    }
+  }, [selectedTasks]);
 
   if (!userInfo) return null
 
@@ -112,6 +99,14 @@ export default function AdminCalendarPage() {
     }
   }
 
+  function findElementById(id: string): HTMLElement | null {
+    // id를 사용하여 요소를 찾습니다.
+    const element = document.getElementById(id); 
+    
+    // HTML 요소이거나 null일 수 있습니다.
+    return element;
+  }
+
   const handleCalendarClick = (calendar: any) => {
     let items: Maintenance[] = []
     calendar.children.map((task: Maintenance) => {
@@ -119,7 +114,7 @@ export default function AdminCalendarPage() {
     })
 
     equipName = "";
-    setSelectedTasks(items)
+    setSelectedTasks(items);
   }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -375,7 +370,7 @@ export default function AdminCalendarPage() {
                               index++;
                               return (
                                 <div
-                                  key={calendar.calendar_date}
+                                  key={`${vessel.vessel_no} -${calendar.calendar_date}-${taskIndex}`}
                                   className={`absolute h-6 rounded cursor-pointer transition-all text-center hover:opacity-80 ${getPriorityColor(calendar.calendar_date)}`}
                                   style={{
                                     ...position.position,
@@ -401,14 +396,14 @@ export default function AdminCalendarPage() {
               </CardContent>
             </Card>
             {selectedTasks.length > 0 && (
-              <Card>
+              <Card id="main_task">
                 <CardContent>
                   {selectedTasks.map((task, index) => {
                     const prevTask = selectedTasks[index - 1];
                     const isNewEquipName = !prevTask || prevTask.equip_name !== task.equip_name;
 
                     return (
-                      <div>
+                      <div key={index}>
                         {isNewEquipName && (
                           <div className="p-2">
                             <div className="flex items-center gap-3 text-xl">

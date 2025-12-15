@@ -59,12 +59,13 @@ export async function GET(req: Request) {
       maintenances: [],
       extensions: [],
       works: [],
+      machines: [],
       usedParts: [],
       warehouses: [],
       materials: [],
       receives: [],
       releases: [],
-      losses: [],
+      losses: []
     };
 
     const response = await fetch(`${remoteSiteUrl}/api/data/all/get`, {

@@ -320,6 +320,7 @@ export async function GET(req: Request) {
       maintenances: maintenances,
       extensions: extensions,
       works: works,
+      machines: [],
       usedParts: usedParts,
       warehouses: warehouses,
       materials: materials,

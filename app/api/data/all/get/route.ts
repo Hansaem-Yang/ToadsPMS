@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
 import { PMSData } from '@/types/data/pms_data';
 import { Vessel } from '@/types/vessel/vessel';
+import { Machine } from '@/types/vessel/machine';
 import { Equipment } from '@/types/vessel/equipment';
 import { Section } from '@/types/vessel/section';
 import { MaintenancePlan } from '@/types/vessel/maintenance_plan';
@@ -37,17 +38,36 @@ export async function POST(req: Request) {
       ]
     );
 
+    const machines: Machine[] = await query(
+      `select vessel_no
+            , machine_name
+            , manufacturer
+            , machine_desc
+            , sort_no
+            , regist_date
+            , regist_user
+            , modify_date
+            , modify_user
+         from [machine]
+        where vessel_no = @vesselNo
+          and (regist_date >= @lastReceiveDate or modify_date >= @lastReceiveDate)`,
+      [
+        { name: 'vesselNo', value: receivePmsData.vessel_no },
+        { name: 'lastReceiveDate', value: receivePmsData.last_receive_date }
+      ]
+    );
+
     const equipments: Equipment[] = await query(
       `select vessel_no
             , equip_no
             , equip_name
+            , machine_name
             , manufacturer
             , model
             , specifications
             , description
             , category
             , lastest_date
-            , machine_name
             , regist_date
             , regist_user
             , modify_date
@@ -193,11 +213,13 @@ export async function POST(req: Request) {
       vessel_no: receivePmsData.vessel_no,
       last_receive_date: receivePmsData.last_receive_date,
       vessels: vessels,
+      machines: machines,
       equipments: equipments,
       sections: sections,
       maintenances: maintenances,
       extensions: extensions,
       works: [],
+      usedParts: [],
       warehouses: [],
       materials: materials,
       receives: receives,

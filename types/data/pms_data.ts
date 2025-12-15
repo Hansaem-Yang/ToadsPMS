@@ -1,4 +1,5 @@
 import { Vessel } from '@/types/vessel/vessel';
+import { Machine } from "@/types/vessel/machine";
 import { Equipment } from "@/types/vessel/equipment";
 import { Section } from "@/types/vessel/section";
 import { MaintenancePlan } from "@/types/vessel/maintenance_plan";
@@ -16,6 +17,7 @@ export interface PMSData {
     vessel_no: string;
     last_receive_date: string;
     vessels: Vessel[];
+    machines: Machine[];
     equipments: Equipment[];
     sections: Section[];
     maintenances: MaintenancePlan[];

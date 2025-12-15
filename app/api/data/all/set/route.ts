@@ -75,6 +75,66 @@ export async function POST(req: Request) {
         count += result.rowsAffected[0];
       }
 
+      // 선박 기계 등록 및 수정
+      for (const item of receivePmsData.machines) {
+        let queryString = `
+        merge [machine] as a
+        using (select @vesselNo as vessel_no
+                    , @machineName as machine_name
+                    , @manufacturer as manufacturer
+                    , @machineDesc as machine_desc
+                    , @sortNo as sort_no
+                    , @registDate as regist_date
+                    , @registUser as regist_user
+                    , @modifyDate as modify_date
+                    , @modifyUser as modify_user) as b
+          on (a.vessel_no = b.vessel_no and a.machineName = b.machineName)
+        when matched then
+              update
+                 set a.machine_name = b.machine_name
+                   , a.manufacturer = b.manufacturer
+                   , a.machine_desc = b.machine_desc
+                   , a.sort_no = b.sort_no
+                   , a.last_receive_date = getdate()
+                   , a.modify_date = b.modify_date
+                   , a.modify_user = b.modify_user
+        when not matched then
+              insert (vessel_no
+                    , machine_name
+                    , manufacturer
+                    , machine_desc
+                    , sort_no
+                    , last_receive_date
+                    , regist_date
+                    , regist_user)
+              values (b.vessel_no
+                    , b.machine_name
+                    , b.manufacturer
+                    , b.machine_desc
+                    , b.sort_no
+                    , getdate()
+                    , b.regist_date
+                    , b.regist_user);`;
+
+        let params = [
+          { name: 'vesselNo', value: item.vessel_no },
+          { name: 'machineName', value: item.machine_name },
+          { name: 'manufacturer', value: item.manufacturer },
+          { name: 'model', value: item.machine_desc },
+          { name: 'sortNo', value: item.sort_no },
+          { name: 'registDate', value: item.regist_date },
+          { name: 'registUser', value: item.regist_user },
+          { name: 'modifyDate', value: item.modify_date },
+          { name: 'modifyUser', value: item.modify_user },
+        ];
+
+        const request = new sql.Request(transantion);
+
+        params?.forEach(p => request.input(p.name, p.value));
+        let result = await request.query(queryString);
+        count += result.rowsAffected[0];
+      }
+
       // 선박 장비 등록 및 수정
       for (const item of receivePmsData.equipments) {
         let queryString = `
@@ -82,6 +142,7 @@ export async function POST(req: Request) {
         using (select @vesselNo as vessel_no
                     , @equipNo as equip_no
                     , @equipName as equip_name
+                    , @machineName as machine_name
                     , @category as category
                     , @manufacturer as manufacturer
                     , @model as model
@@ -94,6 +155,7 @@ export async function POST(req: Request) {
         when matched then
               update
                  set a.equip_name = b.equip_name
+                   , a.machine_name = b.machine_name
                    , a.category = b.category
                    , a.manufacturer = b.manufacturer
                    , a.model = b.model
@@ -105,6 +167,7 @@ export async function POST(req: Request) {
               insert (vessel_no
                     , equip_no
                     , equip_name
+                    , machine_name
                     , category
                     , manufacturer
                     , model
@@ -115,6 +178,7 @@ export async function POST(req: Request) {
               values (b.vessel_no
                     , (select format(isnull(max(equip_no), 0) + 1, '00') from [equipment] where vessel_no = b.vessel_no)
                     , b.equip_name
+                    , b.machine_name
                     , b.category
                     , b.manufacturer
                     , b.model
@@ -127,6 +191,7 @@ export async function POST(req: Request) {
           { name: 'vesselNo', value: item.vessel_no },
           { name: 'equipNo', value: item.equip_no },
           { name: 'equipName', value: item.equip_name },
+          { name: 'machineName', value: item.machine_name },
           { name: 'category', value: item.category },
           { name: 'manufacturer', value: item.manufacturer },
           { name: 'model', value: item.model },

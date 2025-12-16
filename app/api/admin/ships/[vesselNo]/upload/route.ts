@@ -24,11 +24,15 @@ export async function POST(req: Request) {
       let sectionName: string = '';
 
       for (const rows of excelData) {
-        if (vesselNo !== rows.CallSign) {
+        if (vesselNo !== rows.CallSign.trim()) {
           continue;
         }
 
         if (rows.Machine && machineName !== rows.Machine) {
+          equipName = '';
+          sectionCode = '';
+          sectionName = '';
+
           let queryString = 
             `merge [machine] as a
              using (select @vesselNo as vessel_no
@@ -76,7 +80,7 @@ export async function POST(req: Request) {
           machineName = rows.Machine;
         }
 
-        if (equipName !== rows.Equipment) {
+        if (rows.Equipment && equipName !== rows.Equipment) {
           sectionCode = '';
           sectionName = '';
 
@@ -157,7 +161,7 @@ export async function POST(req: Request) {
           }
         }
 
-        if (sectionName !== rows.Section) {
+        if (rows.Section && sectionName !== rows.Section) {
           let queryString = 
             `merge [section] as a
              using (select @vesselNo as vessel_no

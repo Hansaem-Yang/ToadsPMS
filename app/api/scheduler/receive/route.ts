@@ -78,6 +78,14 @@ export async function GET(req: Request) {
 
     if (response.ok) {
       const receivePmsData = await response.json();
+      
+      const jsonString = JSON.stringify(receivePmsData);
+      const sizeInBytes = Buffer.byteLength(jsonString, 'utf8');
+      const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+      const sizeInMB = (sizeInBytes / 1024 / 1024).toFixed(2);
+
+      // 4. 서버 로그에 크기를 출력합니다.
+      console.log(`[Server Log] Response JSON Size: ${sizeInKB} KB (${sizeInMB} MB)`);
 
       const sql = await getSql();
       const pool = await getPool();

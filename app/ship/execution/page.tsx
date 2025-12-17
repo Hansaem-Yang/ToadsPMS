@@ -416,8 +416,6 @@ export default function MaintenanceExecutionPage() {
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span>예정일: {item.extension_date ? item.extension_date : item.due_date}</span>
                   <span>담당자: {item.manager}</span>
-                  <span>작업자수: {item.workers}</span>
-                  <span>작업자별 작업시간: {item.work_hours}시간</span>
                   {item.status === "COMPLATE" && (
                     <span className="text-green-600">완료일: {item.lastest_date}</span>
                   )}

@@ -153,7 +153,7 @@ export default function ShipManagementPage() {
         alert('데이터가 성공적으로 전송되었습니다.');
         fetchVessels();
       } else {
-        alert('데이터 전송 실패');
+        alert('데이터 전송에 실패하였습니다.\n업로드 파일 양식 확인 후 다시 진행하세요.');
       }
       
       setIsUploadDialogOpen(false);

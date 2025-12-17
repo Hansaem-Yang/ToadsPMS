@@ -1115,7 +1115,7 @@ export default function MaintenanceExecutionPage() {
                       <Label className="text-xs">다음 정비일자</Label>
                       <Input
                         type="date"
-                        placeholder="시간"
+                        placeholder="정비일자"
                         value={selectedWork.next_due_date}
                         className='text-sm sm:w-40 md:w-36'
                         disabled

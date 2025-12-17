@@ -14,6 +14,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -38,6 +39,28 @@ import { Maintenance } from '@/types/performance/maintenance';
 import { MaintenanceWork } from '@/types/vessel/maintenance_work'; // ✅ interface import
 
 export default function MaintenanceWorkManagementPage() {
+  var initMaintenanceWork : MaintenanceWork  = {
+    work_order: 0,
+    work_date: "",
+    vessel_no: "",
+    equip_no: "",
+    section_code: "",
+    plan_code: "",
+    plan_date: "",
+    manager: "",
+    work_details: "",
+    work_hours: 0,
+    delay_reason: "",
+    due_date: "",
+    extension_date: "",
+    used_parts: [],
+    used_partnames: "",
+    regist_date: "",
+    regist_user: "",
+    modify_date: "",
+    modify_user: ""
+  }
+
   const [userInfo, setUserInfo] = useState<any>(null)
   const [vessels, setVessels] = useState<Vessel[]>([])
   const [machines, setMachines] = useState<Machine[]>([])
@@ -53,11 +76,12 @@ export default function MaintenanceWorkManagementPage() {
   const [sectionFilter, setSectionFilter] = useState("ALL")
   
   const [maintenanceData, setMaintenanceData] = useState<Maintenance[]>([])
+  const [maintenanceItem, setMaintenanceItem] = useState<Maintenance[]>([])
   const [filteredData, setFilteredData] = useState<Maintenance[]>(maintenanceData)
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
   const [isDetailHistoryDialogOpen, setIsDetailHistoryDialogOpen] = useState(false)
   const [selectedHistoryItems, setSelectedHistoryItems] = useState<MaintenanceWork[]>([])
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null)
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<MaintenanceWork>(initMaintenanceWork)
   const [selectedTaskId, setSelectedTaskId] = useState<string>("")
   
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -94,6 +118,13 @@ export default function MaintenanceWorkManagementPage() {
     fetch(`/api/admin/maintenance/performance`)
       .then(res => res.json())
       .then(data => setMaintenanceData(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchPerformanceItem = (vesselNo: string, equipNo: string, sectionCode: string, planCode: string) => {
+    fetch(`/api/admin/maintenance/performance/item?vesselNo=${vesselNo}&equipNo=${equipNo}&sectionCode=${sectionCode}&planCode=${planCode}`)
+      .then(res => res.json())
+      .then(data => setMaintenanceItem(data))
       .catch(err => console.error(err));
   };
   
@@ -173,6 +204,17 @@ export default function MaintenanceWorkManagementPage() {
 
     setFilteredData(filtered)
   }, [maintenanceData, searchTerm, shipFilter, machineFilter, equipmentFilter, sectionFilter])
+  
+
+  useEffect(() => {
+    let filtered = maintenanceData
+
+    if (maintenanceItem.length > 0) {
+      filtered = updateMaintenanceData(filtered, maintenanceItem)
+    }
+
+    setFilteredData(filtered)
+  }, [maintenanceItem])
 
   if (!userInfo) return null
 
@@ -238,6 +280,25 @@ export default function MaintenanceWorkManagementPage() {
         return null
       })
       .filter(Boolean) as Maintenance[]
+  }
+  
+  const updateMaintenanceData = (items: Maintenance[], changeItems: Maintenance[]) : Maintenance[] => {
+    return items.map((item) => {
+      if (item.type === "TASK") {
+        if (changeItems[0].vessel_no === item.vessel_no && changeItems[0].equip_no === item.equip_no && changeItems[0].section_code === item.section_code && changeItems[0].plan_code === item.plan_code) {
+          return {...item, lastest_date: changeItems[0].lastest_date, due_date: changeItems[0].due_date, children: changeItems}
+        }
+
+        return item;
+      } else {
+        const children = updateMaintenanceData(item.children, changeItems);
+
+        return {
+          ...item,
+          children: children,
+        }
+      }
+    });
   }
   
   const getTableHeaders = () => {
@@ -400,6 +461,51 @@ export default function MaintenanceWorkManagementPage() {
         </Collapsible>
       </div>
     ))
+  }
+  
+  
+  const updateSelectedHistoryItems = (item: any) : MaintenanceWork[] => {
+    return selectedHistoryItems.map((history) => {
+      if (history.vessel_no === item.vessel_no && history.work_order === item.work_order) {
+        
+        return {...history, work_date: item.work_date }
+      } 
+
+      return history;
+    });
+  }
+
+  const handleUpdateExecution = async () => {
+    const updatededData = {
+      ...selectedHistoryItem,
+      regist_user: userInfo.account_no,
+      modify_user: userInfo.account_no,
+    };
+
+    const res = await fetch(`/api/admin/ships/${updatededData.vessel_no}/maintenance/execution/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatededData),
+    });
+    
+    if (!res.ok)
+    {
+      alert('작업 실행 수정 중 오류가 발생하였습니다.');
+      return;
+    }
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      alert("저장이 완료되었습니다.");
+
+      setSelectedHistoryItems(updateSelectedHistoryItems(selectedHistoryItem));
+
+      fetchPerformanceItem(selectedHistoryItem.vessel_no, selectedHistoryItem.equip_no, selectedHistoryItem.section_code, selectedHistoryItem.plan_code);
+      setIsDetailHistoryDialogOpen(false)
+    } else {
+      alert(data.message);
+    }
   }
 
   const toggleExpanded = (id: string) => {
@@ -596,7 +702,13 @@ export default function MaintenanceWorkManagementPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="equip_no">작업일자</Label>
-                          <span className="text-sm font-medium text-gray-500">{selectedHistoryItem.work_date}</span>
+                          <Input
+                            type="date"
+                            placeholder="시간"
+                            value={selectedHistoryItem.work_date}
+                            onChange={(e) => setSelectedHistoryItem((prev) => ({ ...prev, work_date: e.target.value }))}
+                            className="text-sm"
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="equip_no">담당자</Label>
@@ -631,18 +743,43 @@ export default function MaintenanceWorkManagementPage() {
                         <CardTitle className="text-sm">사용 부품</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-gray-500">{selectedHistoryItem.used_parts}</p>
+                        <p className="text-sm text-gray-500">
+                          {selectedHistoryItem.used_partnames && (
+                            <span>부품: {selectedHistoryItem.used_partnames}</span>
+                          )}
+                        </p>
                       </CardContent>
                     </Card>
                   )}
+
+                  {/* 지연 사유 */}
+                  {selectedHistoryItem.delay_reason && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">지연 사유</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-500">{selectedHistoryItem.delay_reason}</p>
+                    </CardContent>
+                  </Card>
+                  )}
                 </div>
               )}
-              <div className="flex justify-end">
+              <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDetailHistoryDialogOpen(false)} style={{cursor: 'pointer'}}>
                   닫기
                 </Button>
-              </div>
+                <Button 
+                  onClick={handleUpdateExecution} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={!selectedHistoryItem.work_date}
+                  style={{cursor: 'pointer'}}
+                >
+                  수정
+                </Button>
+              </DialogFooter>
             </DialogContent>
+            
           </Dialog>
         </main>
       </div>

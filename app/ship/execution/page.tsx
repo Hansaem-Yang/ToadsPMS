@@ -79,8 +79,8 @@ export default function MaintenanceExecutionPage() {
   const [selectedUsedWork, setSelectedUsedWork] = useState<any>(null)
   const [isSingle, setIsSingle] = useState<boolean>(false)
 
-  const [equipmentWorks, setEquipmentWorks] = useState<Maintenance[]>([]);
-  const [filteredEquipment, setFilteredEquipment] = useState(equipmentWorks)
+  const [works, setWorks] = useState<Maintenance[]>([]);
+  const [filteredWorks, setFilteredWorks] = useState(works)
   const [searchTerm, setSearchTerm] = useState("")
   const [searchFilter, setSearchFilter] = useState('');
   const [machineFilter, setMachineFilter] = useState("ALL")
@@ -131,7 +131,7 @@ export default function MaintenanceExecutionPage() {
   const fetchEquipmentTasks = (vesselNo: string) => {
     fetch(`/api/ship/execution/all?vesselNo=${vesselNo}`)
       .then(res => res.json())
-      .then(data => setEquipmentWorks(data))
+      .then(data => setWorks(data))
       .catch(err => console.error(err));
   }
   
@@ -180,7 +180,7 @@ export default function MaintenanceExecutionPage() {
   }, [equipments,  machineFilter, equipmentFilter, equipNo])
 
   useEffect(() => {
-    let filtered = equipmentWorks
+    let filtered = works
       
     if (params) {
       setParams('');
@@ -202,8 +202,8 @@ export default function MaintenanceExecutionPage() {
       filtered = filterBySearch(filtered, searchTerm);
     }
 
-    setFilteredEquipment(filtered)
-  }, [equipmentWorks, searchTerm, machineFilter, equipmentFilter, sectionFilter])
+    setFilteredWorks(filtered)
+  }, [works, searchTerm, machineFilter, equipmentFilter, sectionFilter])
 
   useEffect(() => {    
     if (selectedUsedWork) {
@@ -476,7 +476,7 @@ export default function MaintenanceExecutionPage() {
   }
 
   const updateEquipmentWorks = (item: any, status: string) : Maintenance[] => {
-    return equipmentWorks.map((eq) => {
+    return works.map((eq) => {
       if (eq.vessel_no === item.vessel_no && eq.equip_no === item.equip_no) {
         const updatedSections = eq.children.map((section) => {
           if (section.section_code === item.section_code) {
@@ -518,7 +518,7 @@ export default function MaintenanceExecutionPage() {
       alert("저장이 완료되었습니다.");
 
       // 선택된 작업들의 상태를 완료로 업데이트
-      setEquipmentWorks(updateEquipmentWorks(executionResult, "COMPLATE"))
+      setWorks(updateEquipmentWorks(executionResult, "COMPLATE"))
 
       setUsedItems([])
       setSelectedWork(null)
@@ -569,7 +569,7 @@ export default function MaintenanceExecutionPage() {
       alert("저장이 완료되었습니다.");
 
       // 선택된 작업들의 상태를 완료로 업데이트
-      setEquipmentWorks(updateEquipmentWorks(extensionResult, "EXTENSION"))
+      setWorks(updateEquipmentWorks(extensionResult, "EXTENSION"))
 
       setIsExtensionDialogOpen(false)
       setSelectedExtension(null)
@@ -579,11 +579,11 @@ export default function MaintenanceExecutionPage() {
   }
 
   const getTotalTasks = () => {
-    return equipmentWorks.reduce((total, eq) => total + eq.children.length, 0)
+    return works.reduce((total, eq) => total + eq.children.length, 0)
   }
 
   const getTasksByStatus = (status: string) => {
-    return equipmentWorks.reduce((total, eq) => {
+    return works.reduce((total, eq) => {
       return total + eq.children.filter((task) => task.status === status).length
     }, 0)
   }
@@ -616,7 +616,7 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleSelectAll = () => {
-    const allMatchingTasks: Maintenance[] = findAllMatchingDescendants(filteredEquipment);
+    const allMatchingTasks: Maintenance[] = findAllMatchingDescendants(filteredWorks);
     const allTaskIds = allMatchingTasks.map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`);
 
     if (selectedWorks.length === allTaskIds.length) {
@@ -630,7 +630,7 @@ export default function MaintenanceExecutionPage() {
     let result: Maintenance[] = [];
 
     for (const item of items) {
-      if (item.type === "TASK" && item.equip_no === equipNo && selectedWorks.includes(`${item.equip_no}-${item.section_code}-${item.plan_code}`)) {
+      if (item.type === "TASK" && selectedWorks.includes(`${item.equip_no}-${item.section_code}-${item.plan_code}`)) {
         result.push(item);
       }
 
@@ -644,7 +644,7 @@ export default function MaintenanceExecutionPage() {
   }
 
   const handleBulkExecution = (equipNo: string, equipName: string) => {
-    const allBulkTasks: Maintenance[] = findAllBulkExecutions(filteredEquipment);
+    const allBulkTasks: Maintenance[] = findAllBulkExecutions(filteredWorks);
     const tasksToExecute = allBulkTasks.map((task) => ({
         ...task,
         equipmentName: task.equip_name,
@@ -685,7 +685,7 @@ export default function MaintenanceExecutionPage() {
   }
 
   const updateBulkEquipmentWorks = (executionData: ComparisonData, status: string) : Maintenance[] => {
-    return equipmentWorks.map((eq) => {
+    return works.map((eq) => {
       const isMatch = executionData.tasks.some(task => 
         task.vessel_no === eq.vessel_no &&
         task.equip_no === eq.equip_no
@@ -731,7 +731,7 @@ export default function MaintenanceExecutionPage() {
       alert("저장이 완료되었습니다.");
 
       // 선택된 작업들의 상태를 완료로 업데이트
-      setEquipmentWorks(updateBulkEquipmentWorks(bulkExecutionData, "COMPLATE"))
+      setWorks(updateBulkEquipmentWorks(bulkExecutionData, "COMPLATE"))
 
       setUsedItems([])
       setSelectedWorks([])
@@ -884,7 +884,7 @@ export default function MaintenanceExecutionPage() {
                     checked={
                       selectedWorks.length > 0 &&
                       selectedWorks.length ===
-                        filteredEquipment.flatMap((eq) => eq.children.filter((task) => task.status !== "COMPLATE")).length
+                        filteredWorks.flatMap((eq) => eq.children.filter((task) => task.status !== "COMPLATE")).length
                     }
                     onCheckedChange={handleSelectAll}
                   />
@@ -958,7 +958,7 @@ export default function MaintenanceExecutionPage() {
 
           {/* 장비별 작업 목록 */}
           <div className="space-y-6">
-            {filteredEquipment.map((eq) => (
+            {filteredWorks.map((eq) => (
               <Card key={eq.equip_no}>
                 <CardHeader>
                   <div className="flex items-center justify-between">

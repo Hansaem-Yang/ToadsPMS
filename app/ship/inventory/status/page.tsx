@@ -13,11 +13,11 @@ import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface
 
 export default function ShipInventoryStatusPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
-  const [machines, setMachines] = useState<Machine[]>([])
+  const [machines, setMachines] = useState<Inventory[]>([])
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedMachine, setSelectedMachine] = useState<string>("")
-  const [selectedMachineData, setSelectedMachineData] = useState<Machine>()
+  const [selectedMachineData, setSelectedMachineData] = useState<Inventory>()
   const [filteredMaterials, setFilteredMaterials] = useState<Inventory[]>([])
 
   const fetchStatus = (vesselNo: string) => {
@@ -42,7 +42,7 @@ export default function ShipInventoryStatusPage() {
     let filtered = machines
 
     if (!selectedMachine) {
-      setSelectedMachine(machines[0]?.machine_name)
+      setSelectedMachine(machines[0]?.machine_name || '')
       return;
     }
 
@@ -108,7 +108,7 @@ export default function ShipInventoryStatusPage() {
                     {machines.map((machine) => (
                       <button
                         key={machine.machine_name}
-                        onClick={() => setSelectedMachine(machine.machine_name)}
+                        onClick={() => setSelectedMachine(machine.machine_name || '')}
                         className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-l-4 ${
                           selectedMachine === machine.machine_name
                             ? "border-blue-500 bg-blue-50 text-blue-700"

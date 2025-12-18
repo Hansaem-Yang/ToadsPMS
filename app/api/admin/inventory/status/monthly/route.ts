@@ -65,6 +65,7 @@ export async function GET(req: Request) {
                 where a.use_yn = 'Y') as a
         order by a.vessel_no
                , a.sort_no
+               , a.machine_name
                , a.material_code`);
 
     let vessels: Inventory[] = [];

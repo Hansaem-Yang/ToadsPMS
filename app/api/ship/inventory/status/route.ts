@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/db'; // 이전에 만든 query 함수
-import { Machine } from '@/types/inventory/status/machine'; // ✅ interface import
 import { Inventory } from '@/types/inventory/status/inventory'; // ✅ interface import
 
 export async function GET(req: Request) {
@@ -51,14 +50,16 @@ export async function GET(req: Request) {
       { name: 'vesselNo', value: vesselNo }
     ]);
 
-    let machines: Machine[] = [];
-    let machine: Machine;
+    let machines: Inventory[] = [];
+    let machine: Inventory;
 
     let machineName: string = '';
 
     items.map(item => {
       if (machineName !== item.machine_name) {
         machine = {
+          id: item.machine_name || '',
+          name: item.machine_name || '',
           vessel_no: item.vessel_no,
           vessel_name: item.vessel_name,
           machine_name: item.machine_name,
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
         }
 
         machines.push(machine);
-        machineName = item.machine_name;
+        machineName = item.machine_name || '';
       }
       
       if (item.material_code)

@@ -71,7 +71,7 @@ export async function GET(req: Request) {
         where a.vessel_no = @vesselNo
           and a.use_yn = 'Y'
           and d.stock_qty > 0
-        order by a.vessel_no, isnull(c.sort_no, 999), b.material_code;`,
+        order by a.vessel_no, isnull(c.sort_no, 999), b.machine_name, b.material_code;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

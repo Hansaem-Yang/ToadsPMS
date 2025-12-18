@@ -395,7 +395,7 @@ export default function MaintenanceWorkManagementPage() {
                 <p className="text-gray-600">{userInfo.ship_no} 선박의 정비 실적 현황을 조회하세요</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => (window.location.href = "/admin/calendar")} style={{cursor: 'pointer'}}>
+                <Button variant="outline" onClick={() => (window.location.href = "/ship/calendar")} style={{cursor: 'pointer'}}>
                   <Calendar className="w-4 h-4 mr-2" />
                   작업 캘린더
                 </Button>

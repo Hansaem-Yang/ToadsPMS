@@ -46,7 +46,7 @@ export async function GET(req: Request) {
                   and b.machine_name = c.machine_name
                 where a.vessel_no = @vesselNo
                   and a.use_yn = 'Y') as a
-        order by a.vessel_no, a.sort_no, a.material_code;`,
+        order by a.vessel_no, a.sort_no, a.machine_name, a.material_code;`,
     [
       { name: 'vesselNo', value: vesselNo }
     ]);

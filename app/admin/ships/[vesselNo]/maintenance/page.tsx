@@ -420,6 +420,7 @@ export default function MaintenanceWorkManagementPage() {
     const updatedSections = parent.children.map((section) => {
       if (section.section_code === item.section_code) {
         return { ...section,  
+          name: item.section_name,
           vessel_no: item.vessel_no,
           equip_no: item.equip_no,
           section_code: item.section_code,
@@ -594,6 +595,7 @@ export default function MaintenanceWorkManagementPage() {
         const updatedMaintenances = section.children.map((plan) => {
           if (plan.plan_code === item.plan_code) {
             return { ...plan,  
+              name: item.plan_name,
               vessel_no: item.vessel_no,
               vessel_name: item.vessel_name,
               equip_no: item.equip_no,

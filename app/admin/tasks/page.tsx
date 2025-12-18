@@ -196,7 +196,7 @@ export default function TaskListPage() {
             <CardContent>
               <div className="space-y-4">
                 {filteredTasks.map((task) => (
-                  <div key={task.plan_code} className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
+                  <div key={`${task.equip_no}-${task.section_code}-${task.plan_code}`} className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start gap-3">
                         {getStatusIcon(task.status)}

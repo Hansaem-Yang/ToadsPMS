@@ -475,7 +475,7 @@ export default function ShipEquipmentPage() {
                     <Label htmlFor="description">설명</Label>
                     <Textarea 
                       id="description" 
-                      value={selectedEquipment.description} 
+                      value={selectedEquipment.description ? selectedEquipment.description : ""} 
                       onChange={(e) => setSelectedEquipment((prev: any) => ({ ...prev, description: e.target.value }))}
                     />
                   </div>

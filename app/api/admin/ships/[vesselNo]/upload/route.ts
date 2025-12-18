@@ -24,7 +24,11 @@ export async function POST(req: Request) {
       let sectionName: string = '';
 
       for (const rows of excelData) {
-        if (vesselNo !== rows.CallSign.trim()) {
+        if (vesselNo !== rows.CallSign.trim() ||
+            !rows.Machine ||
+            !rows.Equipment ||
+            !rows.Section ||
+            !rows.MaintenanceName) {
           continue;
         }
 
@@ -225,134 +229,136 @@ export async function POST(req: Request) {
           }
         }
 
-        let queryString = 
-            `merge [maintenance_plan] as a
-             using (select @vesselNo as vessel_no 
-                         , @equipNo as equip_no 
-                         , @sectionCode as section_code 
-                         , @planName as plan_name 
-                         , @manufacturer as manufacturer 
-                         , @model as model 
-                         , @specifications as specifications 
-                         , @workers as workers 
-                         , @workHours as work_hours 
-                         , @intervalTerm as interval_term 
-                         , @interval as interval 
-                         , case @location when 'DOCK' then 'D'
-                                          when 'IN PORT' then 'P'
-                                          when 'SAILING' then 'S' else '' end as location 
-                         , @manager as manager 
-                         , @selfMaintenance as self_maintenance 
-                         , @critical as critical 
-                         , @lastestDate as lastest_date 
-                         , @instructions as instructions
-                         , @prevPmsCode as prev_pms_code
-                         , @registUser as regist_user
-                         , @modifyUser as modify_user) as b
-                on (a.vessel_no = b.vessel_no 
-               and  a.equip_no = b.equip_no
-               and  a.section_code = b.section_code
-               and  a.plan_name = b.plan_name)
-              when matched then
-                   update 
-                      set a.manufacturer = b.manufacturer
-                        , a.model = b.model
-                        , a.specifications = b.specifications
-                        , a.workers = b.workers
-                        , a.work_hours = b.work_hours
-                        , a.interval_term = b.interval_term
-                        , a.interval = b.interval
-                        , a.location = b.location
-                        , a.manager = b.manager
-                        , a.self_maintenance = b.self_maintenance
-                        , a.critical = b.critical
-                        , a.lastest_date = b.lastest_date
-                        , a.instructions = b.instructions
-                        , a.prev_pms_code = b.prev_pms_code
-                        , a.modify_date = getdate()
-                        , a.modify_user = b.modify_user
-              when not matched then
-                   insert (
-                           vessel_no
-                         , equip_no
-                         , section_code
-                         , plan_code
-                         , plan_name
-                         , manufacturer
-                         , model
-                         , specifications
-                         , workers
-                         , work_hours
-                         , interval_term
-                         , interval
-                         , location
-                         , manager
-                         , self_maintenance
-                         , critical
-                         , lastest_date
-                         , instructions
-                         , prev_pms_code
-                         , regist_date
-                         , regist_user
-                   )
-                   values (
-                           b.vessel_no
-                         , b.equip_no
-                         , b.section_code
-                         , (select format(isnull(max(plan_code), 0) + 1, '000') from [maintenance_plan] where vessel_no = b.vessel_no and equip_no = b.equip_no and section_code = b.section_code)
-                         , b.plan_name
-                         , b.manufacturer
-                         , b.model
-                         , b.specifications
-                         , b.workers
-                         , b.work_hours
-                         , b.interval_term
-                         , b.interval
-                         , b.location
-                         , b.manager
-                         , b.self_maintenance
-                         , b.critical
-                         , b.lastest_date
-                         , b.instructions
-                         , b.prev_pms_code
-                         , getdate()
-                         , b.regist_user
-                   );`
-        
-        let lastestDate = rows.LastestDate == 'N/A' ? null : rows.LastestDate;
-        if (typeof lastestDate === 'number') {
-          lastestDate = ConvertExcelSerialToData(lastestDate);
+        if (rows.MaintenanceName) {
+          let queryString = 
+              `merge [maintenance_plan] as a
+              using (select @vesselNo as vessel_no 
+                          , @equipNo as equip_no 
+                          , @sectionCode as section_code 
+                          , @planName as plan_name 
+                          , @manufacturer as manufacturer 
+                          , @model as model 
+                          , @specifications as specifications 
+                          , @workers as workers 
+                          , @workHours as work_hours 
+                          , @intervalTerm as interval_term 
+                          , @interval as interval 
+                          , case @location when 'DOCK' then 'D'
+                                            when 'IN PORT' then 'P'
+                                            when 'SAILING' then 'S' else '' end as location 
+                          , @manager as manager 
+                          , @selfMaintenance as self_maintenance 
+                          , @critical as critical 
+                          , @lastestDate as lastest_date 
+                          , @instructions as instructions
+                          , @prevPmsCode as prev_pms_code
+                          , @registUser as regist_user
+                          , @modifyUser as modify_user) as b
+                  on (a.vessel_no = b.vessel_no 
+                and  a.equip_no = b.equip_no
+                and  a.section_code = b.section_code
+                and  a.plan_name = b.plan_name)
+                when matched then
+                    update 
+                        set a.manufacturer = b.manufacturer
+                          , a.model = b.model
+                          , a.specifications = b.specifications
+                          , a.workers = b.workers
+                          , a.work_hours = b.work_hours
+                          , a.interval_term = b.interval_term
+                          , a.interval = b.interval
+                          , a.location = b.location
+                          , a.manager = b.manager
+                          , a.self_maintenance = b.self_maintenance
+                          , a.critical = b.critical
+                          , a.lastest_date = b.lastest_date
+                          , a.instructions = b.instructions
+                          , a.prev_pms_code = b.prev_pms_code
+                          , a.modify_date = getdate()
+                          , a.modify_user = b.modify_user
+                when not matched then
+                    insert (
+                            vessel_no
+                          , equip_no
+                          , section_code
+                          , plan_code
+                          , plan_name
+                          , manufacturer
+                          , model
+                          , specifications
+                          , workers
+                          , work_hours
+                          , interval_term
+                          , interval
+                          , location
+                          , manager
+                          , self_maintenance
+                          , critical
+                          , lastest_date
+                          , instructions
+                          , prev_pms_code
+                          , regist_date
+                          , regist_user
+                    )
+                    values (
+                            b.vessel_no
+                          , b.equip_no
+                          , b.section_code
+                          , (select format(isnull(max(plan_code), 0) + 1, '000') from [maintenance_plan] where vessel_no = b.vessel_no and equip_no = b.equip_no and section_code = b.section_code)
+                          , b.plan_name
+                          , b.manufacturer
+                          , b.model
+                          , b.specifications
+                          , b.workers
+                          , b.work_hours
+                          , b.interval_term
+                          , b.interval
+                          , b.location
+                          , b.manager
+                          , b.self_maintenance
+                          , b.critical
+                          , b.lastest_date
+                          , b.instructions
+                          , b.prev_pms_code
+                          , getdate()
+                          , b.regist_user
+                    );`
+          
+          let lastestDate = rows.LastestDate == 'N/A' ? null : rows.LastestDate;
+          if (typeof lastestDate === 'number') {
+            lastestDate = ConvertExcelSerialToData(lastestDate);
+          }
+
+          let params = [
+            { name: 'vesselNo', value: vesselNo },
+            { name: 'equipNo', value: equipNo },
+            { name: 'sectionCode', value: sectionCode },
+            { name: 'planName', value: rows.MaintenanceName},
+            { name: 'manufacturer', value: rows.Manufacturer ? rows.Manufacturer : '' },
+            { name: 'model', value: rows.Model ? rows.Model : '' },
+            { name: 'specifications', value: rows.Specifications ? rows.Specifications : '' },
+            { name: 'workers', value: rows.Workers},
+            { name: 'workHours', value: rows.WorkHours},
+            { name: 'intervalTerm', value: rows.IntervalTerm},
+            { name: 'interval', value: rows.Interval},
+            { name: 'location', value: rows.Location? rows.Location : '' },
+            { name: 'manager', value: rows.PIC? rows.PIC : '' },
+            { name: 'selfMaintenance', value: rows.SelfMaintenance? rows.SelfMaintenance : '' },
+            { name: 'critical', value: rows.Critical? rows.Critical : '' },
+            { name: 'lastestDate', value: lastestDate },
+            { name: 'instructions', value: rows.Instructions? rows.Instructions : '' },
+            { name: 'prevPmsCode', value: rows.PrevPMSCode? rows.PrevPMSCode : '' },
+            { name: 'registUser', value: registUser },
+            { name: 'modifyUser', value: modifyUser }
+          ];
+
+          const request = new sql.Request(transantion);
+
+          params?.forEach(p => request.input(p.name, p.value));
+          let result = await request.query(queryString);
+
+          count += result.rowsAffected[0];
         }
-
-        let params = [
-          { name: 'vesselNo', value: vesselNo },
-          { name: 'equipNo', value: equipNo },
-          { name: 'sectionCode', value: sectionCode },
-          { name: 'planName', value: rows.MaintenanceName},
-          { name: 'manufacturer', value: rows.Manufacturer ? rows.Manufacturer : '' },
-          { name: 'model', value: rows.Model ? rows.Model : '' },
-          { name: 'specifications', value: rows.Specifications ? rows.Specifications : '' },
-          { name: 'workers', value: rows.Workers},
-          { name: 'workHours', value: rows.WorkHours},
-          { name: 'intervalTerm', value: rows.IntervalTerm},
-          { name: 'interval', value: rows.Interval},
-          { name: 'location', value: rows.Location? rows.Location : '' },
-          { name: 'manager', value: rows.PIC? rows.PIC : '' },
-          { name: 'selfMaintenance', value: rows.SelfMaintenance? rows.SelfMaintenance : '' },
-          { name: 'critical', value: rows.Critical? rows.Critical : '' },
-          { name: 'lastestDate', value: lastestDate },
-          { name: 'instructions', value: rows.Instructions? rows.Instructions : '' },
-          { name: 'prevPmsCode', value: rows.PrevPMSCode? rows.PrevPMSCode : '' },
-          { name: 'registUser', value: registUser },
-          { name: 'modifyUser', value: modifyUser }
-        ];
-
-        const request = new sql.Request(transantion);
-
-        params?.forEach(p => request.input(p.name, p.value));
-        let result = await request.query(queryString);
-
-        count += result.rowsAffected[0];
       }
 
       transantion.commit();
@@ -361,7 +367,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: 'Data was not inserted.' }, { status: 401 });
       }
       // 성공 정보 반환
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, total: excelData.length, count: count });
     } catch (err) {
       transantion.rollback();
       console.error(err);

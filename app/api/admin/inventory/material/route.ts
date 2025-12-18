@@ -43,7 +43,7 @@ export async function GET(req: Request) {
            on b.vessel_no = e.vessel_no
           and b.warehouse_no = e.warehouse_no
         where a.use_yn = 'Y'
-        order by a.vessel_no, isnull(c.sort_no, 999), b.material_code;`);
+        order by a.vessel_no, isnull(c.sort_no, 999), b.machine_name, b.material_code;`);
 
     let vessels: Vessel[] = [];
     let vessel: Vessel;

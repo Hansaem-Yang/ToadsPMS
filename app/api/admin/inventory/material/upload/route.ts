@@ -70,7 +70,7 @@ export async function POST(req: Request) {
                          from [material]
                         where vessel_no = b.vessel_no
                           and material_type = b.material_type
-                          and material_code like 'A%')
+                          and material_code like 'A' + b.material_type + format(getdate(), 'yyMM') + '%')
                     , b.material_name
                     , b.material_group
                     , b.material_type

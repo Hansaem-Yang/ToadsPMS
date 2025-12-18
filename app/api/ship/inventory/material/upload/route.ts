@@ -30,8 +30,8 @@ export async function POST(req: Request) {
           using (select @vesselNo as vessel_no
                       , @materialName as material_name
                       , @materialGroup as material_group
-                      , @materialType as material_type
-                      , @materialUnit as material_unit
+                      , dbo.fn_get_material_type(@materialType) as material_type
+                      , dbo.fn_get_material_unit(@materialUnit) as material_unit
                       , dbo.fn_get_warehouse_no(@warehouseName) as warehouse_no
                       , @drawingNo as drawing_no
                       , @machineName as machine_name
@@ -73,7 +73,8 @@ export async function POST(req: Request) {
                     , (select b.material_type + format(getdate(), 'yyMM') + format(isnull(right(max(material_code), 3), 0) + 1, '000')
                          from [material]
                         where vessel_no = b.vessel_no
-                          and material_type = b.material_type)
+                          and material_type = b.material_type
+                          and material_type like b.material_type + format(getdate(), 'yyMM') + '%')
                     , b.material_name
                     , b.material_group
                     , b.material_type

@@ -327,13 +327,12 @@ export default function InitialStockPage() {
 
   const warehouseChanged = (mode: string, value: string) => {
     const foundWarehouse = warehouses.find(warehouse => warehouse.warehouse_no === value)
+
     if (foundWarehouse) {
       if (mode === 'add') {
-        setAddMaterial({ ...addMaterial, warehouse_no: foundWarehouse.warehouse_no })
-        setAddMaterial({ ...addMaterial, warehouse_name: foundWarehouse.warehouse_name })
+        setAddMaterial({ ...addMaterial, warehouse_no: foundWarehouse.warehouse_no, warehouse_name: foundWarehouse.warehouse_name})
       } else {
-        setEditMaterial({ ...editMaterial, warehouse_no: foundWarehouse.warehouse_no })
-        setEditMaterial({ ...editMaterial, warehouse_name: foundWarehouse.warehouse_name })
+        setEditMaterial({ ...editMaterial, warehouse_no: foundWarehouse.warehouse_no, warehouse_name: foundWarehouse.warehouse_name })
       }
     }
     else {

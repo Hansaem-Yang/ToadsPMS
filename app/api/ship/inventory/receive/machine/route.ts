@@ -20,7 +20,7 @@ export async function GET(req: Request) {
             , isnull(receive_qty, 0) - (isnull(release_qty, 0) + isnull(loss_qty, 0)) stock_qty
          from (select a.vessel_no
                     , b.machine_name
-                    , c.sort_no
+                    , isnull(c.sort_no, 999) sort_no
                     , b.material_code
                     , b.material_name
                     , b.material_unit
@@ -41,9 +41,12 @@ export async function GET(req: Request) {
                  from [vessel] as a
                 inner join [material] as b
                    on a.vessel_no = b.vessel_no
+				         left outer join [machine] as c
+				           on b.vessel_no = c.vessel_no
+				          and b.machine_name = c.machine_name
                 where a.vessel_no = @vesselNo
                   and a.use_yn = 'Y') as a
-        order by a.vessel_no, a.sort_no, a.material_code;`,
+        order by a.vessel_no, a.sort_no, a.machine_name, a.material_code;`,
       [
         { name: 'vesselNo', value: vesselNo }
       ]

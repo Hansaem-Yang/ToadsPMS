@@ -11,35 +11,35 @@ export async function register() {
     // 매일 자정에 실행되는 스케쥴을 설정
     // Cron 표현식: '분 시 일 월 요일'
     // 예: '0 0 * * *' -> 매일 0시 0분에 실행
-    cron.schedule('*/5 * * * *', () => {
-      console.log('🚀 Running a scheduled job at midnight...');
-      fetch(`${siteUrl}/api/scheduler/send`)
-        .then(res => {
-          if (!res.ok) {
-            console.error('Failed to trigger cron job:', res.statusText);
-          }
-          return res.json();
-        })
-        .then(data => {
-          console.log('Cron job trigger response:', data);
-        })
-        .catch(err => {
-          console.error('Error triggering cron job:', err);
-        });
+    // cron.schedule('*/5 * * * *', () => {
+    //   console.log('🚀 Running a scheduled job at midnight...');
+    //   fetch(`${siteUrl}/api/scheduler/send`)
+    //     .then(res => {
+    //       if (!res.ok) {
+    //         console.error('Failed to trigger cron job:', res.statusText);
+    //       }
+    //       return res.json();
+    //     })
+    //     .then(data => {
+    //       console.log('Cron job trigger response:', data);
+    //     })
+    //     .catch(err => {
+    //       console.error('Error triggering cron job:', err);
+    //     });
 
-      fetch(`${siteUrl}/api/scheduler/receive`)
-        .then(res => {
-          if (!res.ok) {
-            console.error('Failed to trigger cron job:', res.statusText);
-          }
-          return res.json();
-        })
-        .then(data => {
-          console.log('Cron job trigger response:', data);
-        })
-        .catch(err => {
-          console.error('Error triggering cron job:', err);
-        });
-    });
+    //   fetch(`${siteUrl}/api/scheduler/receive`)
+    //     .then(res => {
+    //       if (!res.ok) {
+    //         console.error('Failed to trigger cron job:', res.statusText);
+    //       }
+    //       return res.json();
+    //     })
+    //     .then(data => {
+    //       console.log('Cron job trigger response:', data);
+    //     })
+    //     .catch(err => {
+    //       console.error('Error triggering cron job:', err);
+    //     });
+    // });
   }
 }

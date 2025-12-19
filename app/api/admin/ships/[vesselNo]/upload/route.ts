@@ -122,7 +122,7 @@ export async function POST(req: Request) {
                    )
                    values (
                            b.vessel_no
-                         , (select format(isnull(max(equip_no), 0) + 1, '00') from [equipment] where vessel_no = b.vessel_no)
+                         , (select format(isnull(max(equip_no), 0) + 1, '000') from [equipment] where vessel_no = b.vessel_no)
                          , b.equip_name
                          , lower(b.category)
                          , b.manufacturer

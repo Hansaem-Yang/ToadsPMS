@@ -58,11 +58,11 @@ export async function GET(req: Request) {
                                 , case interval_term when 'YEAR' then dateadd(year, interval, lastest_date)
                                                     when 'MONTH' then dateadd(month, interval, lastest_date)
                                                     when 'DAY' then dateadd(day, interval, lastest_date)
-                                                    when 'HOUR' then dateadd(day, interval / 24, lastest_date) end as due_date
+                                                    when 'HOURS' then dateadd(day, interval / 24, lastest_date) end as due_date
                                 , case interval_term when 'YEAR' then dateadd(year, interval, getdate())
                                                     when 'MONTH' then dateadd(month, interval, getdate())
                                                     when 'DAY' then dateadd(day, interval, getdate())
-                                                    when 'HOUR' then dateadd(day, interval / 24, getdate()) end as next_due_date
+                                                    when 'HOURS' then dateadd(day, interval / 24, getdate()) end as next_due_date
                                 , dbo.fn_get_maintenance_extension(vessel_no, equip_no, section_code, plan_code) as extension_date
                             from [maintenance_plan]
                             where vessel_no = @vesselNo) as b

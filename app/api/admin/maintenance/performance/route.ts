@@ -23,7 +23,7 @@ export async function GET(req: Request) {
             , convert(varchar(10), case d.interval_term when 'YEAR' then dateadd(year, d.interval, d.lastest_date)
                                                         when 'MONTH' then dateadd(month, d.interval, d.lastest_date)
                                                         when 'DAY' then dateadd(day, d.interval, d.lastest_date)
-                                                        when 'HOUR' then dateadd(day, d.interval / 24, d.lastest_date) end, 121) as due_date
+                                                        when 'HOURS' then dateadd(day, d.interval / 24, d.lastest_date) end, 121) as due_date
             , convert(varchar(10), e.work_date, 121) as work_date
           from [vessel] as a
          inner join [equipment] as b

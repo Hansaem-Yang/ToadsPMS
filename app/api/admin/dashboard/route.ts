@@ -27,12 +27,12 @@ export async function GET(req: Request) {
                                            case interval_term when 'YEAR' then dateadd(year, interval, lastest_date)
                                                               when 'MONTH' then dateadd(month, interval, lastest_date)
                                                               when 'DAY' then dateadd(day, interval, lastest_date)
-                                                              when 'HOUR' then dateadd(day, interval / 24, lastest_date) end 
+                                                              when 'HOURS' then dateadd(day, interval / 24, lastest_date) end 
                                       then dbo.fn_get_maintenance_extension(vessel_no, equip_no, section_code, plan_code) 
                                       else case interval_term when 'YEAR' then dateadd(year, interval, lastest_date)
                                                               when 'MONTH' then dateadd(month, interval, lastest_date)
                                                               when 'DAY' then dateadd(day, interval, lastest_date)
-                                                              when 'HOUR' then dateadd(day, interval / 24, lastest_date) end 
+                                                              when 'HOURS' then dateadd(day, interval / 24, lastest_date) end 
                                       end as due_date
                             from [maintenance_plan]) as b
            on a.vessel_no = b.vessel_no

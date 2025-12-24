@@ -31,7 +31,7 @@ export async function GET(req: Request) {
             , convert(varchar(10), case interval_term when 'YEAR' then dateadd(year, interval, lastest_date)
                                                       when 'MONTH' then dateadd(month, interval, lastest_date)
                                                       when 'DAY' then dateadd(day, interval, lastest_date)
-                                                      when 'HOUR' then dateadd(day, interval / 24, lastest_date) end, 121) as due_date
+                                                      when 'HOURS' then dateadd(day, interval / 24, lastest_date) end, 121) as due_date
          from [maintenance_plan]
         where vessel_no = @vesselNo`,
       [

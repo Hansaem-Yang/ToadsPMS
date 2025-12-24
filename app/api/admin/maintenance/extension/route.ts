@@ -29,7 +29,7 @@ export async function GET(req: Request) {
             , convert(varchar(10), case b.interval_term when 'YEAR' then dateadd(year, b.interval, b.lastest_date)
                                                         when 'MONTH' then dateadd(month, b.interval, b.lastest_date)
                                                         when 'DAY' then dateadd(day, b.interval, b.lastest_date)
-                                                        when 'HOUR' then dateadd(day, b.interval / 24, b.lastest_date) end, 121) as due_date
+                                                        when 'HOURS' then dateadd(day, b.interval / 24, b.lastest_date) end, 121) as due_date
          from [maintenance_extension] as a
         inner join [maintenance_plan] as b
            on a.vessel_no = b.vessel_no

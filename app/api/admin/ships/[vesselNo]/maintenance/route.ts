@@ -38,7 +38,7 @@ export async function GET(req: Request) {
             , convert(varchar(10), case c.interval_term when 'YEAR' then dateadd(year, c.interval, c.lastest_date)
                                                         when 'MONTH' then dateadd(month, c.interval, c.lastest_date)
                                                         when 'DAY' then dateadd(day, c.interval, c.lastest_date)
-                                                        when 'HOUR' then dateadd(day, c.interval / 24, c.lastest_date) end, 121) as due_date
+                                                        when 'HOURS' then dateadd(day, c.interval / 24, c.lastest_date) end, 121) as due_date
          from [equipment] as a
          left outer join [machine] as z
            on a.vessel_no = z.vessel_no

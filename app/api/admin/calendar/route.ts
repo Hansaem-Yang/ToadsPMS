@@ -49,7 +49,7 @@ export async function GET(req: Request) {
                     , case a.interval_term when 'YEAR' then dateadd(year, a.interval, a.lastest_date)
                                            when 'MONTH' then dateadd(month, a.interval, a.lastest_date)
                                            when 'DAY' then dateadd(day, a.interval, a.lastest_date)
-                                           when 'HOUR' then dateadd(day, a.interval / 24, a.lastest_date) end as due_date
+                                           when 'HOURS' then dateadd(day, a.interval / 24, a.lastest_date) end as due_date
                     , dbo.fn_get_maintenance_extension(a.vessel_no, a.equip_no, a.section_code, a.plan_code) as extension_date
                  from [maintenance_plan] as a
                 inner join [section] as b

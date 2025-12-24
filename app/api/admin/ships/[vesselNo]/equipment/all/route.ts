@@ -30,7 +30,7 @@ export async function GET(req: Request) {
                                , case a1.interval_term when 'YEAR' then dateadd(year, a1.interval, a1.lastest_date)
                                                        when 'MONTH' then dateadd(month, a1.interval, a1.lastest_date)
                                                        when 'DAY' then dateadd(day, a1.interval, a1.lastest_date)
-                                                       when 'HOUR' then dateadd(day, a1.interval / 24, a1.lastest_date) end as due_date
+                                                       when 'HOURS' then dateadd(day, a1.interval / 24, a1.lastest_date) end as due_date
                             from [maintenance_plan] as a1
                            where vessel_no = @vesselNo) as b
            on a.vessel_no = b.vessel_no

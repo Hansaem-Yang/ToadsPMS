@@ -273,7 +273,7 @@ export default function ShipManagementPage() {
                 <p className="text-gray-600">전체 선박의 정보와 상태를 관리하세요</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline">
+                <Button variant="outline" style={{cursor: 'pointer'}}>
                   <Download className="w-4 h-4 mr-2" />
                   <a href="/template/PMS Maintenance Upload Template.xlsx">
                     템플릿 다운로드

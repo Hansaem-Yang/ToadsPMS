@@ -1,0 +1,59 @@
+import { NextResponse } from 'next/server';
+import { query } from '@/db'; // 이전에 만든 query 함수
+import { PMSData } from '@/types/status/pms_data'; // ✅ interface import
+
+export async function GET(req: Request) {
+  try {
+    // DB에서 데쉬보드 정보 확인
+    const items: PMSData[] = await query(
+      `select a.vessel_no as coll_sign
+            , a.vessel_name
+            , a.machine_name
+            , a.equip_name
+            , a.section_name
+            , a.plan_name
+            , a.interval
+            , a.interval_term
+            , a.lastest_date
+            , convert(varchar(10), a.due_date, 121) as due_date 
+         from (select a.vessel_no
+                    , a.vessel_name
+                    , b.machine_name
+                    , isnull(m.sort_no, 999) as machine_sort
+                    , b.equip_no
+                    , b.equip_name
+                    , c.section_code
+                    , c.section_name
+                    , d.plan_code
+                    , d.plan_name
+                    , d.interval
+                    , d.interval_term
+                    , convert(varchar(10), d.lastest_date, 121) as lastest_date
+                    , convert(varchar(10), case d.interval_term when 'YEAR' then dateadd(year, d.interval, d.lastest_date)
+                                                                when 'MONTH' then dateadd(month, d.interval, d.lastest_date)
+                                                                when 'DAY' then dateadd(day, d.interval, d.lastest_date)
+                                                                when 'HOURS' then dateadd(day, d.interval / 24, d.lastest_date) end, 121) as due_date
+                 from [vessel] as a
+                inner join [equipment] as b
+                   on a.vessel_no = b.vessel_no
+                 left outer join [machine] as m
+                   on b.vessel_no = m.vessel_no
+                  and b.machine_name = m.machine_name
+                 left outer join [section] as c
+                   on b.vessel_no = c.vessel_no
+                  and b.equip_no = c.equip_no
+                 left outer join [maintenance_plan] as d
+                   on c.vessel_no = d.vessel_no
+                  and c.equip_no = d.equip_no
+                  and c.section_code = d.section_code
+                where a.use_yn = 'Y') as a
+       order by a.vessel_no, a.machine_sort, a.equip_no, a.section_code, a.plan_code`);
+
+
+    // 성공 시 데쉬보드 정보 반환
+    return NextResponse.json(items);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+  }
+}

@@ -32,12 +32,15 @@ import {
   History,
   Clock,
   FileText,
+  Download,
 } from "lucide-react"
 import { Vessel } from '@/types/vessel/vessel'; // ✅ interface import
 import { Machine } from '@/types/vessel/machine';
 import { Equipment } from '@/types/vessel/equipment';
 import { MaintenanceWork } from '@/types/vessel/maintenance_work'; // ✅ interface import
 import { Maintenance } from '@/types/status/maintenance'; // ✅ interface import
+import { PMSData } from '@/types/status/pms_data'; // ✅ interface import
+import * as XLSX from "xlsx";
 
 export default function MaintenanceWorkManagementPage() {
   const [userInfo, setUserInfo] = useState<any>(null)
@@ -54,6 +57,8 @@ export default function MaintenanceWorkManagementPage() {
   const [equipmentFilter, setEquipmentFilter] = useState("ALL")
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  
+  const [downloadData, setDownloadData] = useState<PMSData[]>([])
 
   // State for work history dialogs
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
@@ -97,6 +102,13 @@ export default function MaintenanceWorkManagementPage() {
         setSelectedHistoryItems(data)
         setIsHistoryDialogOpen(true)
       })
+      .catch(err => console.error(err));
+  };
+
+  const fetchDownload = () => {
+    fetch(`/api/admin/maintenance/download`)
+      .then(res => res.json())
+      .then(data => setDownloadData(data))
       .catch(err => console.error(err));
   };
 
@@ -152,6 +164,11 @@ export default function MaintenanceWorkManagementPage() {
 
     setFilteredData(filtered)
   }, [maintenanceData, shipFilter, machineFilter, equipmentFilter, statusFilter, searchTerm])
+
+  useEffect(() => {
+    if (downloadData && downloadData.length > 0)
+      downloadExcel()
+  }, [downloadData])
 
   if (!userInfo) return null
 
@@ -389,6 +406,20 @@ export default function MaintenanceWorkManagementPage() {
     }, 0)
   }
 
+  const handlePMSDownload = () => {
+    fetchDownload();
+  }
+
+  const downloadExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(downloadData);
+    const workbook = XLSX.utils.book_new();
+    
+    XLSX.utils.book_append_sheet(workbook, worksheet, "PMS");
+    worksheet["!cols"] = [{ wch: 8 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+
+    XLSX.writeFile(workbook, "export_pms_data.xlsx");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header userType={userInfo.user_auth} />
@@ -402,6 +433,10 @@ export default function MaintenanceWorkManagementPage() {
                 <p className="text-gray-600">전체 선박의 정비 현황을 관리하세요</p>
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" onClick={() => handlePMSDownload()} style={{cursor: 'pointer'}}>
+                  <Download className="w-4 h-4 mr-2" />
+                  PMS 다운로드
+                </Button>
                 <Button variant="outline" onClick={() => (window.location.href = "/admin/calendar")} style={{cursor: 'pointer'}}>
                   <Calendar className="w-4 h-4 mr-2" />
                   작업 캘린더

@@ -176,7 +176,7 @@ export async function POST(req: Request) {
                     , regist_date
                     , regist_user)
               values (b.vessel_no
-                    , (select format(isnull(max(equip_no), 0) + 1, '00') from [equipment] where vessel_no = b.vessel_no)
+                    , b.equip_no
                     , b.equip_name
                     , b.machine_name
                     , b.category
@@ -241,7 +241,7 @@ export async function POST(req: Request) {
                     , regist_user)
               values (b.vessel_no
                     , b.equip_no
-                    , (select format(isnull(max(section_code), 0) + 1, '000') from [section] where vessel_no = b.vessel_no and equip_no = b.equip_no)
+                    , b.section_code)
                     , b.section_name
                     , b.description
                     , getdate()
@@ -344,7 +344,7 @@ export async function POST(req: Request) {
               values (b.vessel_no
                     , b.equip_no
                     , b.section_code
-                    , (select format(isnull(max(plan_code), 0) + 1, '000') from [maintenance_plan] where vessel_no = b.vessel_no and equip_no = b.equip_no and section_code = b.section_code)
+                    , b.plan_code
                     , b.plan_name
                     , b.manufacturer
                     , b.model

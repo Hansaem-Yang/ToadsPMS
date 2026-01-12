@@ -27,7 +27,7 @@ export async function POST(req: Request) {
             , @userName
             , @userEname
             , @email
-            , @password
+            , convert(varbinary(MAX), @password)
             , @position
             , @shipNo
             , @userAuth

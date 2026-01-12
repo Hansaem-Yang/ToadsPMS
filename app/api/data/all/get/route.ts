@@ -11,6 +11,8 @@ import { Material } from '@/types/inventory/material/material';
 import { Receive } from '@/types/inventory/receive/receive';
 
 export async function POST(req: Request) {
+  console.log('===Start data gettings===');
+
   const body = await req.json();
   const receivePmsData : PMSData = body;
 
@@ -175,7 +177,7 @@ export async function POST(req: Request) {
             , regist_user
             , modify_date
             , modify_user
-          from [material]
+         from [material]
         where vessel_no = @vesselNo
           and (regist_date >= @lastReceiveDate or modify_date >= @lastReceiveDate)`,
       [

@@ -5,8 +5,8 @@ export async function register() {
   const siteUrl = process.env.LOCAL_SITE_URL;
         
   if (process.env.NODE_ENV === 'production') {
-    const cron = await import('node-cron');
-    console.log('⏰ Scheduler has been initialized.');
+    // const cron = await import('node-cron');
+    // console.log('⏰ Scheduler has been initialized.');
 
     // 매일 자정에 실행되는 스케쥴을 설정
     // Cron 표현식: '분 시 일 월 요일'

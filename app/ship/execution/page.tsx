@@ -104,6 +104,8 @@ export default function MaintenanceExecutionPage() {
   const [selectedExtension, setSelectedExtension] = useState<any>(null)
   const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false)
   const [extensionResult, setExtensionResult] = useState<MaintenanceExtension>(initialMaintenanceExtension)
+  const [delayReason, setDelayReason] = useState<string>('')
+
   const nowDate = new Date();
   const today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
 
@@ -377,6 +379,14 @@ export default function MaintenanceExecutionPage() {
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
+                  <Checkbox
+                    id="select-all"
+                    checked={
+                      selectedWorks.length > 0 &&
+                      selectedWorks.length === getSelectedCount(item.equip_no, item.section_code || '')
+                    }
+                    onCheckedChange={() => handleSelectAll(item.equip_no, item.section_code || '')}
+                  />
                   <h4 className="font-semibold">{item.section_name}</h4>
                   <span className="text-sm text-gray-500">({item.section_code})</span>
                 </div>
@@ -579,12 +589,18 @@ export default function MaintenanceExecutionPage() {
   }
 
   const getTotalTasks = () => {
-    return works.reduce((total, eq) => total + eq.children.length, 0)
+    return works.reduce((total, eq) => {
+      return total + eq.children.reduce((childTotal, section) => {
+        return childTotal + section.children.length
+      }, 0)
+    }, 0)
   }
 
   const getTasksByStatus = (status: string) => {
     return works.reduce((total, eq) => {
-      return total + eq.children.filter((task) => task.status === status).length
+      return total + eq.children.reduce((childTotal, section) => {
+        return childTotal + section.children.filter((task) => task.status === status).length
+      }, 0)
     }, 0)
   }
 
@@ -598,16 +614,16 @@ export default function MaintenanceExecutionPage() {
     })
   }
 
-  const findAllMatchingDescendants = (items: Maintenance[]): Maintenance[] =>{
+  const findAllMatchingDescendants = (equipNo: string, sectionCode: string, items: Maintenance[]): Maintenance[] =>{
     let result: Maintenance[] = [];
 
     for (const item of items) {
-      if (item.type === "TASK" && item.status !== "COMPLATE") {
+      if (item.type === "TASK" && item.status !== "COMPLATE" && item.equip_no === equipNo && item.section_code === sectionCode) {
         result.push(item);
       }
 
       if (item.children && item.children.length > 0) {
-        const deeperMatches = findAllMatchingDescendants(item.children);
+        const deeperMatches = findAllMatchingDescendants(equipNo, sectionCode, item.children);
         result = result.concat(deeperMatches);
       }
     }
@@ -615,8 +631,8 @@ export default function MaintenanceExecutionPage() {
     return result;
   }
 
-  const handleSelectAll = () => {
-    const allMatchingTasks: Maintenance[] = findAllMatchingDescendants(filteredWorks);
+  const handleSelectAll = (equipNo: string, sectionCode: string) => {
+    const allMatchingTasks: Maintenance[] = findAllMatchingDescendants(equipNo, sectionCode, filteredWorks);
     const allTaskIds = allMatchingTasks.map((task) => `${task.equip_no}-${task.section_code}-${task.plan_code}`);
 
     if (selectedWorks.length === allTaskIds.length) {
@@ -624,6 +640,17 @@ export default function MaintenanceExecutionPage() {
     } else {
       setSelectedWorks(allTaskIds)
     }
+  }
+
+  const getSelectedCount = (equipNo: string, sectionCode: string) => {
+    let count = 0;
+    filteredWorks.map(eq => {
+      eq.children.map(section => {
+        count += section.children.filter(task => task.status !== "COMPLATE" && task.equip_no === equipNo && task.section_code === sectionCode).length
+      })
+    });
+
+    return count;
   }
 
   const findAllBulkExecutions = (items: Maintenance[]): Maintenance[] =>{
@@ -660,6 +687,7 @@ export default function MaintenanceExecutionPage() {
       tasks: tasksToExecute,
     })
     setIsBulkExecutionDialogOpen(true)
+    setDelayReason('')
   }
   
   const updateBulkTaskBySection = (parent: Maintenance, executionData: ComparisonData, status: string) => {
@@ -737,6 +765,25 @@ export default function MaintenanceExecutionPage() {
       setSelectedWorks([])
       setIsBulkExecutionDialogOpen(false)
     }
+  }
+
+  const handleClearDelayReason = () => {
+    setDelayReason('')
+  }
+
+  const handleCopyDelayReason = (equip_no: string, section_code: string, plan_code: string) => {
+    bulkExecutionData.tasks.map(task => {
+      if (task.equip_no === equip_no && task.section_code === section_code && task.plan_code === plan_code) {
+        setDelayReason(task.delay_reason || '')
+      }
+    })
+  }
+
+  const handlePasteDelayReason = (equip_no: string, section_code: string, plan_code: string) => {
+    setBulkExecutionData((prev) => ({
+      ...prev,
+      tasks: prev.tasks.map((task) => (task.equip_no === equip_no && task.section_code === section_code && task.plan_code === plan_code ? { ...task, delay_reason: delayReason } : task)),
+    }))
   }
 
   const updateTaskData = (equip_no: string, section_code: string, plan_code: string, field: string, value: string) => {
@@ -878,20 +925,6 @@ export default function MaintenanceExecutionPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">필터 및 검색</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="select-all"
-                    checked={
-                      selectedWorks.length > 0 &&
-                      selectedWorks.length ===
-                        filteredWorks.flatMap((eq) => eq.children.filter((task) => task.status !== "COMPLATE")).length
-                    }
-                    onCheckedChange={handleSelectAll}
-                  />
-                  <Label htmlFor="select-all" className="text-sm">
-                    전체 선택
-                  </Label>
-                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -999,11 +1032,19 @@ export default function MaintenanceExecutionPage() {
               <DialogHeader>
                 <DialogTitle>일괄 정비 작업 실행 등록</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6">
+              <div className="space-y-6 w-full max-w-full min-w-0">
                 {/* 개별 작업 정보 */}
-                <div className="space-y-4">
+                <div className="space-y-4 w-full max-w-full min-w-0">
                   <h3 className="text-lg font-semibold">{bulkExecutionData.name}</h3>
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-1 max-h-96 overflow-y-auto overflow-x-hidden w-full max-w-full min-w-0">
+                    {delayReason && (
+                      <div className="sticky top-0 z-10 w-full max-w-full min-w-0 h-10 bg-green-100 px-3 !mt-0 rounded-lg flex items-center overflow-hidden"
+                           style={{fontSize: '9pt'}}>
+                        <span className="block w-full max-w-full min-w-0 truncate">
+                          {delayReason}
+                        </span>
+                      </div>
+                    )}
                     {bulkExecutionData.tasks.map((task) => (
                       <Card key={`${task.equip_no}-${task.section_code}-${task.plan_code}`} className="p-4">
                         <div className="space-y-3">
@@ -1058,7 +1099,26 @@ export default function MaintenanceExecutionPage() {
                           </div>
                           {task.status === "DELAYED" && (
                             <div>
-                              <Label className="text-xs">지연 사유</Label>
+                              <div className="flex items-center justify-between mb-1">
+                                <Label className="text-xs">지연 사유</Label>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Button
+                                    variant="outline"
+                                    style={{ height: '20px', alignItems: 'center', fontSize: '9pt', borderRadius: '4px', cursor: 'pointer' }}
+                                    disabled={!delayReason}
+                                    onClick={() => handleClearDelayReason()}>초기화</Button>
+                                  <Button
+                                    variant="outline"
+                                    style={{ height: '20px', alignItems: 'center', fontSize: '9pt', borderRadius: '4px', cursor: 'pointer' }}
+                                    disabled={delayReason === task.delay_reason || !task.delay_reason}
+                                    onClick={() => handleCopyDelayReason(task.equip_no, task.section_code || '', task.plan_code || '')}>복사하기</Button>
+                                  <Button
+                                    variant="outline"
+                                    style={{ height: '20px', alignItems: 'center', fontSize: '9pt', borderRadius: '4px', cursor: 'pointer' }}
+                                    disabled={delayReason === task.delay_reason || !delayReason}
+                                    onClick={() => handlePasteDelayReason(task.equip_no, task.section_code || '', task.plan_code || '')}>붙여넣기</Button>
+                                </div>
+                              </div>
                               <Textarea
                                 placeholder="이 작업에 대한 지연 사유..."
                                 value={task.delay_reason}

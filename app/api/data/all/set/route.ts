@@ -3,6 +3,8 @@ import { getSql, getPool } from '@/db'; // 이전에 만든 query 함수
 import { PMSData } from '@/types/data/pms_data';
 
 export async function POST(req: Request) {
+  console.log('===Start data settings===');
+
   const body = await req.json();
   const receivePmsData : PMSData = body;
 
@@ -15,8 +17,9 @@ export async function POST(req: Request) {
     await transantion.begin();
     try {
       let count = 0;
+      
       // 선박 정보 등록 및 수정
-        for (const item of receivePmsData.vessels) {
+      for (const item of receivePmsData.vessels) {
         let queryString = `
         merge [vessel] as a
         using (select @vesselNo as vessel_no
@@ -241,7 +244,7 @@ export async function POST(req: Request) {
                     , regist_user)
               values (b.vessel_no
                     , b.equip_no
-                    , b.section_code)
+                    , b.section_code
                     , b.section_name
                     , b.description
                     , getdate()

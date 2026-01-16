@@ -97,6 +97,16 @@ export default function MaintenanceWorkManagementPage() {
         return <ColorBadge variant="default">{status}</ColorBadge>
     }
   }
+  const getStatusString = (status: any) => {
+    switch (status) {
+      case "APPROVAL":
+        return '승인'
+      case "REJECT":
+        return '반려'
+      default:
+        return ''
+    }
+  }
 
   useEffect(() => {
     try {
@@ -659,7 +669,7 @@ export default function MaintenanceWorkManagementPage() {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor="equip_no">결재사유</Label>
+                          <Label htmlFor="equip_no">{getStatusString(selectedExtensionItem.approval_status)}사유</Label>
                           <span className="text-sm font-medium text-gray-500">{`${selectedExtensionItem.approval_reason}`}</span>
                         </div>
                       </span>
